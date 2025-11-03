@@ -123,9 +123,8 @@ function Hero() {
                             hyper-minimalistic SOLID architecture framework for
                             Typescript!
                             <br />
-                            Dependency injection (DI) without OOP,
-                            reflect-metadata, decorators, annotations or
-                            compiler magic, just{" "}
+                            Dependency injection (DI) without reflect-metadata,
+                            decorators, annotations or compiler magic, just{" "}
                             <span className={styles.highlight}>
                                 simple functions
                             </span>
@@ -234,9 +233,9 @@ function WhySection() {
                         <div className={styles.whyIcon}>✨</div>
                         <h3>No Magic</h3>
                         <p>
-                            Just functions and closures. No OOP,
-                            reflect-metadata, decorators, or compiler magic.
-                            What you see is what you get.
+                            Just functions and closures. No reflect-metadata,
+                            decorators, or compiler magic. What you see is what
+                            you get.
                         </p>
                     </div>
                     <div className={styles.whyCard}>
@@ -455,10 +454,7 @@ function CTASection() {
 export default function Home(): ReactNode {
     const { siteConfig } = useDocusaurusContext()
     return (
-        <Layout
-            title={`${siteConfig.title} - Functional Dependency Injection`}
-            description="Functional, fully type-safe dependency injection for TypeScript. No decorators, no reflection - just pure functions and closures."
-        >
+        <Layout title={siteConfig.title} description={siteConfig.tagline}>
             <Hero />
             <SectionSeparator />
             <WhySection />

@@ -7,7 +7,7 @@ import type * as Preset from "@docusaurus/preset-classic"
 const config: Config = {
     title: "Typearch",
     tagline:
-        "Functional, fully type-safe and stateless dependency injection for TypeScript",
+        "First fully type-inferred SOLID architecture framework for Typescript",
     favicon: "img/typearch-logo.png",
 
     // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future

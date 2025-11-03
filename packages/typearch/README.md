@@ -1,6 +1,6 @@
 # typearch
 
-First fully type-inferred, type-safe and hyper-minimalistic SOLID architecture framework for Typescript! Dependency injection (DI) without OOP, reflect-metadata, decorators, annotations or compiler magic, just simple functions!
+First fully type-inferred, type-safe and hyper-minimalistic SOLID architecture framework for Typescript! Dependency injection (DI) without reflect-metadata, decorators, annotations or compiler magic, just simple functions!
 
 ## Why Typearch?
 
@@ -8,7 +8,7 @@ First fully type-inferred, type-safe and hyper-minimalistic SOLID architecture f
 -   ✅ **Fully type-inferred** - Compile-time dependency validation.
 -   ✅ **Minimal boilerplate** - Trade-off: a bit more runtime boilerplate for much less type boilerplate.
 -   ✅ **Framework agnostic** - Accommodates all codebases where TypeScript works
--   ✅ **No magic** - Just functions and closures, no OOP, reflect-metadata, decorators, annotations or compiler magic.
+-   ✅ **No magic** - Just functions and closures, no classes, reflect-metadata, decorators, annotations or compiler magic.
 -   ✅ **Testing friendly** - Easy mocking and dependency swapping
 -   ✅ **Performance focused** - Smart memoization, lazy loading, code-splittable architecture.
 -   ✅ **Stateless** - Dependencies resolved via closures, not global state.
@@ -97,7 +97,7 @@ Here's an equivalence table to more classical, technical terms
 
 🔧 Dependency Injection
 
--   Functions only - No OOP, classes, decorators, annotations, or compiler magic.
+-   Functions only - No classes, decorators, annotations, or compiler magic.
 -   Declarative, immutable, functionally pure.
 -   Stateless - Dependencies are resolved via closures, not state. Some memoized state is kept for validation and optimization purposes only.
 -   Auto-wired - All products are built by the Supply Chain and resolve their dependencies automatically.
@@ -370,9 +370,9 @@ profile === <h1>Profile of John Doe</h1>
 
 DI containers have always felt abstract, technical, almost magical in how they work. Like a black box, you often have to dig into the source code of a third-party library to understand how data flows in your own application. It feels like you lose control of your own data when you use one, and your entire app becomes dependent on the container to even work. Typearch aims to make DI cool again! The pattern has real power, even if current implementations on the open-source market hide that power under a lot of complexity.
 
-DI was complex to achieve in OOP world because of the absence of first-class functions in OOP languages. But in modern functional languages, DI should be easier, since DI itself is a functional pattern. However, TypeScript DI frameworks currently available seem to have been built by imitating how they were built in OOP languages...
+DI was complex to achieve in pure OOP world because of the absence of first-class functions. But in more functional languages, DI should be easier, since DI itself is a functional pattern. However, TypeScript DI frameworks currently available seem to have been built by imitating how they were built in OOP languages...
 
-The problem DI was solving in OOP world still exists in the functional world. In OOP world, DI helped inject data and services freely within deeply nested class hierarchies and architectures. In the functional world, DI achieves the same: inject data and services freely in deeply nested function calls. Deeply nested function calls naturally emerge when trying to decouple and implement SOLID principles in medium to highly complex applications. Without DI, you cannot achieve maximal decoupling. Even if in principle you can reuse a function elsewhere, the function is still bound in some way to the particular call stack in which it finds itself, simply by the fact that it can only be called from a parent function that has access to all the data and dependencies it needs.
+The problem DI was solving in OOP still exists in a more functional world. In OOP, DI helped inject data and services freely within deeply nested class hierarchies and architectures. With only functions though, DI achieves a similar purpose: inject data and services freely in deeply nested function calls. Deeply nested function calls naturally emerge when trying to decouple and implement SOLID principles in medium to highly complex applications. Without DI, you cannot achieve maximal decoupling. Even if in principle you can reuse a function elsewhere, the function is still bound in some way to the particular call stack in which it finds itself, simply by the fact that it can only be called from a parent function that has access to all the data and dependencies it needs.
 
 Typearch's "Dependency Injection Supply Chain" (DISC) model can do everything containers do, but in a more elegant, simpler, and easier-to-reason-about manner.
 

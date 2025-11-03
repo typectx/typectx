@@ -25,9 +25,8 @@ const FeatureList: FeatureItem[] = [
         icon: "🪄",
         description: (
             <>
-                Just functions and closures, no OOP, reflect-metadata,
-                decorators, annotations or compiler magic. Clean, understandable
-                code.
+                Just functions and closures, no reflect-metadata, decorators,
+                annotations or compiler magic. Clean, understandable code.
             </>
         )
     },

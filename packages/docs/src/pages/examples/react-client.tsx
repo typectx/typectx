@@ -4,10 +4,7 @@ import useDocusaurusContext from "@docusaurus/useDocusaurusContext"
 export default function ExampleReactClient() {
     const { siteConfig } = useDocusaurusContext()
     return (
-        <Layout
-            title={`${siteConfig.title} - Functional Dependency Injection`}
-            description="Functional, fully type-safe dependency injection for TypeScript. No decorators, no reflection - just pure functions and closures."
-        >
+        <Layout title={siteConfig.title} description={siteConfig.tagline}>
             <iframe
                 src="https://codesandbox.io/p/sandbox/github/typearch-js/typearch/tree/latest-stable-release/packages/examples/react-client?embed=1&file=%2FREADME.md"
                 style={{
