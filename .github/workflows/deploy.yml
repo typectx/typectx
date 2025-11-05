@@ -9,6 +9,9 @@ concurrency:
     cancel-in-progress: false
 
 jobs:
+    test:
+        uses: ./.github/workflows/test.yml
+
     build-pages:
         uses: ./.github/workflows/build-pages.yml
 
@@ -22,7 +25,7 @@ jobs:
         runs-on: ubuntu-latest
         if: contains(github.event.release.tag_name, '-') == false ||
             contains(github.event.release.tag_name, 'docs')
-        needs: [build-pages, validate-tag]
+        needs: [test, build-pages, validate-tag]
         permissions:
             pages: write # Required for deploying to GitHub Pages
             id-token: write # Required for OIDC with GitHub Pages
@@ -34,7 +37,7 @@ jobs:
     push-docs-branch:
         environment:
             name: docs-branch
-        needs: [build-pages, validate-tag]
+        needs: [test, build-pages, validate-tag]
         runs-on: ubuntu-latest
         if: contains(github.event.release.tag_name, '-') == false ||
             contains(github.event.release.tag_name, 'docs')

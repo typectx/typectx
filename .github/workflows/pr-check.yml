@@ -1,0 +1,17 @@
+name: PR Check
+
+on:
+    pull_request:
+        branches: [main]
+
+jobs:
+    test:
+        uses: ./.github/workflows/test.yml
+
+    build-pkg:
+        needs: test
+        uses: ./.github/workflows/build-pkg.yml
+
+    build-pages:
+        needs: test
+        uses: ./.github/workflows/build-pages.yml

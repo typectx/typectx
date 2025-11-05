@@ -1,17 +1,11 @@
 name: Build Pkg
 
 on:
-    pull_request:
-        branches: [main]
     workflow_call:
 
 jobs:
-    test:
-        uses: ./.github/workflows/test.yml
-
     build-pkg:
         runs-on: ubuntu-latest
-        needs: test
         permissions:
             contents: read
         steps:
