@@ -6,17 +6,20 @@ on:
 
 concurrency:
     group: "publish"
-    cancel-in-progress: true
+    cancel-in-progress: false
 
 jobs:
-    build:
-        uses: ./.github/workflows/build.yml
+    test:
+        uses: ./.github/workflows/test.yml
+
+    build-pkg:
+        uses: ./.github/workflows/build-pkg.yml
 
     validate-tag:
         uses: ./.github/workflows/validate-tag.yml
 
     publish-pkg:
-        needs: [build, validate-tag]
+        needs: [test, build-pkg, validate-tag]
         if: contains(github.event.release.tag_name, 'docs') == false
         environment:
             name: npm-publish
