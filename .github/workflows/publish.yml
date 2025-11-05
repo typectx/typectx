@@ -9,13 +9,23 @@ concurrency:
     cancel-in-progress: false
 
 jobs:
+    gate:
+        runs-on: ubuntu-latest
+        if: contains(github.event.release.tag_name, 'docs') == false
+        steps:
+            - name: Gate check
+              run: echo "Publish condition met"
+
     test:
+        needs: gate
         uses: ./.github/workflows/test.yml
 
     build-pkg:
+        needs: gate
         uses: ./.github/workflows/build-pkg.yml
 
     validate-tag:
+        needs: gate
         uses: ./.github/workflows/validate-tag.yml
 
     publish-pkg:

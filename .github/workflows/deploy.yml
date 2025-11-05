@@ -9,13 +9,24 @@ concurrency:
     cancel-in-progress: false
 
 jobs:
+    gate:
+        runs-on: ubuntu-latest
+        if: contains(github.event.release.tag_name, '-') == false ||
+            contains(github.event.release.tag_name, 'docs')
+        steps:
+            - name: Gate check
+              run: echo "Deploy condition met"
+
     test:
+        needs: gate
         uses: ./.github/workflows/test.yml
 
     build-pages:
+        needs: gate
         uses: ./.github/workflows/build-pages.yml
 
     validate-tag:
+        needs: gate
         uses: ./.github/workflows/validate-tag.yml
 
     deploy-pages:
@@ -23,8 +34,6 @@ jobs:
             name: github-pages
             url: ${{ steps.deploy-pages.outputs.page_url }}
         runs-on: ubuntu-latest
-        if: contains(github.event.release.tag_name, '-') == false ||
-            contains(github.event.release.tag_name, 'docs')
         needs: [test, build-pages, validate-tag]
         permissions:
             pages: write # Required for deploying to GitHub Pages
@@ -39,8 +48,6 @@ jobs:
             name: docs-branch
         needs: [test, build-pages, validate-tag]
         runs-on: ubuntu-latest
-        if: contains(github.event.release.tag_name, '-') == false ||
-            contains(github.event.release.tag_name, 'docs')
         steps:
             - name: Checkout
               uses: actions/checkout@v5
