@@ -13,108 +13,16 @@ jobs:
         uses: ./.github/workflows/build.yml
 
     validate-tag:
-        runs-on: ubuntu-latest
-        steps:
-            - name: Validate tag
-              run: |
-                  TAG="${{ github.event.release.tag_name }}"
-                  echo "Validating tag: $TAG"
-
-                  # Check if tag matches the required pattern
-                  if ! echo "$TAG" | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+(-((dry|canary|alpha|beta|rc)\.[0-9]+))?$'; then
-                      echo "❌ Invalid tag format: $TAG"
-                      echo "Tag must start with v[MAJOR].[MINOR].[PATCH]"
-                      echo "Optional suffix: -[dry|canary|alpha|beta|rc].[NUMBER]"
-                      exit 1
-                  fi
-
-                  echo "✅ Tag is valid"
-
-    publish-pkg:
-        needs: [build, validate-tag]
-        environment:
-            name: npm-publish
-            url: https://www.npmjs.com/package/typearch
-        runs-on: ubuntu-latest
-        permissions:
-            contents: read # Required for checkout
-            id-token: write # Required for OIDC with npm
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v5
-
-            - name: Setup Node.js
-              uses: actions/setup-node@v5
-              with:
-                  node-version: "lts/*"
-                  registry-url: "https://registry.npmjs.org"
-                  package-manager-cache: false
-
-            - name: Update npm
-              run: npm install -g npm@latest
-
-            - name: Download build artifacts
-              uses: actions/download-artifact@v5
-              with:
-                  name: typearch-build
-                  path: packages/typearch
-
-            - name: Set version from release tag
-              working-directory: ./packages/typearch
-              run: |
-                  VERSION=${GITHUB_REF#refs/tags/}
-                  VERSION=${VERSION#v}
-                  echo "Setting version to: $VERSION"
-                  npm version $VERSION --no-git-tag-version
-                  echo "Package.json version is now: $(cat package.json | jq -r .version)"
-
-            - name: Dry publish
-              if: contains(github.event.release.tag_name, 'dry')
-              working-directory: ./packages/typearch
-              run: |
-                  npm publish --tag dry --dry-run
-
-            - name: Publish to Canary
-              if: contains(github.event.release.tag_name, 'canary')
-              working-directory: ./packages/typearch
-              run: |
-                  npm publish --tag canary
-
-            - name: Publish to Alpha
-              if: contains(github.event.release.tag_name, 'alpha')
-              working-directory: ./packages/typearch
-              run: |
-                  npm publish --tag alpha
-
-            - name: Publish to Beta
-              if: contains(github.event.release.tag_name, 'beta')
-              working-directory: ./packages/typearch
-              run: |
-                  npm publish --tag beta
-
-            - name: Publish to RC
-              if: contains(github.event.release.tag_name, 'rc')
-              working-directory: ./packages/typearch
-              run: |
-                  npm publish --tag rc
-
-            - name: Publish to Latest
-              if: |
-                  github.event.release.prerelease == false &&
-                  contains(github.event.release.tag_name, '-') == false
-              working-directory: ./packages/typearch
-              run: |
-                  npm publish --tag latest
+        uses: ./.github/workflows/validate-tag.yml
 
     deploy-pages:
         environment:
             name: github-pages
             url: ${{ steps.deploy-pages.outputs.page_url }}
         runs-on: ubuntu-latest
-        if: |
-            github.event.release.prerelease == false &&
-            contains(github.event.release.tag_name, '-') == false
-        needs: [build, validate-tag, publish-pkg]
+        if: contains(github.event.release.tag_name, '-') == false ||
+            contains(github.event.release.tag_name, 'docs')
+        needs: [build, validate-tag]
         permissions:
             pages: write # Required for deploying to GitHub Pages
             id-token: write # Required for OIDC with GitHub Pages
@@ -123,28 +31,26 @@ jobs:
               id: deploy-pages
               uses: actions/deploy-pages@v4
 
-    set-latest-stable-release:
-        needs: [publish-pkg]
+    push-docs-branch:
         environment:
-            name: latest-stable-release-branch
+            name: docs-branch
+        needs: [build, validate-tag]
         runs-on: ubuntu-latest
-        if: |
-            (github.event.release.prerelease == false &&
-            contains(github.event.release.tag_name, '-') == false) ||
-            contains(github.event.release.tag_name, 'dry')
+        if: contains(github.event.release.tag_name, '-') == false ||
+            contains(github.event.release.tag_name, 'docs')
         steps:
             - name: Checkout
               uses: actions/checkout@v5
               with:
-                  token: ${{ secrets.PUSH_RESTRICTED_TAGS_TOKEN }}
+                  token: ${{ secrets.TYPEARCH_TAG_MANAGER }}
 
             - name: Configure Git
               run: |
                   git config --local user.email "action@github.com"
                   git config --local user.name "GitHub Action"
 
-            - name: Set latest-stable-release tag
+            - name: Set docs branch
               run: |
-                  git fetch origin
-                  git branch -f latest-stable-release ${{ github.event.release.tag_name }}
-                  git push origin latest-stable-release --force
+                  git fetch origin --tags
+                  git branch -f docs ${{ github.event.release.tag_name }}
+                  git push origin docs --force

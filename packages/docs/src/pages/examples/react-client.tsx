@@ -6,7 +6,7 @@ export default function ExampleReactClient() {
     return (
         <Layout title={siteConfig.title} description={siteConfig.tagline}>
             <iframe
-                src="https://codesandbox.io/p/sandbox/github/typearch-js/typearch/tree/latest-stable-release/packages/examples/react-client?embed=1&file=%2FREADME.md"
+                src="https://codesandbox.io/p/sandbox/github/typearch-js/typearch/tree/docs/packages/examples/react-client?embed=1&file=%2FREADME.md"
                 style={{
                     width: "100%",
                     height: "90vh",
