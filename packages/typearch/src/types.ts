@@ -66,6 +66,7 @@ export type Product<
         hiredSuppliers?: [...HIRED_SUPPLIERS],
         hiredAssemblers?: [...HIRED_ASSEMBLERS]
     ) => Product<VALUE, SUPPLIER, $<[SUPPLIER, ...HIRED_SUPPLIERS], []>>
+    packed: boolean
     supplier: SUPPLIER
 }
 

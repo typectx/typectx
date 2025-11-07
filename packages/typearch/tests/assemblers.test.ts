@@ -247,6 +247,40 @@ describe("Assemblers Feature", () => {
         $$main.assemble(index($$number.pack(5)))
     })
 
+    it("should properly overwrite resource in assembler's assemble() method", () => {
+        const market = createMarket()
+        const $$number = market.offer("number").asResource<number>()
+        const $$doubler = market.offer("doubler").asProduct({
+            suppliers: [$$number],
+            factory: ($) => {
+                const number = $($$number).unpack()
+                return number * 2
+            }
+        })
+
+        const $$quadrupler = market.offer("quadrupler").asProduct({
+            suppliers: [$$doubler],
+            factory: ($) => {
+                const doubled = $($$doubler).unpack()
+                return doubled * 2
+            }
+        })
+
+        const $$main = market.offer("main").asProduct({
+            suppliers: [$$doubler],
+            assemblers: [$$quadrupler],
+            factory: ($, $$) => {
+                const assembled = $$($$quadrupler).assemble(
+                    index($$number.pack(5))
+                )
+                return assembled.unpack()
+            }
+        })
+
+        const $result = $$main.assemble(index($$number.pack(10)))
+        expect($result.unpack()).toEqual(20)
+    })
+
     it("should support mocks with assembler", () => {
         const market = createMarket()
         const factoryMock = vi.fn().mockReturnValue("value")

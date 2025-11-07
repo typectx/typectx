@@ -370,6 +370,7 @@ describe("Optionals Feature", () => {
 
         it("should allow removing optional in reassemble", () => {
             const market = createMarket()
+
             const $$config = market.offer("config").asResource<string>()
             const $$optional = market.offer("optional").asResource<number>()
 
@@ -390,7 +391,7 @@ describe("Optionals Feature", () => {
                 optional: 42
             })
 
-            // Reassemble without optional, it should use the default vlaue.
+            // Reassemble without optional, it should use the default value.
             const $reassembled = $initial.reassemble({
                 [$$optional.name]: undefined
             })
