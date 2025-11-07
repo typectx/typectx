@@ -83,6 +83,11 @@ const config: Config = {
                     label: "Docs"
                 },
                 {
+                    to: "blog",
+                    label: "Blog",
+                    position: "left"
+                },
+                {
                     href: "https://www.npmjs.com/package/typectx",
                     label: "npm",
                     position: "right"
