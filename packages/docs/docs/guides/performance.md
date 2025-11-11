@@ -1,6 +1,6 @@
 # Performance
 
-Typearch is designed for optimal performance, featuring a minimal bundle size, smart memory management, and powerful preloading strategies.
+typectx is designed for optimal performance, featuring a minimal bundle size, smart memory management, and powerful preloading strategies.
 
 ## Bundle Size & Footprint
 

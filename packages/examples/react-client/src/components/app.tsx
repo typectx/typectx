@@ -5,7 +5,7 @@ import { $$SelectSession } from "@/components/session"
 import { ctx } from "@/context"
 import type { User } from "@/api"
 import { useState } from "react"
-import { index } from "typearch"
+import { index } from "typectx"
 import { useQuery } from "@tanstack/react-query"
 
 export const $$App = market.offer("App").asProduct({

@@ -9,7 +9,7 @@ import SectionSeparator from "@site/src/components/SectionSeparator"
 
 import styles from "./index.module.css"
 
-const heroCode = `import { createMarket, index } from "typearch"
+const heroCode = `import { createMarket, index } from "typectx"
 
 // Create market and define suppliers
 const market = createMarket()
@@ -191,7 +191,7 @@ function Hero() {
                                     <span></span>
                                 </div>
                                 <span className={styles.codeTitle}>
-                                    typearch-demo.ts
+                                    typectx-demo.ts
                                 </span>
                             </div>
                             <CodeBlock
@@ -213,7 +213,7 @@ function WhySection() {
         <section className={styles.whySection}>
             <div className="container">
                 <div className={styles.sectionHeader}>
-                    <Heading as="h2">Why choose Typearch?</Heading>
+                    <Heading as="h2">Why choose typectx?</Heading>
                     <p>
                         Built for modern TypeScript applications that demand
                         performance, safety, and simplicity.
@@ -354,7 +354,7 @@ function UseCasesSection() {
                 <div className={styles.sectionHeader}>
                     <Heading as="h2">Perfect for modern apps</Heading>
                     <p>
-                        From React components to API servers, Typearch adapts to
+                        From React components to API servers, typectx adapts to
                         your architecture.
                     </p>
                 </div>
@@ -412,7 +412,7 @@ function CTASection() {
             <div className="container">
                 <div className={styles.ctaContent}>
                     <Heading as="h2">
-                        Ready to revolutionize your DI with Typearch?
+                        Ready to revolutionize your DI with typectx?
                     </Heading>
                     <p>
                         Join developers who've already made the switch to
@@ -442,7 +442,7 @@ function CTASection() {
                     </div>
                     <div className={styles.ctaNote}>
                         <p>
-                            🚀 Install with <code>npm install typearch</code>
+                            🚀 Install with <code>npm install typectx</code>
                         </p>
                     </div>
                 </div>
@@ -461,7 +461,7 @@ export default function Home(): ReactNode {
             <SectionSeparator />
             <FeatureSection
                 title="Fully Type-Inferred from End to End"
-                description="Catch dependency errors before they reach production. Typearch's architecture provides end-to-end type inference, eliminating entire classes of bugs and ensuring your dependency graph is always valid."
+                description="Catch dependency errors before they reach production. typectx's architecture provides end-to-end type inference, eliminating entire classes of bugs and ensuring your dependency graph is always valid."
                 code={typeExample}
             />
             <SectionSeparator />

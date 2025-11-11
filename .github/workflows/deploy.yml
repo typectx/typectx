@@ -52,12 +52,12 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v5
               with:
-                  token: ${{ secrets.TYPEARCH_TAG_MANAGER }}
+                  token: ${{ secrets.TYPECTX_PROTECTED_REF_ADMIN }}
 
             - name: Configure Git
               run: |
                   git config --local user.email "action@github.com"
-                  git config --local user.name "GitHub Action"
+                  git config --local user.name "typectx-bot"
 
             - name: Set docs branch
               run: |

@@ -1,5 +1,5 @@
 /**
- * Runtime validation utilities for the typearch package.
+ * Runtime validation utilities for the typectx package.
  * These validators help catch common errors for users who don't use TypeScript.
  * @internal
  */

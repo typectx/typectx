@@ -1,4 +1,4 @@
-# Tips for using Typearch with React
+# Tips for using typectx with React
 
 -   **Rules of Hooks** - Don't call hooks in the factory's function body! If you call hooks, either in a component or custon hooks, be sure to call it in a function **returned** by the factory, like so:
 
@@ -10,7 +10,7 @@
 }
 ```
 
--   **React Context alternative** - All you can achieve with React Context can be achieved using Typearch's API:
+-   **React Context alternative** - All you can achieve with React Context can be achieved using typectx's API:
 
     -   `createContext()` → define a new resource with `asResource()`
     -   `useContext()` → access it through supplies with `$(someContextResourceSupplier).unpack()`

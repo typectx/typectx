@@ -94,7 +94,7 @@ export default function HomepageFeatures(): ReactNode {
             <div className="container">
                 <div className="row">
                     <div className="col col--12 text--center margin-bottom--lg">
-                        <Heading as="h2">Why Typearch?</Heading>
+                        <Heading as="h2">Why typectx?</Heading>
                         <p className="text--muted">
                             Modern dependency injection without the complexity
                             of traditional containers

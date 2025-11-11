@@ -6,7 +6,7 @@ export default function ExampleReactClient() {
     return (
         <Layout title={siteConfig.title} description={siteConfig.tagline}>
             <iframe
-                src="https://codesandbox.io/p/sandbox/github/typearch-js/typearch/tree/docs/packages/examples/react-client?embed=1&file=%2FREADME.md"
+                src="https://codesandbox.io/p/sandbox/github/typectx/typectx/tree/docs/packages/examples/react-client?embed=1&file=%2FREADME.md"
                 style={{
                     width: "100%",
                     height: "90vh",
@@ -14,7 +14,7 @@ export default function ExampleReactClient() {
                     borderRadius: "4px",
                     overflow: "hidden"
                 }}
-                title="@typearch-js/examples-react-client"
+                title="@typectx/examples-react-client"
                 allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
                 sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
             ></iframe>

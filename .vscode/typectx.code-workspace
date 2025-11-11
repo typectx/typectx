@@ -17,7 +17,7 @@
         "version": "2.0.0",
         "tasks": [
             {
-                "label": "Start Typearch Watch Mode",
+                "label": "Start typectx Watch Mode",
                 "type": "shell",
                 "command": "pnpm",
                 "args": ["run", "dev"],

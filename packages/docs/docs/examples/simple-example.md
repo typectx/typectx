@@ -1,9 +1,9 @@
 # Simple example
 
-Dummy todo app built with Typearch.
+Dummy todo app built with typectx.
 
 ```typescript
-import { createMarket, index } from "typearch"
+import { createMarket, index } from "typectx"
 
 // 1. Create a market
 const market = createMarket()
@@ -39,6 +39,6 @@ const addTodo = $$addTodo
     .assemble(index($$session.pack(session)))
     .unpack()
 
-console.log(addTodo("Learn Typearch")) // ["Learn Typearch"]
-console.log(addTodo("Build app")) // ["Learn Typearch", "Build app"]
+console.log(addTodo("Learn typectx")) // ["Learn typectx"]
+console.log(addTodo("Build app")) // ["Learn typectx", "Build app"]
 ```

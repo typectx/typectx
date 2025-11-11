@@ -33,7 +33,7 @@ jobs:
         if: contains(github.event.release.tag_name, 'docs') == false
         environment:
             name: npm-publish
-            url: https://www.npmjs.com/package/typearch
+            url: https://www.npmjs.com/package/typectx
         runs-on: ubuntu-latest
         permissions:
             contents: read # Required for checkout
@@ -55,11 +55,11 @@ jobs:
             - name: Download build artifacts
               uses: actions/download-artifact@v5
               with:
-                  name: typearch-build
-                  path: packages/typearch
+                  name: typectx-build
+                  path: packages/typectx
 
             - name: Set version from release tag
-              working-directory: ./packages/typearch
+              working-directory: ./packages/typectx
               run: |
                   VERSION=${GITHUB_REF#refs/tags/}
                   VERSION=${VERSION#v}
@@ -69,36 +69,36 @@ jobs:
 
             - name: Dry publish
               if: contains(github.event.release.tag_name, 'dry')
-              working-directory: ./packages/typearch
+              working-directory: ./packages/typectx
               run: |
                   npm publish --tag dry --dry-run
 
             - name: Publish to Canary
               if: contains(github.event.release.tag_name, 'canary')
-              working-directory: ./packages/typearch
+              working-directory: ./packages/typectx
               run: |
                   npm publish --tag canary
 
             - name: Publish to Alpha
               if: contains(github.event.release.tag_name, 'alpha')
-              working-directory: ./packages/typearch
+              working-directory: ./packages/typectx
               run: |
                   npm publish --tag alpha
 
             - name: Publish to Beta
               if: contains(github.event.release.tag_name, 'beta')
-              working-directory: ./packages/typearch
+              working-directory: ./packages/typectx
               run: |
                   npm publish --tag beta
 
             - name: Publish to RC
               if: contains(github.event.release.tag_name, 'rc')
-              working-directory: ./packages/typearch
+              working-directory: ./packages/typectx
               run: |
                   npm publish --tag rc
 
             - name: Publish to Latest
               if: contains(github.event.release.tag_name, '-') == false
-              working-directory: ./packages/typearch
+              working-directory: ./packages/typectx
               run: |
                   npm publish --tag latest

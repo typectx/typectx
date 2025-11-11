@@ -1,17 +1,17 @@
 {
-    "name": "typearch",
+    "name": "typectx",
     "type": "module",
-    "version": "0.0.0",
+    "version": "0.3.0-alpha.1",
     "description": "First fully type-inferred SOLID architecture framework for Typescript",
     "main": "dist/index.cjs",
     "module": "dist/index.js",
     "types": "dist/index.d.ts",
     "sideEffects": false,
-    "author": "Typearch",
+    "author": "typectx",
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/typearch-js/typearch.git"
+        "url": "git+https://github.com/typectx/typectx.git"
     },
     "imports": {
         "#*": "./src/*.ts"
@@ -34,8 +34,8 @@
         "typecheck": "vitest run --typecheck.only"
     },
     "devDependencies": {
-        "@config.typearch/eslint": "*",
-        "@config.typearch/typescript": "*",
+        "@config.typectx/eslint": "*",
+        "@config.typectx/typescript": "*",
         "memoize": "^10.1.0",
         "tsup": "^8.5.0",
         "turbo": "^2.5.5",

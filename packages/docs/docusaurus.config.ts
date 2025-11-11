@@ -5,10 +5,10 @@ import type * as Preset from "@docusaurus/preset-classic"
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 const config: Config = {
-    title: "Typearch",
+    title: "typectx",
     tagline:
         "First fully type-inferred SOLID architecture framework for Typescript",
-    favicon: "img/typearch-logo.png",
+    favicon: "img/typectx-logo.png",
 
     // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
     future: {
@@ -16,15 +16,15 @@ const config: Config = {
     },
 
     // Set the production url of your site here
-    url: "https://typearch-js.github.io",
+    url: "https://typectx.github.io",
     // Set the /<baseUrl>/ pathname under which your site is served
     // For GitHub pages deployment, it is often '/<projectName>/'
-    baseUrl: "/typearch/",
+    baseUrl: "/typectx/",
 
     // GitHub pages deployment config.
     // If you aren't using GitHub pages, you don't need these.
-    organizationName: "typearch-js", // Usually your GitHub org/user name.
-    projectName: "typearch", // Usually your repo name.
+    organizationName: "typectx", // Usually your GitHub org/user name.
+    projectName: "typectx", // Usually your repo name.
 
     onBrokenLinks: "throw",
 
@@ -51,7 +51,7 @@ const config: Config = {
                     // Please change this to your repo.
                     // Remove this to remove the "edit this page" links.
                     editUrl:
-                        "https://github.com/typearch-js/typearch/tree/main/packages/docs/"
+                        "https://github.com/typectx/typectx/tree/main/packages/docs/"
                 },
                 blog: false,
                 theme: {
@@ -68,12 +68,12 @@ const config: Config = {
             respectPrefersColorScheme: false
         },
         // Replace with your project's social card
-        image: "img/typearch-logo.png",
+        image: "img/typectx-logo.png",
         navbar: {
-            title: "Typearch",
+            title: "typectx",
             logo: {
-                alt: "Typearch Logo",
-                src: "img/typearch-logo.png"
+                alt: "typectx Logo",
+                src: "img/typectx-logo.png"
             },
             items: [
                 {
@@ -83,12 +83,12 @@ const config: Config = {
                     label: "Docs"
                 },
                 {
-                    href: "https://www.npmjs.com/package/typearch",
+                    href: "https://www.npmjs.com/package/typectx",
                     label: "npm",
                     position: "right"
                 },
                 {
-                    href: "https://github.com/typearch-js/typearch",
+                    href: "https://github.com/typectx/typectx",
                     label: "GitHub",
                     position: "right"
                 }
@@ -115,11 +115,11 @@ const config: Config = {
                     items: [
                         {
                             label: "GitHub Issues",
-                            href: "https://github.com/typearch-js/typearch/issues"
+                            href: "https://github.com/typectx/typectx/issues"
                         },
                         {
                             label: "GitHub Discussions",
-                            href: "https://github.com/typearch-js/typearch/discussions"
+                            href: "https://github.com/typectx/typectx/discussions"
                         }
                     ]
                 },
@@ -128,16 +128,16 @@ const config: Config = {
                     items: [
                         {
                             label: "npm Package",
-                            href: "https://www.npmjs.com/package/typearch"
+                            href: "https://www.npmjs.com/package/typectx"
                         },
                         {
                             label: "GitHub",
-                            href: "https://github.com/typearch-js/typearch"
+                            href: "https://github.com/typectx/typectx"
                         }
                     ]
                 }
             ],
-            copyright: `Copyright © ${new Date().getFullYear()} Typearch. Built with Docusaurus.`
+            copyright: `Copyright © ${new Date().getFullYear()} typectx. Built with Docusaurus.`
         },
         prism: {
             theme: prismThemes.jettwaveDark,

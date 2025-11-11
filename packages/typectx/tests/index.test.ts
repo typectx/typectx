@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import { createMarket } from "#index"
 import { index, once, sleep } from "#utils"
 
-describe("typearch", () => {
+describe("typectx", () => {
     beforeEach(() => {
         vi.clearAllMocks()
     })

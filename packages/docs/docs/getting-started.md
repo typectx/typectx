@@ -2,12 +2,12 @@
 
 ## Quick Start in 4 Steps
 
-Get up and running with Typearch in just a few minutes.
+Get up and running with typectx in just a few minutes.
 
 ### 1. Installation
 
 ```bash
-npm install typearch
+npm install typectx
 ```
 
 ### 2. Create a Market
@@ -15,7 +15,7 @@ npm install typearch
 A `market` is a namespace where your suppliers are defined. You'll usually create one per application.
 
 ```typescript
-import { createMarket } from "typearch"
+import { createMarket } from "typectx"
 
 const market = createMarket()
 ```
@@ -46,7 +46,7 @@ const $$userService = market.offer("userService").asProduct({
 At your application's entry point, `assemble` your main product, providing any required resources. The `index()` utility simplifies this process.
 
 ```typescript
-import { index } from "typearch"
+import { index } from "typectx"
 
 const session = { userId: "user-123" }
 
@@ -62,4 +62,4 @@ console.log(userService.id) // "user-123"
 
 -   Walk through a **[Basic Example](examples/simple-example)** of a complete application.
 -   Follow the more in-depth **[Basic Usage](guides/basic-usage)** guide.
--   Dive into the **[Design philosophy and semantics](guides/design-philosophy)** of Typearch.
+-   Dive into the **[Design philosophy and semantics](guides/design-philosophy)** of typectx.
