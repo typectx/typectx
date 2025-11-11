@@ -24,7 +24,7 @@ This is the story of how, while refactoring my React app from Client to Server C
 1.  rediscover DI containers,
 2.  obsolete traditional DI frameworks,
 3.  discover Contextual DI, and
-4.  finally, build my own fully type-inferred Contextual DI solution, TypeArch.
+4.  finally, build my own fully type-inferred Contextual DI solution, typectx.
 
 A tale of dumb, costly refactoring decisions that I hope produced a useful result in the end :).
 
@@ -197,21 +197,21 @@ But you can't, since the services or components in `ctx` still have the old `ctx
 
 The only way is to reinject `newCtx` into all services and components. Basically, you have to write the whole `ctx` object from scratch. There is no real shorthand way to write it, at least that I found. And I had a lot of React Contexts to refactor. I needed to find a way to automate and generalize the process of building the `ctx` object.
 
-### Part 6: The Birth of TypeArch
+### Part 6: The Birth of typectx
 
-It was at that moment, to solve this specific problem, that I decided to create TypeArch: the contextual, fully type-inferred DI container. And now, I have finally managed to release its first public beta version! With TypeArch, you can ditch React Context entirely and manage your dependencies and contexts the same way in both your front-end and your backend.
+It was at that moment, to solve this specific problem, that I decided to create typectx: the contextual, fully type-inferred DI container. And now, I have finally managed to release its first public beta version! With typectx, you can ditch React Context entirely and manage your dependencies and contexts the same way in both your front-end and your backend.
 
-If you've read this far, it probably means TypeArch can help you streamline and solidify your code architecture in a context-aware and type-inferred way. It's completely framework-agnostic, so you can add it to any of your projects seamlessly.
+If you've read this far, it probably means typectx can help you streamline and solidify your code architecture in a context-aware and type-inferred way. It's completely framework-agnostic, so you can add it to any of your projects seamlessly.
 
-It would mean the world to me if you gave it a quick try and shared your feedback, issues, and critiques! Join me on [Github](https://github.com/typearch-js/typearch), or just install it in your project:
+It would mean the world to me if you gave it a quick try and shared your feedback, issues, and critiques! Join me on [Github](https://github.com/typectx/typectx), or just install it in your project:
 
 ```bash
-npm install typearch
+npm install typectx
 ```
 
--   [Full documentation](https://typearch-js.github.io/typearch/docs/getting-started)
--   [Basic Usage guide](https://typearch-js.github.io/typearch/docs/guides/basic-usage)
+-   [Full documentation](https://typectx.github.io/typectx/docs/getting-started)
+-   [Basic Usage guide](https://typectx.github.io/typectx/docs/guides/basic-usage)
 
-Also, if you use React, I made a simple example with tips on how TypeArch can integrate with React functional components and hooks [here](https://typearch-js.github.io/typearch/examples/react-client).
+Also, if you use React, I made a simple example with tips on how typectx can integrate with React functional components and hooks [here](https://typectx.github.io/typectx/examples/react-client).
 
 Thank you so much for your attention, and may you keep building beautiful apps!
