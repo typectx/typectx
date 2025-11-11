@@ -53,9 +53,14 @@ const config: Config = {
                     editUrl:
                         "https://github.com/typectx/typectx/tree/main/packages/docs/"
                 },
-                blog: false,
                 theme: {
                     customCss: "./src/css/custom.css"
+                },
+                blog: {
+                    blogTitle: "TypeArch's Blog",
+                    blogDescription: "News, releases, and more!",
+                    blogSidebarCount: "ALL",
+                    blogSidebarTitle: "News, releases, and more!"
                 }
             } satisfies Preset.Options
         ]
