@@ -1,3 +1,16 @@
+---
+title: "Optional Dependencies - typectx"
+description: "Learn how to use optional dependencies in typectx. Handle resources that may not always be present, such as feature flags or authentication contexts, with type safety."
+keywords:
+    - optionals
+    - optional dependencies
+    - dependency injection
+    - typescript
+    - typectx
+    - feature flags
+    - authentication
+---
+
 # Optionals
 
 Optionals are resource suppliers that a product _may_ depend on, but doesn't _require_ to function. When you declare a resource supplier in the `optionals` array instead of the `suppliers` array, you're telling typectx that:

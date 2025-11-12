@@ -1,3 +1,15 @@
+---
+title: "Simple Example - typectx"
+description: "View a simple example of a todo app built with typectx, demonstrating basic concepts like markets, resources, products, and assembly for dependency injection."
+keywords:
+    - example
+    - simple example
+    - todo app
+    - typescript
+    - dependency injection
+    - typectx
+---
+
 # Simple example
 
 Dummy todo app built with typectx.

@@ -1,3 +1,19 @@
+---
+title: "API Reference - typectx"
+description: "Detailed API reference for typectx. Learn about createMarket, offer, asResource, asProduct, and other core functions for type-safe dependency injection in TypeScript."
+keywords:
+    - api
+    - reference
+    - typectx
+    - createMarket
+    - offer
+    - asResource
+    - asProduct
+    - assemble
+    - dependency injection
+    - typescript
+---
+
 # API Reference
 
 ## API Reference
@@ -121,3 +137,5 @@ The factory function is where your service logic lives. It receives two argument
 
 -   **`$` (Supplies)**: A function to access regular dependencies.
 -   **`$$` (Optionals or Assemblers)**: A function to access optional or assembler suppliers in a factory.
+
+```

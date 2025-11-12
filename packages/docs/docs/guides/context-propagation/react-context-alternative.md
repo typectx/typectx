@@ -1,3 +1,18 @@
+---
+title: "Using typectx with React - Tips and Best Practices"
+description: "Learn how to effectively use typectx with React. Find tips on replacing React Context, following the Rules of Hooks, preloading data and components, and configuring ESLint."
+keywords:
+    - react
+    - typescript
+    - dependency injection
+    - typectx
+    - react context
+    - hooks
+    - performance
+    - preload
+    - eslint
+---
+
 # Tips for using typectx with React
 
 -   **Rules of Hooks** - Don't call hooks in the factory's function body! If you call hooks, either in a component or custon hooks, be sure to call it in a function **returned** by the factory, like so:

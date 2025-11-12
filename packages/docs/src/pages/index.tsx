@@ -3,6 +3,7 @@ import clsx from "clsx"
 import Link from "@docusaurus/Link"
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext"
 import Layout from "@theme/Layout"
+import Head from "@docusaurus/Head"
 import Heading from "@theme/Heading"
 import CodeBlock from "@theme/CodeBlock"
 import SectionSeparator from "@site/src/components/SectionSeparator"
@@ -454,7 +455,16 @@ function CTASection() {
 export default function Home(): ReactNode {
     const { siteConfig } = useDocusaurusContext()
     return (
-        <Layout title={siteConfig.title} description={siteConfig.tagline}>
+        <Layout
+            title={`${siteConfig.title} - Modern, Type-Safe DI and Context for TypeScript`}
+            description={siteConfig.tagline}
+        >
+            <Head>
+                <meta
+                    name="keywords"
+                    content="typescript, dependency injection, inversion of control, context propagation, type-safe, react, nodejs, deno, bun, typectx"
+                />
+            </Head>
             <Hero />
             <SectionSeparator />
             <WhySection />
