@@ -1,5 +1,26 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 
+/* Skip to main content link for accessibility */
+.skip-to-main {
+    position: absolute;
+    top: -100px;
+    left: 0;
+    z-index: 9999;
+    padding: 1rem 1.5rem;
+    background: var(--ifm-color-primary);
+    color: #031626;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 0 0 8px 0;
+    transition: top 0.2s ease;
+}
+
+.skip-to-main:focus {
+    top: 0;
+    outline: 3px solid var(--ifm-color-primary-lightest);
+    outline-offset: 2px;
+}
+
 :root {
     color-scheme: dark;
     --ifm-font-family-base: "Inter", system-ui, -apple-system, sans-serif;
@@ -65,6 +86,12 @@ body {
 .navbar__link:hover,
 .navbar__link--active {
     color: #ffffff !important;
+}
+
+.navbar__link:focus-visible {
+    outline: 3px solid var(--ifm-color-primary-lightest);
+    outline-offset: 2px;
+    border-radius: 4px;
 }
 
 .dropdown__menu {
@@ -140,6 +167,13 @@ body {
     box-shadow: 0 20px 40px rgba(13, 102, 189, 0.45);
 }
 
+.button:focus-visible,
+.button--secondary:focus-visible,
+.button.button--primary:focus-visible {
+    outline: 3px solid var(--ifm-color-primary-lightest);
+    outline-offset: 2px;
+}
+
 .button--outline {
     border: 1px solid rgba(124, 232, 255, 0.6);
     color: #e9f3ff;
@@ -205,6 +239,25 @@ code {
 
 .footer__item a:hover {
     color: #ffffff;
+}
+
+.footer__item a:focus-visible {
+    outline: 3px solid var(--ifm-color-primary-lightest);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* Improve link focus states throughout the site */
+a:focus-visible {
+    outline: 3px solid var(--ifm-color-primary-lightest);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* Ensure code blocks are accessible */
+.theme-code-block:focus-within {
+    outline: 3px solid var(--ifm-color-primary-lightest);
+    outline-offset: 2px;
 }
 
 .pagination-nav__link {

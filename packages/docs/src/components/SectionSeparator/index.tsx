@@ -3,13 +3,14 @@ import styles from "./styles.module.css"
 
 export default function SectionSeparator(): ReactNode {
     return (
-        <div className={styles.separator}>
+        <div className={styles.separator} role="separator" aria-hidden="true">
             <div className={styles.line} />
             <div className={styles.logoContainer}>
                 <img
                     src="img/typectx-logo.png"
-                    alt="typectx Logo"
+                    alt=""
                     className={styles.logo}
+                    aria-hidden="true"
                 />
             </div>
             <div className={styles.line} />
