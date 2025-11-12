@@ -1,3 +1,15 @@
+---
+title: "Design Philosophy - typectx"
+description: "Discover the design philosophy behind typectx. Learn how its supply chain metaphor for dependency injection simplifies development compared to traditional DI containers."
+keywords:
+    - design philosophy
+    - dependency injection
+    - supply chain
+    - typescript
+    - typectx
+    - inversion of control
+---
+
 # Design Philosophy
 
 ## The Problem with Traditional DI

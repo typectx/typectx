@@ -1,3 +1,16 @@
+---
+title: "Getting Started with typectx"
+description: "Learn how to get started with typectx, a modern, type-safe dependency injection and context propagation library for TypeScript. Quick start guide and installation."
+keywords:
+    - getting started
+    - quick start
+    - installation
+    - setup
+    - typescript
+    - dependency injection
+    - typectx
+---
+
 # Getting Started
 
 ## Quick Start in 4 Steps

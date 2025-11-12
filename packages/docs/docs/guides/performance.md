@@ -1,3 +1,18 @@
+---
+title: "Performance Optimization - typectx"
+description: "Learn about performance in typectx, including its small bundle size, memoization, and eager vs. lazy loading strategies for optimal TypeScript dependency injection."
+keywords:
+    - performance
+    - optimization
+    - bundle size
+    - lazy loading
+    - eager loading
+    - memoization
+    - typescript
+    - dependency injection
+    - typectx
+---
+
 # Performance
 
 typectx is designed for optimal performance, featuring a minimal bundle size, smart memory management, and powerful preloading strategies.

@@ -1,3 +1,17 @@
+---
+title: "Troubleshooting & FAQ - typectx"
+description: "Find answers to frequently asked questions and troubleshooting tips for typectx. Solve common TypeScript errors like TS(7056), handle circular dependencies, and improve performance."
+keywords:
+    - troubleshooting
+    - faq
+    - typescript
+    - error
+    - TS7056
+    - circular dependency
+    - performance
+    - typectx
+---
+
 # Troubleshooting and FAQ
 
 ### I get the following Typescript error: "The inferred type of this node exceeds the maximum length the compiler will serialize. An explicit type annotation is needed TS(7056)"

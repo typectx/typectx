@@ -3,6 +3,7 @@ import clsx from "clsx"
 import Link from "@docusaurus/Link"
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext"
 import Layout from "@theme/Layout"
+import Head from "@docusaurus/Head"
 import Heading from "@theme/Heading"
 import CodeBlock from "@theme/CodeBlock"
 import SectionSeparator from "@site/src/components/SectionSeparator"
@@ -141,6 +142,7 @@ function Hero() {
                                     height="16"
                                     viewBox="0 0 16 16"
                                     fill="currentColor"
+                                    aria-hidden="true"
                                 >
                                     <path d="M8 0L6.59 1.41L12.17 7H0V9H12.17L6.59 14.59L8 16L16 8L8 0Z" />
                                 </svg>
@@ -155,27 +157,47 @@ function Hero() {
                                 View Example
                             </Link>
                         </div>
-                        <div className={styles.heroStats}>
-                            <div className={styles.stat}>
-                                <span className={styles.statNumber}>~5KB</span>
+                        <div className={styles.heroStats} role="list">
+                            <div className={styles.stat} role="listitem">
+                                <span
+                                    className={styles.statNumber}
+                                    aria-label="Bundle size minified"
+                                >
+                                    ~5KB
+                                </span>
                                 <span className={styles.statLabel}>
                                     Minified
                                 </span>
                             </div>
-                            <div className={styles.stat}>
-                                <span className={styles.statNumber}>~2KB</span>
+                            <div className={styles.stat} role="listitem">
+                                <span
+                                    className={styles.statNumber}
+                                    aria-label="Bundle size minzipped"
+                                >
+                                    ~2KB
+                                </span>
                                 <span className={styles.statLabel}>
                                     Minzipped
                                 </span>
                             </div>
-                            <div className={styles.stat}>
-                                <span className={styles.statNumber}>0</span>
+                            <div className={styles.stat} role="listitem">
+                                <span
+                                    className={styles.statNumber}
+                                    aria-label="Zero dependencies"
+                                >
+                                    0
+                                </span>
                                 <span className={styles.statLabel}>
                                     Dependencies
                                 </span>
                             </div>
-                            <div className={styles.stat}>
-                                <span className={styles.statNumber}>100%</span>
+                            <div className={styles.stat} role="listitem">
+                                <span
+                                    className={styles.statNumber}
+                                    aria-label="One hundred percent type safe"
+                                >
+                                    100%
+                                </span>
                                 <span className={styles.statLabel}>
                                     Type safe
                                 </span>
@@ -185,7 +207,10 @@ function Hero() {
                     <div className={styles.heroCode}>
                         <div className={styles.codeWindow}>
                             <div className={styles.codeHeader}>
-                                <div className={styles.codeDots}>
+                                <div
+                                    className={styles.codeDots}
+                                    aria-hidden="true"
+                                >
                                     <span></span>
                                     <span></span>
                                     <span></span>
@@ -219,85 +244,103 @@ function WhySection() {
                         performance, safety, and simplicity.
                     </p>
                 </div>
-                <div className={styles.whyGrid}>
-                    <div className={styles.whyCard}>
-                        <div className={styles.whyIcon}>💡</div>
+                <div className={styles.whyGrid} role="list">
+                    <article className={styles.whyCard} role="listitem">
+                        <div className={styles.whyIcon} aria-hidden="true">
+                            💡
+                        </div>
                         <h3>Fully Type-Inferred</h3>
                         <p>
                             Zero type hints, definitions or boilerplate.
                             End-to-end type safety with compile-time dependency
                             validation.
                         </p>
-                    </div>
-                    <div className={styles.whyCard}>
-                        <div className={styles.whyIcon}>✨</div>
+                    </article>
+                    <article className={styles.whyCard} role="listitem">
+                        <div className={styles.whyIcon} aria-hidden="true">
+                            ✨
+                        </div>
                         <h3>No Magic</h3>
                         <p>
                             Just functions and closures. No reflect-metadata,
                             decorators, or compiler magic. What you see is what
                             you get.
                         </p>
-                    </div>
-                    <div className={styles.whyCard}>
-                        <div className={styles.whyIcon}>🚀</div>
+                    </article>
+                    <article className={styles.whyCard} role="listitem">
+                        <div className={styles.whyIcon} aria-hidden="true">
+                            🚀
+                        </div>
                         <h3>Performance Focused</h3>
                         <p>
                             Smart memoization, lazy loading, and a tiny bundle
                             size (~5KB minified, ~2KB minzipped). Designed for
                             minimal runtime overhead.
                         </p>
-                    </div>
-                    <div className={styles.whyCard}>
-                        <div className={styles.whyIcon}>🧪</div>
+                    </article>
+                    <article className={styles.whyCard} role="listitem">
+                        <div className={styles.whyIcon} aria-hidden="true">
+                            🧪
+                        </div>
                         <h3>Testing Friendly</h3>
                         <p>
                             Easy mocking and dependency swapping. Swap
                             implementations effortlessly to achieve perfect test
                             isolation.
                         </p>
-                    </div>
-                    <div className={styles.whyCard}>
-                        <div className={styles.whyIcon}>🏗️</div>
+                    </article>
+                    <article className={styles.whyCard} role="listitem">
+                        <div className={styles.whyIcon} aria-hidden="true">
+                            🏗️
+                        </div>
                         <h3>Scalable Architecture</h3>
                         <p>
                             Promotes SOLID, clean, and code-splittable design
                             patterns that grow with your application.
                         </p>
-                    </div>
-                    <div className={styles.whyCard}>
-                        <div className={styles.whyIcon}>🌍</div>
+                    </article>
+                    <article className={styles.whyCard} role="listitem">
+                        <div className={styles.whyIcon} aria-hidden="true">
+                            🌍
+                        </div>
                         <h3>Framework Agnostic</h3>
                         <p>
                             Works anywhere TypeScript works. Use it in React,
                             Node.js, Deno, or Bun—from frontend to backend.
                         </p>
-                    </div>
-                    <div className={styles.whyCard}>
-                        <div className={styles.whyIcon}>🔄</div>
+                    </article>
+                    <article className={styles.whyCard} role="listitem">
+                        <div className={styles.whyIcon} aria-hidden="true">
+                            🔄
+                        </div>
                         <h3>Stateless</h3>
                         <p>
                             Dependencies are resolved via closures, not global
                             state. This ensures clean, predictable, and
                             easy-to-reason-about behavior in any environment.
                         </p>
-                    </div>
-                    <div className={styles.whyCard}>
-                        <div className={styles.whyIcon}>📖</div>
+                    </article>
+                    <article className={styles.whyCard} role="listitem">
+                        <div className={styles.whyIcon} aria-hidden="true">
+                            📖
+                        </div>
                         <h3>Intuitive Terminology</h3>
                         <p>
                             A supply chain metaphor (Market, Product, Resource)
                             that makes dependency injection feel natural and
                             easier to understand.
                         </p>
-                    </div>
-                    <div className={styles.whyCard}>
-                        <div className={styles.whyIcon}>🆕</div>
+                    </article>
+                    <article className={styles.whyCard} role="listitem">
+                        <div className={styles.whyIcon} aria-hidden="true">
+                            🆕
+                        </div>
                         <h3>A New DI Paradigm</h3>
                         <p>
                             Don't let your past experiences with DI prevent you
                             from trying this solution!
                         </p>
-                    </div>
+                    </article>
                 </div>
             </div>
         </section>
@@ -331,7 +374,10 @@ function FeatureSection({
                     </div>
                     <div className={styles.featureCode}>
                         <div className={styles.codeWindow}>
-                            <div className={styles.codeHeader}>
+                            <div
+                                className={styles.codeHeader}
+                                aria-hidden="true"
+                            >
                                 <div className={styles.codeDots}>
                                     <span></span>
                                     <span></span>
@@ -358,48 +404,66 @@ function UseCasesSection() {
                         your architecture.
                     </p>
                 </div>
-                <div className={styles.useCasesGrid}>
-                    <div className={styles.useCaseCard}>
-                        <div className={styles.useCaseIcon}>⚛️</div>
+                <div className={styles.useCasesGrid} role="list">
+                    <article className={styles.useCaseCard} role="listitem">
+                        <div className={styles.useCaseIcon} aria-hidden="true">
+                            ⚛️
+                        </div>
                         <h3>React Applications</h3>
                         <p>
                             Eliminate prop drilling. Share context across
                             components without global state or complex
                             providers.
                         </p>
-                        <div className={styles.useCaseTags}>
-                            <span>SSR</span>
-                            <span>Client</span>
-                            <span>Next.js</span>
+                        <div
+                            className={styles.useCaseTags}
+                            role="list"
+                            aria-label="Supported technologies"
+                        >
+                            <span role="listitem">SSR</span>
+                            <span role="listitem">Client</span>
+                            <span role="listitem">Next.js</span>
                         </div>
-                    </div>
-                    <div className={styles.useCaseCard}>
-                        <div className={styles.useCaseIcon}>🖧</div>
+                    </article>
+                    <article className={styles.useCaseCard} role="listitem">
+                        <div className={styles.useCaseIcon} aria-hidden="true">
+                            🖧
+                        </div>
                         <h3>APIs & Microservices</h3>
                         <p>
                             Request-scoped context propagation. Clean service
                             layers. Perfect for Express, Fastify, or any
                             framework.
                         </p>
-                        <div className={styles.useCaseTags}>
-                            <span>Express</span>
-                            <span>Fastify</span>
-                            <span>GraphQL</span>
+                        <div
+                            className={styles.useCaseTags}
+                            role="list"
+                            aria-label="Supported frameworks"
+                        >
+                            <span role="listitem">Express</span>
+                            <span role="listitem">Fastify</span>
+                            <span role="listitem">GraphQL</span>
                         </div>
-                    </div>
-                    <div className={styles.useCaseCard}>
-                        <div className={styles.useCaseIcon}>🧪</div>
+                    </article>
+                    <article className={styles.useCaseCard} role="listitem">
+                        <div className={styles.useCaseIcon} aria-hidden="true">
+                            🧪
+                        </div>
                         <h3>Testing & A/B Testing</h3>
                         <p>
                             Swap implementations on the fly. Test different
                             strategies. Mock external services with ease.
                         </p>
-                        <div className={styles.useCaseTags}>
-                            <span>Jest</span>
-                            <span>Vitest</span>
-                            <span>Playwright</span>
+                        <div
+                            className={styles.useCaseTags}
+                            role="list"
+                            aria-label="Supported testing tools"
+                        >
+                            <span role="listitem">Jest</span>
+                            <span role="listitem">Vitest</span>
+                            <span role="listitem">Playwright</span>
                         </div>
-                    </div>
+                    </article>
                 </div>
             </div>
         </section>
@@ -429,6 +493,7 @@ function CTASection() {
                                 height="16"
                                 viewBox="0 0 16 16"
                                 fill="currentColor"
+                                aria-hidden="true"
                             >
                                 <path d="M8 0L6.59 1.41L12.17 7H0V9H12.17L6.59 14.59L8 16L16 8L8 0Z" />
                             </svg>
@@ -442,7 +507,8 @@ function CTASection() {
                     </div>
                     <div className={styles.ctaNote}>
                         <p>
-                            🚀 Install with <code>npm install typectx</code>
+                            <span aria-hidden="true">🚀</span> Install with{" "}
+                            <code>npm install typectx</code>
                         </p>
                     </div>
                 </div>
@@ -454,34 +520,49 @@ function CTASection() {
 export default function Home(): ReactNode {
     const { siteConfig } = useDocusaurusContext()
     return (
-        <Layout title={siteConfig.title} description={siteConfig.tagline}>
-            <Hero />
-            <SectionSeparator />
-            <WhySection />
-            <SectionSeparator />
-            <FeatureSection
-                title="Fully Type-Inferred from End to End"
-                description="Catch dependency errors before they reach production. typectx's architecture provides end-to-end type inference, eliminating entire classes of bugs and ensuring your dependency graph is always valid."
-                code={typeExample}
-            />
-            <SectionSeparator />
-            <FeatureSection
-                title="Unmatched Performance"
-                description="Smart memoization: dependencies are created in parallel once per context eagerly, and cached. Or choose lazy loading to defer the creation of expensive services until they are first accessed."
-                code={performanceExample}
-                imageAlign="left"
-                variant="alt"
-            />
-            <SectionSeparator />
-            <FeatureSection
-                title="Effortless Testing"
-                description="Isolate components completely. With .mock(), you can create alternative implementations for testing that remove entire dependency trees, leading to cleaner and more robust tests."
-                code={testingExample}
-            />
-            <SectionSeparator />
-            <UseCasesSection />
-            <SectionSeparator />
-            <CTASection />
+        <Layout
+            title={`${siteConfig.title} - Modern, Type-Safe DI and Context for TypeScript`}
+            description={siteConfig.tagline}
+        >
+            <Head>
+                <meta
+                    name="keywords"
+                    content="typescript, dependency injection, inversion of control, context propagation, type-safe, react, nodejs, deno, bun, typectx"
+                />
+                <link rel="preconnect" href="https://fonts.googleapis.com" />
+            </Head>
+            <a href="#main-content" className="skip-to-main">
+                Skip to main content
+            </a>
+            <main id="main-content">
+                <Hero />
+                <SectionSeparator />
+                <WhySection />
+                <SectionSeparator />
+                <FeatureSection
+                    title="Fully Type-Inferred from End to End"
+                    description="Catch dependency errors before they reach production. typectx's architecture provides end-to-end type inference, eliminating entire classes of bugs and ensuring your dependency graph is always valid."
+                    code={typeExample}
+                />
+                <SectionSeparator />
+                <FeatureSection
+                    title="Unmatched Performance"
+                    description="Smart memoization: dependencies are created in parallel once per context eagerly, and cached. Or choose lazy loading to defer the creation of expensive services until they are first accessed."
+                    code={performanceExample}
+                    imageAlign="left"
+                    variant="alt"
+                />
+                <SectionSeparator />
+                <FeatureSection
+                    title="Effortless Testing"
+                    description="Isolate components completely. With .mock(), you can create alternative implementations for testing that remove entire dependency trees, leading to cleaner and more robust tests."
+                    code={testingExample}
+                />
+                <SectionSeparator />
+                <UseCasesSection />
+                <SectionSeparator />
+                <CTASection />
+            </main>
         </Layout>
     )
 }

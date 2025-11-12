@@ -1,3 +1,18 @@
+---
+title: "Testing and Mocking - typectx"
+description: "Learn how to test and mock dependencies with typectx. Use `.pack()` for simple mocks and `.mock()` with `.hire()` for complex testing scenarios in TypeScript."
+keywords:
+    - testing
+    - mocking
+    - typescript
+    - dependency injection
+    - typectx
+    - unit testing
+    - pack
+    - mock
+    - hire
+---
+
 # Testing and Mocking
 
 typectx makes testing easy by providing two powerful mocking strategies, allowing you to isolate components and control dependencies during tests.

@@ -99,12 +99,14 @@ const config: Config = {
                 {
                     href: "https://www.npmjs.com/package/typectx",
                     label: "npm",
-                    position: "right"
+                    position: "right",
+                    "aria-label": "Visit typectx on npm (opens in new tab)"
                 },
                 {
                     href: "https://github.com/typectx/typectx",
                     label: "GitHub",
-                    position: "right"
+                    position: "right",
+                    "aria-label": "Visit typectx on GitHub (opens in new tab)"
                 }
             ]
         },
