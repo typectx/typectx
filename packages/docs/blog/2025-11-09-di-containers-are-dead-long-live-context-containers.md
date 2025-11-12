@@ -6,6 +6,7 @@ authors:
       title: "@someone635"
       url: https://github.com/someone635
 tags: []
+image: "/img/equation.png"
 hide_table_of_contents: false
 ---
 
