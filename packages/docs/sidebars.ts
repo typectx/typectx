@@ -33,16 +33,20 @@ const sidebars: SidebarsConfig = {
         {
             Guides: [
                 "guides/basic-usage",
-                "guides/optionals",
-                "guides/assemblers",
                 "guides/testing",
-                "guides/performance",
-                "guides/design-philosophy",
                 {
-                    type: "doc",
-                    id: "guides/react-context-alternative",
-                    label: "React Context alternative"
-                }
+                    "Context propagation": [
+                        "guides/context-propagation/optionals",
+                        "guides/context-propagation/assemblers",
+                        {
+                            type: "doc",
+                            id: "guides/context-propagation/react-context-alternative",
+                            label: "React Context alternative"
+                        }
+                    ]
+                },
+                "guides/performance",
+                "guides/design-philosophy"
             ]
         },
         "api-reference",

@@ -1,6 +1,6 @@
 ---
-title: "DI is dead, long live Contextual, Type-Inferred DI!"
-slug: di-is-dead-long-live-contextual-type-inferred-di
+title: "DI containers are dead, long live context containers!"
+slug: di-containers-are-dead-long-live-context-containers
 authors:
     - name: Félix Dubé
       title: "@someone635"
@@ -8,6 +8,8 @@ authors:
 tags: []
 hide_table_of_contents: false
 ---
+
+![Equation banner](/img/equation.png)
 
 :::info
 This story is for you if:
@@ -23,8 +25,8 @@ This is the story of how, while refactoring my React app from Client to Server C
 
 1.  rediscover DI containers,
 2.  obsolete traditional DI frameworks,
-3.  discover Contextual DI, and
-4.  finally, build my own fully type-inferred Contextual DI solution, typectx.
+3.  discover Context containers, and
+4.  finally, build my own fully type-inferred context container framework, typectx.
 
 A tale of dumb, costly refactoring decisions that I hope produced a useful result in the end :).
 
@@ -92,7 +94,9 @@ But TypeScript didn't like this; it threw an error:
 
 `'ctx' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.(7022)`
 
-After much head-scratching, I realized the problem was fundamental. To know the type of `ctx`, TypeScript needed to know the types of `fnA` and `fnB`, but to know the functions' full types, it needed to know the type of `ctx`. It was a classic case of circular type dependency. It seemed my whole architecture couldn't be realized after all... Why didn't I think about that?
+I initially thought I had a simple mistake hidden in my code, a simple circular dependency I could easily fix, or maybe even that I had just reached the limits of Typescript's type inference. But after much head-scratching, I realized the problem was architectural, and that there was no easy way around it.
+
+To know the type of `ctx`, TypeScript needed to know the types of `fnA` and `fnB`, but to know the functions' full types, it needed to know the type of `ctx`. It was a classic case of circular type dependency. It seemed my whole architecture couldn't be realized after all... Why didn't I think about that?
 
 My entire refactoring effort to preserve full type-inference had led me straight into a wall. But quitting now would force me to refactor everything back, and to write all the explicit type definitions I had avoided all along. I had to find a solution.
 
@@ -159,7 +163,7 @@ Looking at the main TypeScript DI frameworks on the market—like awilix, invers
 
 But my `ctx` object is auto-wired out of the box. I can just add data and services to it, and they are automatically injected into all the other services of the object, no matter the order in which they are defined.
 
-### Part 5: Mimicking React Context Providers
+### Part 5: From DI Containers to Context Containers
 
 Initially, I didn't plan to make a package out of this. I just auto-wired my `ctx` object at the root of my application. It was a bit tedious but nothing too overwhelming. I thought DI container frameworks were obsolete now that most modern programming languages have lambda functions, which enable the `ctx` pattern above.
 
@@ -199,9 +203,11 @@ The only way is to reinject `newCtx` into all services and components. Basically
 
 ### Part 6: The Birth of typectx
 
-It was at that moment, to solve this specific problem, that I decided to create typectx: the contextual, fully type-inferred DI container. And now, I have finally managed to release its first public beta version! With typectx, you can ditch React Context entirely and manage your dependencies and contexts the same way in both your front-end and your backend.
+It was at that moment, to solve this specific problem, that I decided to create typectx: the fully type-inferred Context and DI container framework. The goal? Like any DI framework, typectx traverses your dependency graph to collect the values and the types of all required dependencies of your app and automates the process of "assembling" (wiring) the ctx object (container). But moreover, it defines methods to quickly and immutably "reassemble" the container, to help you easily scaffold your app as a tree of flexible and decoupled sub-contexts, the same way you'd use React Context to scaffold your UI as a tree of sub-components and sub-contexts.
 
-If you've read this far, it probably means typectx can help you streamline and solidify your code architecture in a context-aware and type-inferred way. It's completely framework-agnostic, so you can add it to any of your projects seamlessly.
+And today, I am proud to release typectx's first public beta version!
+
+If you've read this far, it probably means typectx can help you streamline and solidify your code architecture in a context-aware and type-inferred way. It's completely framework-agnostic, so you can try it with any of your Typescript projects seamlessly.
 
 It would mean the world to me if you gave it a quick try and shared your feedback, issues, and critiques! Join me on [Github](https://github.com/typectx/typectx), or just install it in your project:
 

@@ -1,9 +1,11 @@
 # Assemblers
 
-:::info
+:::tip
+Assemblers are the flagship feature that transform typectx DI containers into Context Containers. You can picture assemblers as a streamlined way to create nested DI containers, dividing monolithic apps into a tree of different sub-contexts.
+:::
 
+:::note
 Using assemblers requires using optionals most of the time, so please read [optionals docs](optionals) before this one.
-
 :::
 
 Not all products in your supply chain can be assembled at the entry point of the application. Sometimes, a product depends on a resource that is not yet known at the entry point, but only computed later on in a product's factory. In these situations, you need assemblers.

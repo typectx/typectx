@@ -6,8 +6,7 @@ import type * as Preset from "@docusaurus/preset-classic"
 
 const config: Config = {
     title: "typectx",
-    tagline:
-        "First fully type-inferred SOLID architecture framework for Typescript",
+    tagline: "Fully type-inferred Context and DI container for Typescript",
     favicon: "img/typectx-logo.png",
 
     // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future

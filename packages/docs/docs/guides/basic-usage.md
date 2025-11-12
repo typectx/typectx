@@ -1,10 +1,10 @@
 # Basic Usage
 
-This guide covers the fundamental concepts of typectx in detail, providing you with everything you need to build applications with the dependency injection supply chain pattern.
+This guide covers the fundamental concepts of typectx in detail, providing you with everything you need to build applications with context containers.
 
 ## Understanding the Supply Chain Metaphor
 
-typectx uses a supply chain metaphor to make dependency injection intuitive. Instead of abstract containers and providers, you work with:
+typectx uses a supply chain metaphor to make context injection intuitive. Instead of abstract containers and providers, you work with:
 
 -   **Markets** - Namespaces where suppliers are defined
 -   **Suppliers** - Entities that provide either resources or products
@@ -12,7 +12,7 @@ typectx uses a supply chain metaphor to make dependency injection intuitive. Ins
 -   **Products** - Complex services built from other suppliers
 -   **Assembly** - The process of building products with their dependencies
 
-Think of it like a real supply chain: raw materials (resources) are transformed by factories (products) into increasingly complex goods, all orchestrated in a marketplace.
+Think of it like a real supply chain: raw materials (resources) are transformed by factories (products) into increasingly complex products, all orchestrated in a marketplace.
 
 ## Step 1: Creating a Market
 
@@ -596,7 +596,7 @@ Now that you understand the basics, explore these advanced features:
 -   **[Performance Optimization](performance)** - Advanced lazy loading and initialization strategies
 -   **[Design Philosophy](design-philosophy)** - Understanding the principles behind typectx
 
-For more advanced patterns:
+For more advanced context propagation patterns:
 
--   **[Optionals](optionals)** - Handle dependencies that may or may not be present
--   **[Assemblers](assemblers)** - For Just-in-time product assembly.
+-   **[Optionals](context-propagation/optionals)** - Handle dependencies that may or may not be present
+-   **[Assemblers](context-propagation/assemblers)** - For Just-in-time product assembly.

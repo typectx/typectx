@@ -1,6 +1,6 @@
 # typectx
 
-First fully type-inferred, type-safe and hyper-minimalistic SOLID architecture framework for Typescript! Dependency injection (DI) without reflect-metadata, decorators, annotations or compiler magic, just simple functions!
+Fully type-inferred Context and DI container for Typescript! Dependency injection (DI) and context propagation without reflect-metadata, decorators, annotations or compiler magic, just simple functions!
 
 ## Why typectx?
 
@@ -294,7 +294,7 @@ Sometimes a product can work with or without certain dependencies. For these cas
 
 Not all products in your supply chain can be assembled at the entry point of the application. Sometimes, a product depends on a resource that is not yet known at the entry point, but only computed later on in a product's factory. In these situations, you need assemblers.
 
-[Learn more about assemblers →](https://typectx.github.io/typectx/docs/guides/context-switching)
+[Learn more about assemblers →](https://typectx.github.io/typectx/docs/guides/assemblers)
 
 ## Testing and Packing
 
@@ -306,7 +306,7 @@ You usually use `pack()` to provide resources to `assemble()`, but you can also 
 const $$profile = market.offer("profile").asProduct({
     suppliers: [$$user],
     factory: () => {
-        return <h1>Profile of {$($$user)unpack().name}</h1>
+        return <h1>Profile of {$($$user).unpack().name}</h1>
     }
 })
 
@@ -323,7 +323,7 @@ const $profile = $$profile.assemble(
         //$$user's factory will not be called, but...
         $$user.pack({ name: "John Doe" })
          //assemble still requires a valid value for db and session when using pack(),
-         // since $$db and $session are in the supply chain...
+         // since $$db and $$session are in the supply chain...
         $$db.pack(undefined),
         // if you can't pass undefined, or some mock for them,
         // prefer using `.mock()` and `.hire()` instead.
@@ -353,13 +353,13 @@ const $$user = market.offer("user").asProduct({
     }
 })
 
-const userMock = $$user.mock({
+const $$userMock = $$user.mock({
     suppliers: [],
     factory: () => "John Doe"
 })
 
-//You no longer need to pass some value for db and session, since userMock removes them from the supply chain.
-const profile = $$profile.hire(userMock).assemble()
+//You no longer need to pass some value for $$db and $$session, since $$userMock removes them from the supply chain.
+const profile = $$profile.hire($$userMock).assemble()
 
 profile === <h1>Profile of John Doe</h1>
 ```
@@ -374,26 +374,26 @@ DI was complex to achieve in pure OOP world because of the absence of first-clas
 
 The problem DI was solving in OOP still exists in a more functional world. In OOP, DI helped inject data and services freely within deeply nested class hierarchies and architectures. With only functions though, DI achieves a similar purpose: inject data and services freely in deeply nested function calls. Deeply nested function calls naturally emerge when trying to decouple and implement SOLID principles in medium to highly complex applications. Without DI, you cannot achieve maximal decoupling. Even if in principle you can reuse a function elsewhere, the function is still bound in some way to the particular call stack in which it finds itself, simply by the fact that it can only be called from a parent function that has access to all the data and dependencies it needs.
 
-typectx's "Dependency Injection Supply Chain" (DISC) model can do everything containers do, but in a more elegant, simpler, and easier-to-reason-about manner.
+typectx's Context containers can do everything DI containers do, and more! It also achieves it in a more elegant, simpler, and easier-to-reason-about manner.
 
 ## Under the hood
 
 Injections happens statelessly via a memoized recursive self-referential lazy object. Here is a simplified example:
 
 ```ts
-const $obj = {
+const $ctx = {
     resourceA,
     resourceB,
 
     // Products are wrapped in a function to be lazily evaluated and memoized.
-    // The `$obj` object is passed to assemble, creating a recursive structure.
-    productA: once(() => productA.assemble($obj)),
-    productB: once(() => productA.assemble($obj))
+    // The `$ctx` object is passed to assemble, creating a recursive structure.
+    productA: once(() => productA.assemble($ctx)),
+    productB: once(() => productA.assemble($ctx))
     //...
 }
 ```
 
-The `assemble()` call builds the above $obj object, each product now ready to be injected and built right away if eager, or on-demand if lazy. The `$($$supplier)` function you use in your factories simply uses the supplier's name to find the product or resource you want in the above object.
+The `assemble()` call builds the above $ctx object, each product now ready to be injected and built right away if eager, or on-demand if lazy. The `$($$supplier)` function you use in your factories simply uses the supplier's name to find the product or resource you want in the above object.
 
 This functional approach avoids the complexity of traditional DI containers while providing the same power in a more elegant and understandable way.
 

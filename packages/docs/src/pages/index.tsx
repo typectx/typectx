@@ -118,13 +118,13 @@ function Hero() {
                             {siteConfig.title}
                         </Heading>
                         <p className={styles.heroSubtitle}>
-                            The <span className={styles.highlight}>first</span>{" "}
-                            fully type-inferred, type-safe and
-                            hyper-minimalistic SOLID architecture framework for
-                            Typescript!
+                            Fully type-inferred Context and DI container for
+                            Typescript.
                             <br />
-                            Dependency injection (DI) without reflect-metadata,
-                            decorators, annotations or compiler magic, just{" "}
+                            <br />
+                            Dependency injection (DI) and context propagation
+                            without reflect-metadata, decorators, annotations or
+                            compiler magic, just{" "}
                             <span className={styles.highlight}>
                                 simple functions
                             </span>

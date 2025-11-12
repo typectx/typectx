@@ -108,4 +108,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Built with ❤️ using [typectx](https://github.com/typectx/typectx) - First fully type-inferred DI for TypeScript**
+**Built with ❤️ using [typectx](https://github.com/typectx/typectx) - Fully type-inferred Context and DI container for Typescript**
