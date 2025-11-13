@@ -8,8 +8,8 @@
             "name": "Run tests",
             "type": "node-terminal",
             "request": "launch",
-            "command": "pnpm run test:run --test-timeout=0 -t \"should offer a product with suppliers\"",
-            "cwd": "${workspaceFolder}/packages/supplier",
+            "command": "pnpm run test:run",
+            "cwd": "${workspaceFolder}/packages/typectx",
             "showAsyncStacks": true,
             "sourceMaps": true,
             "smartStep": true
