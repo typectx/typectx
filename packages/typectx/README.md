@@ -349,7 +349,7 @@ const $$profile = market.offer("profile").asProduct({
 const $$user = market.offer("user").asProduct({
     suppliers: [$$db, $$session],
     factory: () => {
-        return $($$db).unpack()findUserById($($$session).userId)
+        return $($$db).unpack().findUserById($($$session).userId)
     }
 })
 
@@ -359,7 +359,7 @@ const $$userMock = $$user.mock({
 })
 
 //You no longer need to pass some value for $$db and $$session, since $$userMock removes them from the supply chain.
-const profile = $$profile.hire($$userMock).assemble()
+const profile = $$profile.hire([$$userMock]).assemble()
 
 profile === <h1>Profile of John Doe</h1>
 ```
