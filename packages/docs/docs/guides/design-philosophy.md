@@ -1,5 +1,5 @@
 ---
-title: "Design Philosophy - typectx"
+title: "Design Philosophy"
 description: "Discover the design philosophy behind typectx. Learn how its supply chain metaphor for dependency injection simplifies development compared to traditional DI containers."
 keywords:
     - design philosophy

@@ -1,5 +1,5 @@
 ---
-title: "Basic Usage Guide - typectx"
+title: "Basic Usage Guide"
 description: "Learn the basic usage of typectx, a type-safe dependency injection library for TypeScript. Understand markets, resources, products, and the assembly process."
 keywords:
     - basic usage

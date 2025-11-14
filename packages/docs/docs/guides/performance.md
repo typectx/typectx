@@ -1,5 +1,5 @@
 ---
-title: "Performance Optimization - typectx"
+title: "Performance Optimization"
 description: "Learn about performance in typectx, including its small bundle size, memoization, and eager vs. lazy loading strategies for optimal TypeScript dependency injection."
 keywords:
     - performance

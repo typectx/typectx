@@ -1,5 +1,5 @@
 ---
-title: "Troubleshooting & FAQ - typectx"
+title: "Troubleshooting & FAQ"
 description: "Find answers to frequently asked questions and troubleshooting tips for typectx. Solve common TypeScript errors like TS(7056), handle circular dependencies, and improve performance."
 keywords:
     - troubleshooting

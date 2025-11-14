@@ -1,5 +1,5 @@
 ---
-title: "Simple Example - typectx"
+title: "Simple Example"
 description: "View a simple example of a todo app built with typectx, demonstrating basic concepts like markets, resources, products, and assembly for dependency injection."
 keywords:
     - example

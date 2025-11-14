@@ -1,5 +1,5 @@
 ---
-title: "Optional Dependencies - typectx"
+title: "Optional Dependencies"
 description: "Learn how to use optional dependencies in typectx. Handle resources that may not always be present, such as feature flags or authentication contexts, with type safety."
 keywords:
     - optionals

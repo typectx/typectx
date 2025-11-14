@@ -33,7 +33,6 @@ const sidebars: SidebarsConfig = {
         {
             Guides: [
                 "guides/basic-usage",
-                "guides/testing",
                 {
                     "Context propagation": [
                         "guides/context-propagation/optionals",
@@ -45,6 +44,7 @@ const sidebars: SidebarsConfig = {
                         }
                     ]
                 },
+                "guides/testing",
                 "guides/performance",
                 "guides/design-philosophy"
             ]

@@ -1,5 +1,5 @@
 ---
-title: "Assemblers for Context Propagation - typectx"
+title: "Assemblers for Context Propagation"
 description: "Learn about Assemblers in typectx, a powerful feature for context propagation and creating nested dependency injection containers in TypeScript applications."
 keywords:
     - assemblers
@@ -177,7 +177,7 @@ const $$App = market.offer("app").asProduct({
         const role = session.user.role
         if (role === "admin") {
             const $Panel = $$($$adminPanel)
-                .hire($$adminDashboard, $$adminProfile)
+                .hire([$$adminDashboard, $$adminProfile])
                 .assemble({
                     ...$,
                     ...index(
