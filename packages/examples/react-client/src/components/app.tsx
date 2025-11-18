@@ -24,7 +24,7 @@ export const $$App = market.offer("App").asProduct({
             }
 
             const $FeedProduct = $$($$Feed)
-                .hire([$$SelectSession])
+                .hire($$SelectSession)
                 .assemble(
                     index(
                         ctx.$$session.pack([

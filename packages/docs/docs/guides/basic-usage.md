@@ -589,7 +589,7 @@ Notice how:
 While not required, the typectx community follows these conventions:
 
 -   `$$supplier` - Supplier definitions (double dollar sign)
--   `$$` - 2nd argument received by a factory, which provided in-factory access to suppliers (optionals or assemblers)
+-   `$$` - 2nd argument received by a factory, which provided in-factory access to contextualized suppliers
 -   `$instance` - Assembled products/resources (single dollar sign)
 -   `$` - 1st argument received by a factory, which provided in-factory access to supplies from suppliers or optionals.
 -   `value` - Unpacked values (no prefix)

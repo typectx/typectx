@@ -52,22 +52,15 @@ export type ResourceSupplier<NAME extends string = string, CONSTRAINT = any> = {
 export type Product<
     VALUE = any,
     SUPPLIER extends BaseProductSupplier = BaseProductSupplier,
-    SUPPLIES = unknown
+    SUPPLIES = (supplier: any) => unknown
 > = {
     /** Unpacks and returns the current value of this product */
     unpack: () => VALUE
     $: SUPPLIES
-    /** Reassembles this product with new dependency overrides */
-    reassemble: <
-        HIRED_SUPPLIERS extends ProductSupplier[] = [],
-        HIRED_ASSEMBLERS extends ProductSupplier[] = []
-    >(
-        overrides: SupplyMap,
-        hiredSuppliers?: [...HIRED_SUPPLIERS],
-        hiredAssemblers?: [...HIRED_ASSEMBLERS]
-    ) => Product<VALUE, SUPPLIER, $<[SUPPLIER, ...HIRED_SUPPLIERS], []>>
-    packed: boolean
     supplier: SUPPLIER
+    _: {
+        packed: boolean
+    }
 }
 
 export type BaseProductSupplier<
@@ -104,8 +97,7 @@ export type ProductSupplier<
     SUPPLIERS extends MainSupplier[] = any[],
     OPTIONALS extends ResourceSupplier[] = ResourceSupplier[],
     ASSEMBLERS extends MainProductSupplier[] = any[],
-    HIRED_SUPPLIERS extends ProductSupplier[] = any[],
-    HIRED_ASSEMBLERS extends ProductSupplier[] = any[],
+    HIRED extends ProductSupplier[] = any[],
     TEAM extends Supplier[] = any[]
 > = BaseProductSupplier<NAME, CONSTRAINT> & {
     /** Array of suppliers this product depends on */
@@ -114,28 +106,25 @@ export type ProductSupplier<
     optionals: OPTIONALS
     /** Array of assemblers (lazy unassembled suppliers) */
     assemblers: ASSEMBLERS
-    hiredSuppliers: HIRED_SUPPLIERS
-    hiredAssemblers: HIRED_ASSEMBLERS
-
+    hired: HIRED
     team: TEAM
     /** Factory function that creates the product value from its dependencies */
     factory: (
-        $: $<[...SUPPLIERS, ...HIRED_SUPPLIERS], OPTIONALS>,
-        $$: $$<[...ASSEMBLERS, ...HIRED_ASSEMBLERS], OPTIONALS>
+        $: $<MergeSuppliers<SUPPLIERS, HIRED>, OPTIONALS>,
+        $$: $$<MergeSuppliers<SUPPLIERS, HIRED>, OPTIONALS, ASSEMBLERS>
     ) => CONSTRAINT
     /** Assembles the product by resolving dependencies */
     assemble: (
-        supplied: ToSupply<
-            SUPPLIERS,
-            OPTIONALS,
-            HIRED_SUPPLIERS,
-            HIRED_ASSEMBLERS
-        >
+        supplied: ToSupply<SUPPLIERS, OPTIONALS, HIRED>
     ) => Product<CONSTRAINT, ProductSupplier>
     /** Optional initialization function called after factory */
-    init?: (value: CONSTRAINT, $: $<SUPPLIERS, OPTIONALS>) => void
+    init?: (
+        value: CONSTRAINT,
+        $: $<MergeSuppliers<SUPPLIERS, HIRED>, OPTIONALS>
+    ) => void
     /** Whether this supplier should be lazily evaluated */
     lazy?: boolean
+    hire: (...hired: ProductSupplier[]) => any
     _: {
         build: (...args: any[]) => Product<CONSTRAINT, ProductSupplier>
     }
@@ -155,8 +144,7 @@ export type MainProductSupplier = ProductSupplier & {
     _: {
         isMock: false
     }
-    hiredSuppliers: []
-    hiredAssemblers: []
+    hired: []
 }
 
 export type MainSupplier = MainProductSupplier | ResourceSupplier
@@ -173,7 +161,7 @@ export type AsProductParameters<
     assemblers?: [...ASSEMBLERS]
     factory: (
         $: $<SUPPLIERS, OPTIONALS>,
-        $$: $$<ASSEMBLERS, OPTIONALS>
+        $$: $$<SUPPLIERS, OPTIONALS, ASSEMBLERS>
     ) => CONSTRAINT
     init?: (value: CONSTRAINT, $: $<SUPPLIERS, OPTIONALS>) => void
     lazy?: LAZY
@@ -205,7 +193,8 @@ export type SupplyMap<
 export type SupplyMapFromSuppliers<
     SUPPLIERS extends BaseSupplier[],
     OPTIONALS extends BaseSupplier[],
-    WIDE extends boolean = true
+    WIDE extends boolean = true,
+    $ = (supplier: any) => unknown
 > = {
     [SUPPLIER in SUPPLIERS[number] as string extends SUPPLIER["name"]
         ? never
@@ -217,7 +206,8 @@ export type SupplyMapFromSuppliers<
                         SUPPLIER["name"],
                         SUPPLIER["_"]["constraint"]
                     >
-                  : SUPPLIER
+                  : SUPPLIER,
+              $
           >
         : SUPPLIER extends ResourceSupplier
         ? Resource<SUPPLIER["_"]["constraint"], SUPPLIER>
@@ -233,7 +223,8 @@ export type SupplyMapFromSuppliers<
                         OPTIONAL["name"],
                         OPTIONAL["_"]["constraint"]
                     >
-                  : OPTIONAL
+                  : OPTIONAL,
+              $
           >
         : OPTIONAL extends ResourceSupplier
         ? Resource<OPTIONAL["_"]["constraint"], OPTIONAL>
@@ -260,7 +251,12 @@ export type $<
     }
 >(
     supplier: SUPPLIER
-) => SupplyMapFromSuppliers<SUPPLIERS, OPTIONALS, WIDE>[SUPPLIER["name"]])
+) => SupplyMapFromSuppliers<
+    SUPPLIERS,
+    OPTIONALS,
+    WIDE,
+    $<SUPPLIERS, OPTIONALS, WIDE>
+>[SUPPLIER["name"]])
 
 /**
  * Assembler accessor type used in factory functions for lazy dependency assembly.
@@ -274,52 +270,52 @@ export type $<
  * @public
  */
 export type $$<
-    ASSEMBLERS extends ProductSupplier[],
-    OPTIONALS extends ResourceSupplier[]
-> = <ASSEMBLER extends ASSEMBLERS[number] | OPTIONALS[number]>(
-    assembler: ASSEMBLER
-) => BaseProductSupplier<ASSEMBLER["name"], ASSEMBLER["_"]["constraint"]> &
-    (ASSEMBLER extends ProductSupplier
-        ? {
-              hire: <
-                  HIRED_SUPPLIERS extends BaseProductSupplier[],
-                  HIRED_ASSEMBLERS extends BaseProductSupplier[]
-              >(
-                  hiredSuppliers: [...HIRED_SUPPLIERS],
-                  hiredAssemblers?: [...HIRED_ASSEMBLERS]
-              ) => {
-                  assemble: (
-                      supplied: ToSupply<
-                          ASSEMBLER["suppliers"],
-                          ASSEMBLER["optionals"],
-                          ASSEMBLER["hiredSuppliers"],
-                          ASSEMBLER["hiredAssemblers"]
-                      >
-                  ) => Product<
-                      ASSEMBLER["_"]["constraint"],
-                      BaseProductSupplier<
-                          ASSEMBLER["name"],
-                          ASSEMBLER["_"]["constraint"]
-                      >,
-                      $<[ASSEMBLER, ...HIRED_SUPPLIERS], []>
-                  >
-              }
+    SUPPLIERS extends Supplier[],
+    OPTIONALS extends ResourceSupplier[],
+    ASSEMBLERS extends ProductSupplier[]
+> = <
+    ASSEMBLER extends SUPPLIERS[number] | OPTIONALS[number] | ASSEMBLERS[number]
+>(
+    assembler?: ASSEMBLER
+) => ASSEMBLER extends ProductSupplier
+    ? BaseProductSupplier<ASSEMBLER["name"], ASSEMBLER["_"]["constraint"]> & {
+          hire: <HIRED extends ProductSupplier[]>(
+              ...hired: [...HIRED]
+          ) => {
               assemble: (
-                  supplied: ToSupply<
-                      ASSEMBLER["suppliers"],
-                      ASSEMBLER["optionals"],
-                      ASSEMBLER["hiredSuppliers"],
-                      ASSEMBLER["hiredAssemblers"]
-                  >
+                  supplied: ASSEMBLER extends SUPPLIERS[number]
+                      ? ToSupply<[], [], HIRED>
+                      : ToSupply<
+                            ASSEMBLER["suppliers"],
+                            ASSEMBLER["optionals"],
+                            MergeSuppliers<ASSEMBLER["hired"], HIRED>
+                        >
               ) => Product<
                   ASSEMBLER["_"]["constraint"],
                   BaseProductSupplier<
                       ASSEMBLER["name"],
                       ASSEMBLER["_"]["constraint"]
-                  >
+                  >,
+                  $<HIRED, []>
               >
           }
-        : ASSEMBLER)
+          assemble: (
+              supplied: ASSEMBLER extends SUPPLIERS[number]
+                  ? SupplyMap
+                  : ToSupply<
+                        ASSEMBLER["suppliers"],
+                        ASSEMBLER["optionals"],
+                        ASSEMBLER["hired"]
+                    >
+          ) => Product<
+              ASSEMBLER["_"]["constraint"],
+              BaseProductSupplier<
+                  ASSEMBLER["name"],
+                  ASSEMBLER["_"]["constraint"]
+              >
+          >
+      }
+    : ASSEMBLER //Matched by optionals, simply returns the optional itself.
 
 /**
  * Recursively filters out suppliers of a specific type from a supplier array.
@@ -402,43 +398,29 @@ export type Optionals<SUPPLIERS extends Supplier[]> = SUPPLIERS extends [
  *
  * @typeParam SUPPLIERS - The array of suppliers to analyze
  * @typeParam OPTIONALS - The array of optional resource suppliers
- * @typeParam HIRED_SUPPLIERS - The array of hired suppliers
- * @typeParam HIRED_ASSEMBLERS - The array of hired assemblers
+ * @typeParam HIRED - The array of hired suppliers
  * @returns A supply map of only the resource suppliers that must be provided
  * @public
  */
 export type ToSupply<
     SUPPLIERS extends Supplier[],
     OPTIONALS extends ResourceSupplier[],
-    HIRED_SUPPLIERS extends ProductSupplier[],
-    HIRED_ASSEMBLERS extends ProductSupplier[]
+    HIRED extends ProductSupplier[]
 > = SupplyMapFromSuppliers<
     ExcludeSuppliersType<
-        TransitiveSuppliers<
-            [...MergeSuppliers<SUPPLIERS, HIRED_SUPPLIERS>, ...HIRED_ASSEMBLERS]
-        >,
+        TransitiveSuppliers<MergeSuppliers<SUPPLIERS, HIRED>>,
         ProductSupplier
     >,
     [
         ...OPTIONALS,
         ...Optionals<
             ExcludeSuppliersType<
-                TransitiveSuppliers<
-                    [
-                        ...MergeSuppliers<SUPPLIERS, HIRED_SUPPLIERS>,
-                        ...HIRED_ASSEMBLERS
-                    ]
-                >,
+                TransitiveSuppliers<MergeSuppliers<SUPPLIERS, HIRED>>,
                 ResourceSupplier
             >
         >,
         ...ExcludeSuppliersType<
-            TransitiveSuppliers<
-                [
-                    ...MergeSuppliers<SUPPLIERS, HIRED_SUPPLIERS>,
-                    ...HIRED_ASSEMBLERS
-                ]
-            >,
+            TransitiveSuppliers<MergeSuppliers<SUPPLIERS, HIRED>>,
             ResourceSupplier
         >
     ]
@@ -490,12 +472,7 @@ export type MergeSuppliers<
 export type CircularDependencyGuard<
     SUPPLIER extends Pick<
         ProductSupplier,
-        | "name"
-        | "suppliers"
-        | "optionals"
-        | "assemblers"
-        | "hiredSuppliers"
-        | "hiredAssemblers"
+        "name" | "suppliers" | "optionals" | "assemblers" | "hired"
     >
 > = SUPPLIER["name"] extends (
     TransitiveSuppliers<
@@ -503,8 +480,7 @@ export type CircularDependencyGuard<
             ...SUPPLIER["suppliers"],
             ...SUPPLIER["optionals"],
             ...SUPPLIER["assemblers"],
-            ...SUPPLIER["hiredSuppliers"],
-            ...SUPPLIER["hiredAssemblers"]
+            ...SUPPLIER["hired"]
         ]
     >[number] extends infer S
         ? S extends Supplier

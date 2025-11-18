@@ -22,9 +22,40 @@ describe("Assemblers Feature", () => {
             }
         })
 
-        const result = $$main.assemble({})
-        expect(result.unpack()).toBe("main-result")
+        const result = $$main.assemble({}).unpack()
+        expect(result).toBe("main-result")
         expect(factoryMock).not.toHaveBeenCalled()
+    })
+
+    it("should force hired assemblers to be pre-supplied", () => {
+        const market = createMarket()
+        const $$resource = market.offer("resource").asResource<string>()
+
+        const $$assembler1 = market.offer("assembler1").asProduct({
+            suppliers: [$$resource],
+            factory: ($) => `A1: ${$($$resource).unpack()}`
+        })
+
+        const $$assembler2 = market.offer("assembler2").asProduct({
+            suppliers: [$$resource],
+            factory: ($) => `A2: ${$($$resource).unpack()}`
+        })
+
+        const $$base = market.offer("base").asProduct({
+            assemblers: [$$assembler1],
+            factory: ($, $$) => {
+                return $$($$assembler1)
+                    .assemble(index($$resource.pack("test")))
+                    .unpack()
+            }
+        })
+
+        const $$extended = $$base.hire($$assembler2)
+
+        // @ts-expect-error - hired resources must be supplied also
+        $$extended.assemble({})
+        const $result = $$extended.assemble(index($$resource.pack("unused")))
+        expect($result.unpack()).toBe("A1: test")
     })
 
     it("should allow manual assembly of assemblers within factory", () => {
@@ -51,8 +82,8 @@ describe("Assemblers Feature", () => {
             }
         })
 
-        const result = $$main.assemble({})
-        expect(result.unpack()).toEqual({
+        const result = $$main.assemble({}).unpack()
+        expect(result).toEqual({
             main: "main-result",
             assembler: "value"
         })
@@ -110,9 +141,9 @@ describe("Assemblers Feature", () => {
             userId: "admin123",
             role: "admin"
         })
-        const adminResult = $$main.assemble(index(adminSession))
+        const adminResult = $$main.assemble(index(adminSession)).unpack()
 
-        expect(adminResult.unpack()).toEqual({
+        expect(adminResult).toEqual({
             user: "admin123",
             feature: "sensitive-admin-data"
         })
@@ -121,9 +152,9 @@ describe("Assemblers Feature", () => {
             userId: "user456",
             role: "user"
         })
-        const userResult = $$main.assemble(index(userSession))
+        const userResult = $$main.assemble(index(userSession)).unpack()
 
-        expect(userResult.unpack()).toEqual({
+        expect(userResult).toEqual({
             user: "user456",
             feature: "regular-user-data"
         })
@@ -147,10 +178,8 @@ describe("Assemblers Feature", () => {
             }
         })
 
-        const $result = $$main.assemble({})
-
         expect(() => {
-            $result.unpack()
+            $$main.assemble({}).unpack()
         }).toThrow("Assembler failed")
     })
 
@@ -166,10 +195,10 @@ describe("Assemblers Feature", () => {
         })
 
         const $$mock = $$main.mock({
+            assemblers: [$$assembler],
             factory: () => {
                 return "mock-value"
-            },
-            assemblers: [$$assembler]
+            }
         })
 
         expect($$mock.assemblers).toHaveLength(1)
@@ -207,44 +236,10 @@ describe("Assemblers Feature", () => {
             }
         })
 
-        const $result = $$main.assemble({})
-        expect($result.unpack()).toEqual(
+        const result = $$main.assemble({}).unpack()
+        expect(result).toEqual(
             "main-feature-repo-postgresql://localhost:5432/mydb"
         )
-    })
-
-    it("should handle assembler reassembly correctly", () => {
-        const market = createMarket()
-
-        const $$number = market.offer("number").asResource<number>()
-
-        const $$squarer = market.offer("squarer").asProduct({
-            suppliers: [$$number],
-            factory: ($) => {
-                const number = $($$number).unpack()
-                return number * number
-            }
-        })
-
-        const $$main = market.offer("main").asProduct({
-            suppliers: [$$number],
-            assemblers: [$$squarer],
-            factory: ($, $$) => {
-                const assembled = $$($$squarer).assemble(
-                    index($$number.pack($($$number).unpack()))
-                )
-                const squared = assembled.unpack()
-                expect(squared).toEqual(25)
-                const reassembled = assembled.reassemble(
-                    index($$number.pack(10))
-                )
-                const reassembledSquared = reassembled.unpack()
-                expect(reassembledSquared).toEqual(100)
-                return reassembledSquared
-            }
-        })
-
-        $$main.assemble(index($$number.pack(5)))
     })
 
     it("should properly overwrite resource in assembler's assemble() method", () => {
@@ -277,8 +272,46 @@ describe("Assemblers Feature", () => {
             }
         })
 
-        const $result = $$main.assemble(index($$number.pack(10)))
-        expect($result.unpack()).toEqual(20)
+        const result = $$main.assemble(index($$number.pack(10))).unpack()
+        expect(result).toEqual(20)
+    })
+
+    it("should preserve products from previous assemble calls that don't depend on the new supplies", async () => {
+        const market = createMarket()
+        const $$number = market.offer("number").asResource<number>()
+        const $$dummy = market.offer("dummy").asProduct({
+            factory: () => "dummy"
+        })
+
+        let timesCalled = 0
+        const $$counter = market.offer("counter").asProduct({
+            suppliers: [$$dummy],
+            factory: ($) => {
+                return timesCalled++
+            }
+        })
+
+        const $$reassembled = market.offer("reassembled").asProduct({
+            suppliers: [$$number, $$counter],
+            factory: ($) => {
+                return $($$number).unpack()
+            }
+        })
+
+        const $$main = market.offer("main").asProduct({
+            suppliers: [$$dummy, $$counter, $$reassembled],
+            assemblers: [$$reassembled],
+            factory: ($, $$) => {
+                const $reassembled = $$($$reassembled).assemble(
+                    index($$number.pack(10))
+                )
+                const $counter: any = $reassembled.$($$counter)
+                $counter.unpack()
+            }
+        })
+
+        $$main.assemble(index($$number.pack(20))).unpack()
+        expect(timesCalled).toEqual(1)
     })
 
     it("should support mocks with assembler", () => {
@@ -305,8 +338,8 @@ describe("Assemblers Feature", () => {
             assemblers: [$$assembler]
         })
 
-        const $result = $$mock.assemble({})
-        expect($result.unpack()).toBe("base-value-value")
+        const result = $$mock.assemble({}).unpack()
+        expect(result).toBe("base-value-value")
         expect(factoryMock).toHaveBeenCalledTimes(1)
     })
 
@@ -328,17 +361,17 @@ describe("Assemblers Feature", () => {
         })
 
         const $$mock = $$base.mock({
+            assemblers: [$$A, $$B],
             factory: ($, $$) => {
                 const assembler1 = $$($$A).assemble({})
                 const assembler2 = $$($$B).assemble({})
 
                 return `base-value-${assembler1.unpack()}-${assembler2.unpack()}`
-            },
-            assemblers: [$$A, $$B]
+            }
         })
 
-        const $result = $$mock.assemble({})
-        expect($result.unpack()).toBe("base-value-A-B")
+        const result = $$mock.assemble({}).unpack()
+        expect(result).toBe("base-value-A-B")
         expect(ASpy).toHaveBeenCalledTimes(1)
         expect(BSpy).toHaveBeenCalledTimes(1)
     })
@@ -362,13 +395,17 @@ describe("Assemblers Feature", () => {
             }
         })
 
-        const $$hired = $$base.hire([], [$$originalAssemblerMock])
+        const $$hired = $$base.hire($$originalAssemblerMock)
 
         const result = $$hired.assemble({}).unpack()
 
         expect(result).toBe("hired")
         expect(originalSpy).toHaveBeenCalledTimes(0)
-        expect(hiredSpy).toHaveBeenCalledTimes(1)
+        // Eager loading, called on both assemble() calls
+        // Because nothing is preserved between assembler calls
+        // Because passed via assemblers, not suppliers
+        // Just a weird, but normal edge case
+        expect(hiredSpy).toHaveBeenCalledTimes(2)
     })
 
     it("should support empty assembler in mocks", () => {
@@ -383,8 +420,8 @@ describe("Assemblers Feature", () => {
             }
         })
 
-        const $result = $$mock.assemble({})
-        expect($result.unpack()).toBe("mock-value")
+        const result = $$mock.assemble({}).unpack()
+        expect(result).toBe("mock-value")
     })
 
     it("should handle assembler errors in mocks gracefully", () => {
@@ -411,8 +448,8 @@ describe("Assemblers Feature", () => {
             assemblers: [$$error]
         })
 
-        const $result = $$mock.assemble({})
-        expect($result.unpack()).toBe("mock-value")
+        const result = $$mock.assemble({}).unpack()
+        expect(result).toBe("mock-value")
     })
 
     it("should handle assembler errors in hire() method gracefully", () => {
@@ -440,7 +477,7 @@ describe("Assemblers Feature", () => {
             }
         })
 
-        const $$hired = $$main.hire([], [$$error])
+        const $$hired = $$main.hire($$error)
 
         const result = $$hired.assemble({}).unpack()
         expect(result).toBe("main")
@@ -476,86 +513,8 @@ describe("Assemblers Feature", () => {
             }
         })
 
-        const $result = $$mock.assemble({})
-        expect($result.unpack()).toBe("base-test")
-    })
-
-    it("should support assembler reassembly in mocks", () => {
-        const market = createMarket()
-        const $$number = market.offer("number").asResource<number>()
-        const $$squarer = market.offer("squarer").asProduct({
-            suppliers: [$$number],
-            factory: ($) => {
-                const number = $($$number).unpack()
-                return number * number
-            }
-        })
-
-        const $$base = market.offer("base").asProduct({
-            suppliers: [$$number],
-            factory: () => "base-value"
-        })
-
-        const $$mock = $$base.mock({
-            factory: ($, $$) => {
-                const assembler = $$($$squarer).assemble(
-                    index($$number.pack(5))
-                )
-                const squared = assembler.unpack()
-
-                const reassembled = assembler.reassemble(
-                    index($$number.pack(10))
-                )
-                const reassembledSquared = reassembled.unpack()
-
-                return `base-value-${squared}-${reassembledSquared}`
-            },
-            assemblers: [$$squarer]
-        })
-
-        const $result = $$mock.assemble(index($$number.pack(5)))
-        expect($result.unpack()).toBe("base-value-25-100")
-    })
-
-    it("should support assembler reassembly in hire() method", () => {
-        const market = createMarket()
-        const $$number = market.offer("number").asResource<number>()
-        const $$squarer = market.offer("squarer").asProduct({
-            suppliers: [$$number],
-            factory: ($) => {
-                const number = $($$number).unpack()
-                return number * number
-            }
-        })
-
-        const $$hiredSquarer = $$squarer.mock({
-            suppliers: [$$number],
-            factory: ($) => {
-                const number = $($$number).unpack()
-                return number * number * 2
-            }
-        })
-
-        const $$base = market.offer("base").asProduct({
-            assemblers: [$$squarer],
-            factory: ($, $$) => {
-                const $assembler = $$($$squarer).assemble(
-                    index($$number.pack(5))
-                )
-                const result = $assembler.unpack()
-                expect(result).toBe(50)
-                const $reassembled = $assembler.reassemble(
-                    index($$number.pack(10))
-                )
-                const reassembledResult = $reassembled.unpack()
-                expect(reassembledResult).toBe(200)
-                return reassembledResult
-            }
-        })
-
-        const $$hired = $$base.hire([], [$$hiredSquarer])
-        const $result = $$hired.assemble(index($$number.pack(5)))
-        expect($result.unpack()).toBe(200)
+        const result = $$mock.assemble({}).unpack()
+        expect(result).toBe("base-test")
     })
 
     it("should handle duplicate assembler names in hire() method by overriding", () => {
@@ -583,44 +542,13 @@ describe("Assemblers Feature", () => {
             }
         })
 
-        const $$hired = $$base.hire([], [$$override, $$override2])
+        const $$hired = $$base.hire($$override, $$override2)
 
-        const $result = $$hired.assemble({})
-        expect($result.unpack()).toBe("override2")
+        const result = $$hired.assemble({}).unpack()
+        expect(result).toBe("override2")
         expect(originalSpy).toHaveBeenCalledTimes(0)
         expect(overrideSpy).toHaveBeenCalledTimes(0)
-        expect(overrideSpy2).toHaveBeenCalledTimes(1)
-    })
-
-    it("should allow adding new assemblers with different names", () => {
-        const market = createMarket()
-        const $$resource = market.offer("resource").asResource<string>()
-
-        const $$assembler1 = market.offer("assembler1").asProduct({
-            suppliers: [$$resource],
-            factory: ($) => `A1: ${$($$resource).unpack()}`
-        })
-
-        const $$assembler2 = market.offer("assembler2").asProduct({
-            suppliers: [$$resource],
-            factory: ($) => `A2: ${$($$resource).unpack()}`
-        })
-
-        const $$base = market.offer("base").asProduct({
-            assemblers: [$$assembler1],
-            factory: ($, $$) => {
-                return $$($$assembler1)
-                    .assemble(index($$resource.pack("test")))
-                    .unpack()
-            }
-        })
-
-        const $$extended = $$base.hire([], [$$assembler2])
-
-        // @ts-expect-error - withAssemblers resources must be supplied also
-        $$extended.assemble({})
-        const $result = $$extended.assemble(index($$resource.pack("unused")))
-        expect($result.unpack()).toBe("A1: test")
+        expect(overrideSpy2).toHaveBeenCalledTimes(2)
     })
 
     describe("Accessing $ supplies after hire() call in a factory", () => {
@@ -639,7 +567,7 @@ describe("Assemblers Feature", () => {
                 assemblers: [$$assembler1, $$assembler2],
                 factory: ($, $$) => {
                     const $product = $$($$assembler1)
-                        .hire([$$assembler2])
+                        .hire($$assembler2)
                         .assemble({})
 
                     const $assembler2 = $product.$($$assembler2)
@@ -648,7 +576,7 @@ describe("Assemblers Feature", () => {
                 }
             })
 
-            $$main.assemble({})
+            $$main.assemble({}).unpack()
         })
     })
 })

@@ -81,24 +81,11 @@ const $$profile = market.offer("profile").asProduct({
 })
 
 const profile = $$profile
-    .hire([$$userMock]) // Swaps the original $$user with the mock
+    .hire($$userMock) // Swaps the original $$user with the mock
     .assemble() // No resources needed, as the mock has no dependencies
     .unpack()
 
 // profile === "<h1>Profile of Mock John Doe</h1>"
 ```
 
-By using `.hire([$$userMock])`, you instruct the `$$profile` to use the mock implementation instead of the real one. Because the mock has no dependencies, the final `.assemble()` call is much simpler.
-
-The first arg of hire will only replace suppliers, not assemblers. If you also want to replace assemblers with an alternative implementation, use the second argument of .hire()
-
-```tsx
-const profile = $$profile
-    .hire([], [$$userMock]) // Replaces only assemblers
-    // or
-    .hire([$$userMock], [$$userMock]) // Replaces both suppliers and asssemblers
-    .assemble() // No resources needed, as the mock has no dependencies
-    .unpack()
-
-// profile === "<h1>Profile of Mock John Doe</h1>"
-```
+By using `.hire($$userMock)`, you instruct the `$$profile` to use the mock implementation instead of the real one. Because the mock has no dependencies, the final `.assemble()` call is much simpler.

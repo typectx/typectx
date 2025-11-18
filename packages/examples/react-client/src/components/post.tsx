@@ -17,7 +17,7 @@ export const $$Post = market.offer("Post").asProduct({
         $$Comment,
         $$SelectSession
     ],
-    factory: ($) => () => {
+    factory: ($, $$) => () => {
         const post = $(ctx.$$post).unpack()
         const [session] = $(ctx.$$session).unpack()
         const { data: users } = useQuery($($$usersQuery).unpack())
@@ -35,7 +35,7 @@ export const $$Post = market.offer("Post").asProduct({
             $(ctx.$$post)
         )
 
-        const $Comment = $($$Comment).reassemble(newCtx, [$$SelectSession])
+        const $Comment = $$($$Comment).hire($$SelectSession).assemble(newCtx)
 
         const SelectSession = $Comment.$($$SelectSession).unpack()
         const Comment = $Comment.unpack()

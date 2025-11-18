@@ -60,23 +60,20 @@ const $$App = market.offer("app").asProduct({
         if (role === "admin") {
             //Assemblers are not yet assembled, you need to assemble them with the new context.
             return $$($$adminPanel).assemble(
-                {
-                    ...$, // Keep all previous supplies if needed (not needed here, for example purpose only)
-                    ...index(
-                        $$($$adminSession).pack(session as AdminSession)
+                index(
+                    $$($$adminSession).pack(session as AdminSession)
 
-                        // Or, even better, rebuild the session for full type-safety without assertions now that role has been
-                        // type guarded.
+                    // Or, even better, rebuild the session for full type-safety without assertions now that role has been
+                    // type guarded.
 
-                        // $$adminSession.pack({
-                        //     ...session,
-                        //     user: {
-                        //         ...session.user,
-                        //         role
-                        //     }
-                        // })
-                    )
-                }
+                    // $$adminSession.pack({
+                    //     ...session,
+                    //     user: {
+                    //         ...session.user,
+                    //         role
+                    //     }
+                    // })
+                )
             )
         }
 
@@ -94,9 +91,18 @@ const App = $$app.assemble(index($$session.pack(session))).unpack()
 > Assemblers work similarly by allowing you to provide new dependencies that are only available to children
 > deeper in the call-stack.
 
-## Shorthand: `reassemble()`
+## Why $$() ?
 
-Sometimes, you don't need to build a new product from scratch based on new context, like in the `AdminPanel` example. Instead, you may just need to rebuild an _already assembled_ product with a different context. In that case, you don't need assemblers; you can just use `$product.reassemble()`.
+You might wonder why the 2nd argument of the factory is even needed. In the example, why not call `$$adminPanel.assemble(...)` instead of `$$($$adminPanel).assemble(...)`? The $$adminPanel is available via closure, no?
+
+Well, not really. $$(...) provides access to `contextualized` suppliers. It doesn't return the same object as the module-scope supplier. Two main differences:
+
+1. If you `hired` a `mock` at the entry-point, $$(...) will return the mock, not the module-scope supplier.
+2.
+
+## Reassembling suppliers
+
+Sometimes, you don't need to build a new product from scratch based on new context, like in the `AdminPanel` example. Instead, you may just need to rebuild an _already assembled_ product with a different context.
 
 When you reassemble, you only need to provide the resources you want to change. All other original dependencies from the initial `.assemble()` call are carried over automatically.
 

@@ -154,16 +154,11 @@ describe("Optionals Feature", () => {
                 factory: ($, $$) => {
                     // Both should be in $$
                     expect($$($$optional)).toBe($$optional)
-                    const { assemble: _, ...left } = $$($$assembler)
-                    const { assemble: __, ...right } = $$assembler
-                    expect(left).toEqual(right)
-
-                    return "result"
+                    expect($$($$assembler).name).toBe($$assembler.name)
                 }
             })
 
-            const $result = $$product.assemble({})
-            expect($result.unpack()).toBe("result")
+            $$product.assemble({})
         })
     })
 
@@ -295,7 +290,7 @@ describe("Optionals Feature", () => {
             })
         })
 
-        it("should handle optionals with with method", () => {
+        it("should handle optionals with hire method", () => {
             const market = createMarket()
             const $$config = market.offer("config").asResource<string>()
             const $$optional = market.offer("optional").asResource<number>()
@@ -318,7 +313,7 @@ describe("Optionals Feature", () => {
                 factory: () => 100
             })
 
-            const $$hired = $$main.hire([$$mockDep])
+            const $$hired = $$main.hire($$mockDep)
 
             const $result = $$hired.assemble({})
             expect($result.unpack()).toBe(100)
@@ -336,36 +331,35 @@ describe("Optionals Feature", () => {
                 suppliers: [$$config],
                 optionals: [$$optional1, $$optional2],
                 factory: ($) => {
+                    const optional1 = $($$optional1)?.unpack()
+                    const optional2 = $($$optional2)?.unpack()
                     return {
                         config: $($$config).unpack(),
-                        optional1: $($$optional1)?.unpack() ?? 0,
-                        optional2: $($$optional2)?.unpack() ?? 0
+                        ...(optional1 ? { optional1 } : {}),
+                        ...(optional2 ? { optional2 } : {})
                     }
                 }
             })
 
-            const $initial = $$service.assemble(
-                index(
-                    $$config.pack("initial"),
-                    $$optional1.pack(10),
-                    $$optional2.pack(20)
-                )
-            )
-            expect($initial.unpack()).toEqual({
-                config: "initial",
-                optional1: 10,
-                optional2: 20
+            const $$main = market.offer("main").asProduct({
+                suppliers: [$$service],
+                factory: ($, $$) => {
+                    const initial = $($$service).unpack()
+                    expect(initial).toEqual({
+                        config: "initial"
+                    })
+
+                    const reassembled = $$($$service)
+                        .assemble(index($$optional2.pack(50)))
+                        .unpack()
+                    expect(reassembled).toEqual({
+                        config: "initial",
+                        optional2: 50
+                    })
+                }
             })
 
-            // Reassemble with different optional value
-            const $reassembled = $initial.reassemble(
-                index($$optional2.pack(50))
-            )
-            expect($reassembled.unpack()).toEqual({
-                config: "initial",
-                optional1: 10,
-                optional2: 50
-            })
+            $$main.assemble(index($$config.pack("initial"))).unpack()
         })
 
         it("should allow removing optional in reassemble", () => {
@@ -383,22 +377,28 @@ describe("Optionals Feature", () => {
                 })
             })
 
-            const $initial = $$service.assemble(
-                index($$config.pack("test"), $$optional.pack(42))
-            )
-            expect($initial.unpack()).toEqual({
-                config: "test",
-                optional: 42
+            const $$main = market.offer("main").asProduct({
+                suppliers: [$$service],
+                factory: ($, $$) => {
+                    const initial = $($$service).unpack()
+                    expect(initial).toEqual({
+                        config: "test",
+                        optional: 42
+                    })
+
+                    const reassembled = $$($$service)
+                        .assemble({ [$$optional.name]: undefined })
+                        .unpack()
+                    expect(reassembled).toEqual({
+                        config: "test",
+                        optional: 0
+                    })
+                }
             })
 
-            // Reassemble without optional, it should use the default value.
-            const $reassembled = $initial.reassemble({
-                [$$optional.name]: undefined
-            })
-            expect($reassembled.unpack()).toEqual({
-                config: "test",
-                optional: 0
-            })
+            $$main
+                .assemble(index($$config.pack("test"), $$optional.pack(42)))
+                .unpack()
         })
     })
 
@@ -423,7 +423,7 @@ describe("Optionals Feature", () => {
             })
 
             const $batch = $$service1
-                .hire([$$service2])
+                .hire($$service2)
                 .assemble(index($$optional1.pack("test")))
 
             expect($batch.unpack()).toBe("S1: test")
@@ -550,7 +550,7 @@ describe("Optionals Feature", () => {
                 optionals: [$$featureFlag, $$ctx],
                 assemblers: [$$optionalFeature],
                 factory: ($, $$) => {
-                    const enabled = $($$featureFlag)
+                    const enabled = $($$featureFlag)?.unpack()
 
                     if (enabled) {
                         // Assemble the optional feature with the optional context

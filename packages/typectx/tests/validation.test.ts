@@ -123,20 +123,6 @@ describe("Runtime Validation", () => {
         })
     })
 
-    describe("product.reassemble()", () => {
-        it("should throw TypeError when overrides is not an object", () => {
-            const market = createMarket()
-            const $$product = market.offer("A").asProduct({
-                factory: () => ({})
-            })
-            const assembled = $$product.assemble({})
-            expect(() => assembled.reassemble(null as any)).toThrow(TypeError)
-            expect(() => assembled.reassemble(null as any)).toThrow(
-                "overrides must be an object, got null"
-            )
-        })
-    })
-
     describe("productSupplier.hire()", () => {
         it("should throw TypeError when suppliers contain invalid items", () => {
             const market = createMarket()
@@ -152,7 +138,6 @@ describe("Runtime Validation", () => {
             const $$product = market.offer("A").asProduct({
                 factory: () => ({})
             })
-            expect(() => $$product.hire({} as any)).toThrow(TypeError)
             expect(() => $$product.hire({} as any)).toThrow(TypeError)
         })
     })

@@ -15,11 +15,12 @@ import {
     TransitiveSuppliers
 } from "#types"
 
-import { once, team as buildTeam, isProductSupplier } from "#utils"
+import { once, team as buildTeam, isProductSupplier, isPacked } from "#utils"
 import {
     assertString,
     assertPlainObject,
-    assertProductConfig
+    assertProductConfig,
+    assertProductSuppliers
 } from "#validation"
 
 /**
@@ -120,8 +121,7 @@ export const createMarket = () => {
                         SUPPLIERS extends MainSupplier[] = [],
                         OPTIONALS extends ResourceSupplier[] = [],
                         ASSEMBLERS extends MainProductSupplier[] = [],
-                        HIRED_SUPPLIERS extends ProductSupplier[] = [],
-                        HIRED_ASSEMBLERS extends ProductSupplier[] = []
+                        HIRED extends ProductSupplier[] = []
                     >(
                         config: AsProductParameters<
                             CONSTRAINT,
@@ -130,14 +130,10 @@ export const createMarket = () => {
                             OPTIONALS,
                             ASSEMBLERS
                         >,
-                        hiredSuppliers: [
-                            ...HIRED_SUPPLIERS
-                        ] = [] as unknown as [...HIRED_SUPPLIERS],
-                        hiredAssemblers: [
-                            ...HIRED_ASSEMBLERS
-                        ] = [] as unknown as [...HIRED_ASSEMBLERS]
+                        ...hired: [...HIRED]
                     ) {
                         assertProductConfig(name, config)
+                        assertProductSuppliers(name, hired, true)
 
                         const {
                             suppliers = [] as unknown as SUPPLIERS,
@@ -150,18 +146,20 @@ export const createMarket = () => {
 
                         type TEAM = [
                             ...TransitiveSuppliers<
-                                MergeSuppliers<SUPPLIERS, HIRED_SUPPLIERS>
+                                MergeSuppliers<SUPPLIERS, HIRED>
                             >
                         ]
 
                         const team = buildTeam(name, [
                             ...suppliers,
-                            ...hiredSuppliers
+                            ...hired
                         ]) as TEAM
 
                         const assemblersTeam = buildTeam(name, [
+                            ...suppliers,
+                            ...optionals,
                             ...assemblers,
-                            ...hiredAssemblers
+                            ...hired
                         ])
 
                         const base = {
@@ -169,8 +167,7 @@ export const createMarket = () => {
                             suppliers,
                             optionals,
                             assemblers,
-                            hiredSuppliers,
-                            hiredAssemblers,
+                            hired,
                             team,
                             lazy,
                             factory,
@@ -193,77 +190,32 @@ export const createMarket = () => {
                                 TEAM extends Supplier[],
                                 SUPPLIERS extends Supplier[],
                                 OPTIONALS extends ResourceSupplier[],
-                                HIRED_SUPPLIERS extends ProductSupplier[],
-                                HIRED_ASSEMBLERS extends ProductSupplier[]
+                                HIRED extends ProductSupplier[]
                             >(
                                 this: THIS & {
                                     team: TEAM
                                     hire: HIRE &
-                                        ((
-                                            hiredSuppliers: ProductSupplier[],
-                                            hiredAssemblers: ProductSupplier[]
-                                        ) => {
+                                        ((...hired: ProductSupplier[]) => {
                                             assemble: ASSEMBLE &
                                                 ((...args: any[]) => any)
                                         })
                                     suppliers: SUPPLIERS
                                     optionals: OPTIONALS
-                                    hiredSuppliers: HIRED_SUPPLIERS
-                                    hiredAssemblers: HIRED_ASSEMBLERS
+                                    hired: HIRED
                                 },
-                                supplied: ToSupply<
-                                    SUPPLIERS,
-                                    OPTIONALS,
-                                    HIRED_SUPPLIERS,
-                                    HIRED_ASSEMBLERS
-                                >
+                                supplied: ToSupply<SUPPLIERS, OPTIONALS, HIRED>
                             ) {
                                 assertPlainObject("supplied", supplied)
 
-                                const preserved: SupplyMap<ProductSupplier> = {}
-
-                                // Loop over all supplied and remove the products that need to be rebuilt, otherwise they'd be preserved and not rebuilt
-                                for (const name of Object.keys(
-                                    supplied
-                                ) as (keyof typeof supplied)[]) {
-                                    const supply = supplied[name] as
-                                        | Product<any, ProductSupplier>
-                                        | Resource
-                                        | undefined
-
-                                    if (
-                                        supply === undefined ||
-                                        !isProductSupplier(supply.supplier) ||
-                                        // Packed product can be preserved
-                                        ("packed" in supply && supply.packed) ||
-                                        // Preserve the supplied  built products (usually from previous assemble call) if they aren't overwritten by hires and
-                                        // if none of their team members products or resources have been overwritten by the newly supplied products or resources
-                                        (!hiredSuppliers.some(
-                                            (hiredS) => hiredS.name === name
-                                        ) &&
-                                            supply.supplier.team.every(
-                                                (s) =>
-                                                    !(s.name in supplied) &&
-                                                    !hiredSuppliers.some(
-                                                        (hiredS) =>
-                                                            hiredS.name ===
-                                                            s.name
-                                                    )
-                                            ))
-                                    ) {
-                                        preserved[name] = supply
-                                    }
-                                }
-
                                 const supplies: SupplyMap<ProductSupplier> =
-                                    preserved
+                                    supplied
 
                                 for (const supplier of Object.values(
                                     this.team
                                 )) {
                                     if (
                                         !isProductSupplier(supplier) ||
-                                        supplier.name in preserved
+                                        supplier.name in supplied
                                     )
                                         continue
                                     supplies[supplier.name] = once(() =>
@@ -318,11 +270,10 @@ export const createMarket = () => {
                                 return {
                                     unpack: () => value,
                                     $: () => undefined,
-                                    reassemble<THIS>(this: THIS) {
-                                        return this
-                                    },
-                                    packed: true as const,
-                                    supplier: this
+                                    supplier: this,
+                                    _: {
+                                        packed: true as const
+                                    }
                                 }
                             },
                             _: {
@@ -337,7 +288,7 @@ export const createMarket = () => {
                                  * @returns A product instance with unpack(), reassemble(), and $ methods
                                  * @internal
                                  */
-                                build<
+                                build: <
                                     SUPPLIER,
                                     TEAM extends Supplier[],
                                     HIRE,
@@ -347,16 +298,94 @@ export const createMarket = () => {
                                     supplier: SUPPLIER & {
                                         team: TEAM
                                         hire: HIRE &
-                                            ((
-                                                hiredSuppliers: ProductSupplier[],
-                                                hiredAssemblers: ProductSupplier[]
-                                            ) => {
+                                            ((...hired: ProductSupplier[]) => {
                                                 assemble: ASSEMBLE &
                                                     ((...args: any[]) => any)
                                             })
                                     },
                                     $: $MAP
-                                ) {
+                                ) => {
+                                    function reassemble(
+                                        assembler: any,
+                                        supplied: SupplyMap<ProductSupplier>,
+                                        ...hired: ProductSupplier[]
+                                    ) {
+                                        const prev = Object.fromEntries(
+                                            $.keys.map((name) => [
+                                                name,
+                                                $({
+                                                    name
+                                                })
+                                            ])
+                                        )
+
+                                        // Stores the supplies that can be preserved to optimize reassemble
+                                        const preserved: SupplyMap<ProductSupplier> =
+                                            {}
+
+                                        for (const name of Object.keys(
+                                            prev
+                                        ) as (keyof typeof prev)[]) {
+                                            const prevSupply = prev[name] as
+                                                | Product<any, ProductSupplier>
+                                                | Resource
+                                                | undefined
+
+                                            if (prevSupply === undefined) {
+                                                continue
+                                            }
+
+                                            if (
+                                                hired.some(
+                                                    (h) => h.name === name
+                                                ) ||
+                                                supplied[name as any] !==
+                                                    undefined
+                                            ) {
+                                                // Do not preserve products or resources from newly hired
+                                                // or newly supplied resources or products
+                                                continue
+                                            }
+
+                                            if (
+                                                !isProductSupplier(
+                                                    prevSupply.supplier
+                                                ) ||
+                                                isPacked(prevSupply)
+                                            ) {
+                                                // Preserve if it's a resource or a packed product
+                                                preserved[name as any] =
+                                                    prevSupply
+                                                continue
+                                            }
+
+                                            // Do not preserve if some of the products's team members
+                                            // depend on newly hired or supplied
+                                            if (
+                                                prevSupply.supplier.team.some(
+                                                    (t) =>
+                                                        t.name in supplied ||
+                                                        hired.some(
+                                                            (h) =>
+                                                                h.name ===
+                                                                t.name
+                                                        )
+                                                )
+                                            ) {
+                                                continue
+                                            }
+
+                                            preserved[name as any] = prevSupply
+                                        }
+
+                                        return assembler
+                                            .hire(...hired)
+                                            .assemble({
+                                                ...preserved,
+                                                ...supplied
+                                            })
+                                    }
+
                                     const $$ = (assembler: any) => {
                                         const actual =
                                             assemblersTeam.find(
@@ -371,16 +400,23 @@ export const createMarket = () => {
 
                                         return {
                                             ...actual,
+                                            hire<
+                                                HIRED extends ProductSupplier[]
+                                            >(...hired: [...HIRED]) {
+                                                return {
+                                                    assemble: (
+                                                        supplied: any
+                                                    ) => {
+                                                        return reassemble(
+                                                            actual,
+                                                            supplied,
+                                                            ...hired
+                                                        )
+                                                    }
+                                                }
+                                            },
                                             assemble: (supplied: any) =>
-                                                actual.assemble({
-                                                    ...Object.fromEntries(
-                                                        $.keys.map((name) => [
-                                                            name,
-                                                            $({ name })
-                                                        ])
-                                                    ),
-                                                    ...supplied
-                                                })
+                                                reassemble(actual, supplied)
                                         }
                                     }
 
@@ -393,49 +429,10 @@ export const createMarket = () => {
                                             return value
                                         }),
                                         $,
-                                        packed: false as const,
-                                        reassemble: <
-                                            HIRED_SUPPLIERS extends ProductSupplier[],
-                                            HIRED_ASSEMBLERS extends ProductSupplier[]
-                                        >(
-                                            overrides: Partial<SupplyMap>,
-                                            hiredSuppliers: [
-                                                ...HIRED_SUPPLIERS
-                                            ] = [] as unknown as [
-                                                ...HIRED_SUPPLIERS
-                                            ],
-                                            hiredAssemblers: [
-                                                ...HIRED_ASSEMBLERS
-                                            ] = [] as unknown as [
-                                                ...HIRED_ASSEMBLERS
-                                            ]
-                                        ) => {
-                                            assertPlainObject(
-                                                "overrides",
-                                                overrides
-                                            )
-                                            return supplier
-                                                .hire(
-                                                    hiredSuppliers,
-                                                    hiredAssemblers
-                                                )
-                                                .assemble({
-                                                    ...Object.fromEntries(
-                                                        $.keys
-                                                            .map((name) => [
-                                                                name,
-                                                                $({ name })
-                                                            ])
-                                                            .filter(
-                                                                (entry) =>
-                                                                    entry !==
-                                                                    undefined
-                                                            )
-                                                    ),
-                                                    ...overrides
-                                                }) as typeof product
-                                        },
-                                        supplier
+                                        supplier,
+                                        _: {
+                                            packed: false as const
+                                        }
                                     }
 
                                     return product
@@ -516,7 +513,6 @@ export const createMarket = () => {
                          * names in the transitive dependency tree.
                          *
                          * @param hiredSuppliers - Product suppliers to hire (replace/add to the team)
-                         * @param hiredAssemblers - Product assemblers to hire (replace/add to assemblers)
                          * @returns A new product supplier with the hired suppliers merged into the team
                          * @public
                          */
@@ -529,10 +525,8 @@ export const createMarket = () => {
                             SUPPLIERS extends MainSupplier[],
                             OPTIONALS extends ResourceSupplier[],
                             ASSEMBLERS extends MainProductSupplier[],
-                            HIRED_SUPPLIERS extends ProductSupplier[],
-                            HIRED_ASSEMBLERS extends ProductSupplier[],
-                            HIRED_SUPPLIERS_2 extends ProductSupplier[],
-                            HIRED_ASSEMBLERS_2 extends ProductSupplier[]
+                            HIRED extends ProductSupplier[],
+                            HIRED_2 extends ProductSupplier[]
                         >(
                             this: THIS &
                                 AsProductParameters<
@@ -542,25 +536,13 @@ export const createMarket = () => {
                                     OPTIONALS,
                                     ASSEMBLERS
                                 > & {
-                                    hiredSuppliers: [...HIRED_SUPPLIERS]
-                                    hiredAssemblers: [...HIRED_ASSEMBLERS]
+                                    hired: [...HIRED]
                                     mock: MOCK
                                     hire: HIRE
                                 },
-                            hiredSuppliers: [...HIRED_SUPPLIERS_2],
-                            hiredAssemblers?: [...HIRED_ASSEMBLERS_2]
+                            ...hired: [...HIRED_2]
                         ) {
-                            const base = _base(
-                                this,
-                                [...this.hiredSuppliers, ...hiredSuppliers],
-                                [
-                                    ...this.hiredAssemblers,
-                                    ...(hiredAssemblers ??
-                                        ([] as unknown as [
-                                            ...HIRED_ASSEMBLERS_2
-                                        ]))
-                                ]
-                            )
+                            const base = _base(this, ...this.hired, ...hired)
 
                             const supplier = {
                                 mock: this.mock,

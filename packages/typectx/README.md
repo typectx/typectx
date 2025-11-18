@@ -359,7 +359,7 @@ const $$userMock = $$user.mock({
 })
 
 //You no longer need to pass some value for $$db and $$session, since $$userMock removes them from the supply chain.
-const profile = $$profile.hire([$$userMock]).assemble()
+const profile = $$profile.hire($$userMock).assemble()
 
 profile === <h1>Profile of John Doe</h1>
 ```

@@ -96,14 +96,20 @@ export function team(name: string, suppliers: Supplier[]) {
             return [supplier, ...supplier.team]
         })
         .filter((supplier) => supplier !== undefined)
+        .map((supplier) => {
+            if (supplier.name === name)
+                throw new Error("Circular dependency detected")
+            return supplier
+        })
 
+    return dedupe(team)
+}
+
+export function dedupe(suppliers: Supplier[]) {
     const deduped: Record<string, Supplier> = {}
-    for (const supplier of team) {
-        if (supplier.name === name)
-            throw new Error("Circular dependency detected")
+    for (const supplier of suppliers) {
         deduped[supplier.name] = supplier
     }
-
     return Object.values(deduped)
 }
 
@@ -114,7 +120,11 @@ export function team(name: string, suppliers: Supplier[]) {
  * @internal
  */
 export function isProduct(supply: any): supply is Product {
-    return supply.supplier._.product === true
+    return (
+        "_" in supply.supplier &&
+        "product" in supply.supplier._ &&
+        supply.supplier._.product === true
+    )
 }
 
 /**
@@ -124,7 +134,15 @@ export function isProduct(supply: any): supply is Product {
  * @internal
  */
 export function isProductSupplier(supplier: any): supplier is ProductSupplier {
-    return supplier._.product === true
+    return (
+        "_" in supplier &&
+        "product" in supplier._ &&
+        supplier._.product === true
+    )
+}
+
+export function isPacked(supply: any) {
+    return "_" in supply && "packed" in supply._ && supply._.packed
 }
 
 /**

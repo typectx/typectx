@@ -81,14 +81,6 @@ const $product = $$product.assemble(suppliesObject)
 const value = $product.unpack()
 ```
 
-### `$product.reassemble(newSupplies)`
-
-Creates a new product instance built with some supplies overwritten.
-
-```ts
-const $newProduct = $existingProduct.reassemble(newSuppliesObject)
-```
-
 ### `$$supplier.mock(options)`
 
 Creates an alternative implementation.
@@ -100,19 +92,19 @@ const $$alternative = $$originalSupplier.mock({
 })
 ```
 
-### `$$supplier.hire([...hiredSuppliers], [...hiredAssemblers]?)`
+### `$$supplier.hire(...hiredSuppliers)`
 
-`Composition root` method to wire additionnal suppliers and assemblers. Mocks will replace originals
+`Composition root` method to wire additionnal suppliers. Mocks will replace originals
 with the same name across the entire dependency chain.
 
 ```ts
-const $$modified = $$originalSupplier.hire([$$prototypeSupplier])
+const $$modified = $$originalSupplier.hire($$prototypeSupplier)
 ```
 
 You can also pass originals to hiredSuppliers to batch assemble multiple products together. You access other products via `$product.$($$otherSupplier)`
 
 ```ts
-const $A = $$A.hire([$$B, $$C]).assemble({})
+const $A = $$A.hire($$B, $$C).assemble({})
 // All assembled products will be available in $A's supplies() (see below)
 const $B = $A.$($$B)
 const $C = $A.$($$C)
@@ -136,7 +128,7 @@ const suppliesObject = index($supply1, $supply2, $supply3)
 The factory function is where your service logic lives. It receives two arguments:
 
 -   **`$` (Supplies)**: A function to access regular dependencies.
--   **`$$` (Optionals or Assemblers)**: A function to access optional or assembler suppliers in a factory.
+-   **`$$` (Suppliers, Optionals or Assemblers)**: A function to safely access contextualized suppliers in a factory.
 
 ```
 

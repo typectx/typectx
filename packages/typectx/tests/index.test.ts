@@ -195,7 +195,7 @@ describe("typectx", () => {
                 prefix: "APP"
             })
         })
-        it("should enable context switching by calling reassemble on products", () => {
+        it("should enable context switching by calling $$", () => {
             const market = createMarket()
             const $$config = market.offer("config").asResource<string>()
             const $$name = market.offer("name").asResource<string>()
@@ -212,61 +212,64 @@ describe("typectx", () => {
                 }
             })
 
-            const initialSupplies = index(
-                $$config.pack("initial-config"),
-                $$name.pack("initial-name"),
-                $$count.pack(1)
-            )
+            const $$main = market.offer("main").asProduct({
+                suppliers: [$$test],
+                factory: ($, $$) => {
+                    const $newTestA = $$($$test).assemble(
+                        index(
+                            $$config.pack("new-config"),
+                            $$name.pack("new-name"),
+                            $$count.pack(42)
+                        )
+                    )
 
-            const $test = $$test.assemble(initialSupplies)
+                    const $newTestB = $$($$test).assemble(
+                        index($$config.pack("new-config"))
+                    )
 
-            const $newTest1 = $test.reassemble(
-                index(
-                    $$config.pack("new-config"),
-                    $$name.pack("new-name"),
-                    $$count.pack(42)
+                    const $newTestC = $$($$test).assemble(
+                        index($$name.pack("new-name"))
+                    )
+
+                    const $newTestD = $$($$test).assemble(
+                        index($$config.pack("new-config"), $$count.pack(42))
+                    )
+
+                    expect($newTestA.unpack()).toEqual({
+                        config: "new-config",
+                        name: "new-name",
+                        count: 42
+                    })
+
+                    expect($newTestB.unpack()).toEqual({
+                        config: "new-config",
+                        name: "initial-name",
+                        count: 1
+                    })
+
+                    expect($newTestC.unpack()).toEqual({
+                        config: "initial-config",
+                        name: "new-name",
+                        count: 1
+                    })
+
+                    expect($newTestD.unpack()).toEqual({
+                        config: "new-config",
+                        name: "initial-name",
+                        count: 42
+                    })
+                }
+            })
+
+            $$main
+                .assemble(
+                    index(
+                        $$config.pack("initial-config"),
+                        $$name.pack("initial-name"),
+                        $$count.pack(1)
+                    )
                 )
-            )
-
-            const $newTest2 = $test.reassemble(
-                index($$config.pack("new-config"))
-            )
-
-            const $newTest3 = $test.reassemble(index($$name.pack("new-name")))
-
-            const $newTest4 = $test.reassemble(
-                index($$config.pack("new-config"), $$count.pack(42))
-            )
-
-            expect($test.unpack()).toEqual({
-                config: "initial-config",
-                name: "initial-name",
-                count: 1
-            })
-
-            expect($newTest1.unpack()).toEqual({
-                config: "new-config",
-                name: "new-name",
-                count: 42
-            })
-
-            expect($newTest2.unpack()).toEqual({
-                config: "new-config",
-                name: "initial-name",
-                count: 1
-            })
-
-            expect($newTest3.unpack()).toEqual({
-                config: "initial-config",
-                name: "new-name",
-                count: 1
-            })
-
-            expect($newTest4.unpack()).toEqual({
-                config: "new-config",
-                name: "initial-name",
-                count: 42
-            })
+                .unpack()
         })
     })
 
@@ -376,7 +379,7 @@ describe("typectx", () => {
                 factory: () => Date.now()
             })
 
-            const $$main = market.offer("main").asProduct({
+            const $$E = market.offer("E").asProduct({
                 suppliers: [$$A, $$B, $$C, $$D],
                 factory: ($) => {
                     return {
@@ -388,78 +391,33 @@ describe("typectx", () => {
                 }
             })
 
-            const $initialMain = $$main.assemble({})
-            const initialA = $initialMain.unpack().A
-            const initialB = $initialMain.unpack().B
-            const initialC = $initialMain.unpack().C
-            const initialD = $initialMain.unpack().D
-
-            await sleep(100)
-
-            // Override productA - this should trigger resupply of productB and productD
-            // but productC should remain cached
-            const newMain = $initialMain
-                .reassemble(index($$A.pack(Date.now())))
-                .unpack()
-
-            expect(newMain.A).not.toBe(initialA)
-            expect(newMain.B).not.toBe(initialB)
-            expect(newMain.C).toBe(initialC)
-            expect(newMain.D).not.toBe(initialD)
-        })
-
-        it("should handle recursive dependency chains correctly", async () => {
-            const market = createMarket()
-            const $$A = market.offer("A").asProduct({
-                factory: () => Date.now()
-            })
-
-            const $$B = market.offer("B").asProduct({
-                suppliers: [$$A],
-                factory: () => Date.now()
-            })
-
-            const $$C = market.offer("C").asProduct({
-                suppliers: [$$B],
-                factory: () => Date.now()
-            })
-
-            const $$D = market.offer("D").asProduct({
-                suppliers: [$$C],
-                factory: () => Date.now()
-            })
-
             const $$main = market.offer("main").asProduct({
-                suppliers: [$$A, $$B, $$C, $$D],
-                factory: ($) => {
-                    return {
-                        A: $($$A),
-                        B: $($$B),
-                        C: $($$C),
-                        D: $($$D)
-                    }
+                suppliers: [$$E],
+                factory: async ($, $$) => {
+                    const E = $($$E).unpack()
+                    const initialA = E.A
+                    const initialB = E.B
+                    const initialC = E.C
+                    const initialD = E.D
+
+                    await sleep(100)
+
+                    // Override productA - this should trigger resupply of productB and productD
+                    // but productC should remain cached
+                    const newE = $$($$E)
+                        .assemble(index($$A.pack(Date.now())))
+                        .unpack()
+
+                    expect(newE.A).not.toBe(initialA)
+                    expect(newE.B).not.toBe(initialB)
+                    expect(newE.C).toBe(initialC)
+                    expect(newE.D).not.toBe(initialD)
                 }
             })
 
-            const $main = $$main.assemble({})
-
-            const initialA = $main.unpack().A
-            const initialB = $main.unpack().B
-            const initialC = $main.unpack().C
-            const initialD = $main.unpack().D
-
-            await sleep(100)
-
-            // Override productA - this should cascade through B, C, and D
-            const $newMain = $main.reassemble(index($$A.pack(Date.now())))
-
-            expect($newMain.unpack().A).not.toBe(initialA)
-            expect($newMain.unpack().B).not.toBe(initialB)
-            expect($newMain.unpack().C).not.toBe(initialC)
-            expect($newMain.unpack().D).not.toBe(initialD)
+            await $$main.assemble({}).unpack()
         })
     })
-
     describe("Preload Feature", () => {
         it("should init eager products, not lazy ones ", async () => {
             const market = createMarket()
@@ -664,20 +622,18 @@ describe("typectx", () => {
 
             const $$main = market.offer("main").asProduct({
                 suppliers: [$$lazy],
-                factory: ($) => {
+                factory: ($, $$) => {
+                    expect(lazySpy).toHaveBeenCalledTimes(0)
                     const lazyValue = $($$lazy).unpack()
+                    expect(lazySpy).toHaveBeenCalledTimes(1)
+
+                    const $newLazy = $$($$lazy).assemble({})
+                    expect(lazySpy).toHaveBeenCalledTimes(1)
+                    expect($newLazy.unpack()).toBe("lazy")
+                    expect(lazySpy).toHaveBeenCalledTimes(2)
                     return { lazyValue }
                 }
             })
-
-            const $main = $$main.assemble({})
-
-            expect($main.unpack().lazyValue).toBe("lazy")
-            expect(lazySpy).toHaveBeenCalledTimes(1)
-
-            const $newMain = $main.reassemble({})
-            expect($newMain.unpack().lazyValue).toBe("lazy")
-            expect(lazySpy).toHaveBeenCalledTimes(1) // Still only called once
         })
 
         it("should handle lazy suppliers with mocks", () => {
@@ -703,7 +659,7 @@ describe("typectx", () => {
                 }
             })
 
-            const $main = $$main.hire([$$mock]).assemble({})
+            const $main = $$main.hire($$mock).assemble({})
 
             // Neither factory should be called during assemble
             expect(originalSpy).toHaveBeenCalledTimes(0)

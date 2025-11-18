@@ -9,7 +9,7 @@ import { $$postsQuery, $$usersQuery } from "@/api"
 queryClient.prefetchQuery($$usersQuery.assemble({}).unpack())
 queryClient.prefetchQuery($$postsQuery.assemble({}).unpack())
 
-const root = createRoot(document.getElementById("root")!)
+const root = createRoot(document.getElementById("root") as HTMLElement)
 const App = $$App.assemble({}).unpack()
 root.render(
     <StrictMode>

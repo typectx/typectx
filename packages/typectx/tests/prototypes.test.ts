@@ -58,7 +58,7 @@ describe("Mocks Feature", () => {
             })
 
             const $$mocked = $$base.mock({
-                factory: () => once(initedSpy) as Mock<any>,
+                factory: () => once(initedSpy),
                 init: (value) => value()
             })
 
@@ -67,7 +67,7 @@ describe("Mocks Feature", () => {
                 factory: ($) => $($$base).unpack()
             })
 
-            const $$hired = $$test.hire([$$mocked])
+            const $$hired = $$test.hire($$mocked)
 
             $$hired.assemble({})
             $$test.assemble({})
@@ -136,8 +136,8 @@ describe("Mocks Feature", () => {
             // This should be caught by the circular dependency detection
             expect(() => {
                 const $$mockA = $$A.mock({
-                    factory: ($) => "mockA uses " + $($$B),
-                    suppliers: [$$B] // This creates a potential circle
+                    suppliers: [$$B], // This creates a potential circle
+                    factory: ($) => "mockA uses " + $($$B)
                 })
 
                 expectTypeOf($$mockA).toExtend<CircularDependencyError>()
@@ -145,8 +145,8 @@ describe("Mocks Feature", () => {
 
             expect(() => {
                 const $$mockA = $$A.mock({
-                    factory: () => "mockA",
-                    assemblers: [$$B] // This creates a potential circle
+                    assemblers: [$$B], // This creates a potential circle
+                    factory: () => "mockA"
                 })
 
                 expectTypeOf($$mockA).toExtend<CircularDependencyError>()
@@ -190,7 +190,7 @@ describe("Mocks Feature", () => {
                 suppliers: []
             })
 
-            const $$hired = $$service.hire([$$mockDb, $$mockCache])
+            const $$hired = $$service.hire($$mockDb, $$mockCache)
             const $test = $$hired.assemble({})
 
             expect($test.unpack()).toEqual({
@@ -221,7 +221,7 @@ describe("Mocks Feature", () => {
                 factory: () => "extra-service"
             })
 
-            const $$hired = $$main.hire([$$unusedMock])
+            const $$hired = $$main.hire($$unusedMock)
             const $test = $$hired.assemble({})
 
             // The extra supplier is added to the suppliers list, but not to the result
@@ -236,7 +236,7 @@ describe("Mocks Feature", () => {
             })
 
             // Hire with no suppliers - should work fine
-            const $$hired = $$main.hire([])
+            const $$hired = $$main.hire()
             const $test = $$hired.assemble({})
 
             expect($test.unpack()).toBe("main")
@@ -264,8 +264,8 @@ describe("Mocks Feature", () => {
                 suppliers: []
             })
 
-            const $$hired = $$main.hire([$$mockDb1, $$mockDb2])
-            expect($$hired.hiredSuppliers.map((s) => s.name)).toEqual([
+            const $$hired = $$main.hire($$mockDb1, $$mockDb2)
+            expect($$hired.hired.map((s) => s.name)).toEqual([
                 $$mockDb1.name,
                 $$mockDb2.name
             ])
@@ -297,7 +297,7 @@ describe("Mocks Feature", () => {
             })
 
             const $result = $$A
-                .hire([$$B])
+                .hire($$B)
                 .assemble(
                     index($$shared.pack("shared-data"), $$unique.pack(123))
                 )
@@ -329,7 +329,7 @@ describe("Mocks Feature", () => {
                 }
             })
 
-            const $$combined = $$user.hire([$$session])
+            const $$combined = $$user.hire($$session)
 
             const db = $$db.pack("postgresql://localhost:5432/db")
             const cache = $$cache.pack("redis://localhost:6379")
@@ -350,33 +350,6 @@ describe("Mocks Feature", () => {
             expect(sessionResult).toEqual("session-redis://localhost:6379")
         })
 
-        it("should handle reassembly correctly with hire() method", () => {
-            const market = createMarket()
-
-            const $$number = market.offer("number").asResource<number>()
-
-            const $$doubler = market.offer("doubler").asProduct({
-                suppliers: [$$number],
-                factory: ($) => $($$number).unpack() * 2
-            })
-
-            const $$tripler = market.offer("tripler").asProduct({
-                suppliers: [$$number],
-                factory: ($) => $($$number).unpack() * 3
-            })
-
-            const $result = $$doubler
-                .hire([$$tripler])
-                .assemble(index($$number.pack(5)))
-
-            expect($result.unpack()).toBe(10) // 5 * 2
-            expect($result.$($$tripler).unpack()).toBe(15) // 5 * 3
-
-            const $reassembled = $result.reassemble(index($$number.pack(10)))
-            expect($reassembled.unpack()).toBe(20) // 10 * 2
-            expect($reassembled.$($$tripler).unpack()).toBe(30) // 10 * 3
-        })
-
         it("should handle errors in hire() method gracefully", () => {
             const market = createMarket()
 
@@ -391,7 +364,7 @@ describe("Mocks Feature", () => {
                 }
             })
 
-            const $result = $$working.hire([$$failing]).assemble({})
+            const $result = $$working.hire($$failing).assemble({})
             expect($result.unpack()).toBe("working-value")
             expect(() => {
                 $result.$($$failing).unpack()
@@ -399,351 +372,7 @@ describe("Mocks Feature", () => {
         })
     })
 
-    describe("Reassemble Method with Hire Parameters", () => {
-        it("should reassemble with alternative suppliers", () => {
-            const market = createMarket()
-
-            const $$db = market.offer("db").asProduct({
-                factory: () => "real-db"
-            })
-
-            const $$cache = market.offer("cache").asProduct({
-                factory: () => "real-cache"
-            })
-
-            const $$service = market.offer("service").asProduct({
-                suppliers: [$$db, $$cache],
-                factory: ($) => ({
-                    db: $($$db).unpack(),
-                    cache: $($$cache).unpack()
-                })
-            })
-
-            const $initial = $$service.assemble({})
-            expect($initial.unpack()).toEqual({
-                db: "real-db",
-                cache: "real-cache"
-            })
-
-            // Create mocks for reassembly
-            const $$mockDb = $$db.mock({
-                factory: () => "mock-db",
-                suppliers: []
-            })
-
-            const $$mockCache = $$cache.mock({
-                factory: () => "mock-cache",
-                suppliers: []
-            })
-
-            // Reassemble with mocks
-            const $reassembled = $initial.reassemble({}, [
-                $$mockDb,
-                $$mockCache
-            ])
-
-            expect($reassembled.unpack()).toEqual({
-                db: "mock-db",
-                cache: "mock-cache"
-            })
-        })
-
-        it("should reassemble with partial supplier override", () => {
-            const market = createMarket()
-
-            const $$db = market.offer("db").asProduct({
-                factory: () => "real-db"
-            })
-
-            const $$cache = market.offer("cache").asProduct({
-                factory: () => "real-cache"
-            })
-
-            const $$logger = market.offer("logger").asProduct({
-                factory: () => "real-logger"
-            })
-
-            const $$service = market.offer("service").asProduct({
-                suppliers: [$$db, $$cache, $$logger],
-                factory: ($) => ({
-                    db: $($$db).unpack(),
-                    cache: $($$cache).unpack(),
-                    logger: $($$logger).unpack()
-                })
-            })
-
-            const $initial = $$service.assemble({})
-
-            // Only replace db, keep cache and logger
-            const $$mockDb = $$db.mock({
-                factory: () => "mock-db",
-                suppliers: []
-            })
-
-            const $reassembled = $initial.reassemble({}, [$$mockDb])
-
-            expect($reassembled.unpack()).toEqual({
-                db: "mock-db",
-                cache: "real-cache",
-                logger: "real-logger"
-            })
-        })
-
-        it("should handle triggering supply reassembly via overrides and hired suppliers simultaneously", () => {
-            const market = createMarket()
-
-            const $$config = market.offer("config").asResource<string>()
-
-            const $$db = market.offer("db").asProduct({
-                suppliers: [$$config],
-                factory: ($) => "db-" + $($$config).unpack()
-            })
-
-            const $$cache = market.offer("cache").asProduct({
-                factory: () => "cache-v1"
-            })
-
-            const $$service = market.offer("service").asProduct({
-                suppliers: [$$config, $$db, $$cache],
-                factory: ($) => ({
-                    config: $($$config).unpack(),
-                    db: $($$db).unpack(),
-                    cache: $($$cache).unpack()
-                })
-            })
-
-            const $initial = $$service.assemble(
-                index($$config.pack("production"))
-            )
-
-            expect($initial.unpack()).toEqual({
-                config: "production",
-                db: "db-production",
-                cache: "cache-v1"
-            })
-
-            // Mock cache and override config
-            const $$mockCache = $$cache.mock({
-                factory: () => "cache-v2",
-                suppliers: []
-            })
-
-            const $reassembled = $initial.reassemble(
-                index($$config.pack("staging")),
-                [$$mockCache]
-            )
-
-            expect($reassembled.unpack()).toEqual({
-                config: "staging",
-                db: "db-staging", // recomputed due to config change
-                cache: "cache-v2" // uses mock
-            })
-        })
-
-        it("should handle reassembly with assemblers replacement", () => {
-            const market = createMarket()
-
-            const $$number = market.offer("number").asResource<number>()
-
-            const $$squarer = market.offer("squarer").asProduct({
-                suppliers: [$$number],
-                factory: ($) => $($$number).unpack() ** 2
-            })
-
-            const $$main = market.offer("main").asProduct({
-                suppliers: [$$number],
-                assemblers: [$$squarer],
-                factory: ($, $$) => {
-                    const squared = $$($$squarer)
-                        .assemble(index($($$number)))
-                        .unpack()
-                    return {
-                        number: $($$number).unpack(),
-                        squared
-                    }
-                }
-            })
-
-            const $initial = $$main.assemble(index($$number.pack(5)))
-            expect($initial.unpack()).toEqual({
-                number: 5,
-                squared: 25
-            })
-
-            // Create a mock squarer that cubes instead
-            const $$mockSquarer = $$squarer.mock({
-                suppliers: [$$number],
-                factory: ($) => {
-                    const n = $($$number).unpack()
-                    return n * n * n
-                }
-            })
-
-            // Reassemble with mock assembler and new number
-            const $reassembled = $initial.reassemble(
-                index($$number.pack(3)),
-                [],
-                [$$mockSquarer]
-            )
-
-            expect($reassembled.unpack()).toEqual({
-                number: 3,
-                squared: 27 // 3^3 using mock
-            })
-        })
-
-        it("should handle reassembly with both suppliers and assemblers", () => {
-            const market = createMarket()
-
-            const $$config = market.offer("config").asResource<string>()
-
-            const $$db = market.offer("db").asProduct({
-                suppliers: [$$config],
-                factory: ($) => `db-${$($$config).unpack()}`
-            })
-
-            const $$logger = market.offer("logger").asProduct({
-                suppliers: [$$config],
-                factory: ($) => `logger-${$($$config).unpack()}`
-            })
-
-            const $$service = market.offer("service").asProduct({
-                suppliers: [$$db],
-                assemblers: [$$logger],
-                factory: ($, $$) => {
-                    const log = $$($$logger)
-                        .assemble(index($$config.pack("default")))
-                        .unpack()
-                    return {
-                        db: $($$db).unpack(),
-                        log
-                    }
-                }
-            })
-
-            const $initial = $$service.assemble(index($$config.pack("prod")))
-            expect($initial.unpack()).toEqual({
-                db: "db-prod",
-                log: "logger-default"
-            })
-
-            // Create mocks
-            const $$mockDb = $$db.mock({
-                factory: () => "mock-db",
-                suppliers: []
-            })
-
-            const $$mockLogger = $$logger.mock({
-                factory: () => "mock-logger",
-                suppliers: []
-            })
-
-            // Reassemble with both mocks
-            const $reassembled = $initial.reassemble(
-                {},
-                [$$mockDb],
-                [$$mockLogger]
-            )
-
-            expect($reassembled.unpack()).toEqual({
-                db: "mock-db",
-                log: "mock-logger"
-            })
-        })
-
-        it("should handle empty hire parameters in reassembly", () => {
-            const market = createMarket()
-
-            const $$config = market.offer("config").asResource<string>()
-
-            const $$service = market.offer("service").asProduct({
-                suppliers: [$$config],
-                factory: ($) => `service-${$($$config).unpack()}`
-            })
-
-            const $initial = $$service.assemble(index($$config.pack("v1")))
-            expect($initial.unpack()).toBe("service-v1")
-
-            // Reassemble with no with parameters (just overrides)
-            const $reassembled = $initial.reassemble(
-                index($$config.pack("v2")),
-                [],
-                []
-            )
-
-            expect($reassembled.unpack()).toBe("service-v2")
-        })
-
-        it("should handle nested dependency changes with reassembly and hire", () => {
-            const market = createMarket()
-
-            const $$config = market.offer("config").asResource<number>()
-
-            const $$level1 = market.offer("level1").asProduct({
-                suppliers: [$$config],
-                factory: ($) => $($$config).unpack() + 1
-            })
-
-            const $$level2 = market.offer("level2").asProduct({
-                suppliers: [$$level1],
-                factory: ($) => $($$level1).unpack() + 10
-            })
-
-            const $$level3 = market.offer("level3").asProduct({
-                suppliers: [$$level2],
-                factory: ($) => $($$level2).unpack() + 100
-            })
-
-            const $initial = $$level3.assemble(index($$config.pack(1)))
-            expect($initial.unpack()).toBe(112) // (1+1)+10+100
-
-            // Mock level1 to multiply instead of add
-            const $$mockLevel1 = $$level1.mock({
-                suppliers: [$$config],
-                factory: ($) => $($$config).unpack() * 10
-            })
-
-            // Change config and replace level1
-            const $reassembled = $initial.reassemble(index($$config.pack(5)), [
-                $$mockLevel1
-            ])
-
-            expect($reassembled.unpack()).toBe(160) // (5*10)+10+100
-        })
-
-        it("should handle reassembly with duplicate supplier names (last wins)", () => {
-            const market = createMarket()
-
-            const $$service = market.offer("service").asProduct({
-                factory: () => "real"
-            })
-
-            const $$main = market.offer("main").asProduct({
-                suppliers: [$$service],
-                factory: ($) => `main-${$($$service).unpack()}`
-            })
-
-            const $initial = $$main.assemble({})
-            expect($initial.unpack()).toBe("main-real")
-
-            const $$mock1 = $$service.mock({
-                factory: () => "mock1",
-                suppliers: []
-            })
-
-            const $$mock2 = $$service.mock({
-                factory: () => "mock2",
-                suppliers: []
-            })
-
-            // Both mocks target same service, last should win
-            const $reassembled = $initial.reassemble({}, [$$mock1, $$mock2])
-
-            expect($reassembled.unpack()).toBe("main-mock2")
-        })
-    })
-
-    describe("Accessing $ supplies after Reassemble call with Hire parameters", () => {
+    describe("Accessing $ supplies after $$.hire() call", () => {
         it("$ supplies of product built with reassemble with Hire parameters should contain only the hired suppliers products properly typed", () => {
             const market = createMarket()
 
@@ -758,8 +387,10 @@ describe("Mocks Feature", () => {
             const $$main = market.offer("main").asProduct({
                 suppliers: [$$supplier],
                 assemblers: [$$assembler],
-                factory: ($) => {
-                    const $product = $($$supplier).reassemble({}, [$$assembler])
+                factory: ($, $$) => {
+                    const $product = $$($$supplier)
+                        .hire($$assembler)
+                        .assemble({})
 
                     const $assembler = $product.$($$assembler)
                     expectTypeOf($assembler).toExtend<Product>()
