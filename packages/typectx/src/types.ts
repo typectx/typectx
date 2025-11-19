@@ -344,27 +344,54 @@ export type ExcludeSuppliersType<
     : []
 
 /**
- * Recursively collects all transitive dependencies of a supplier array into a team.
- * This type walks through the dependency tree, collecting each supplier and all of its
- * nested dependencies into a flattened array. This forms the "team" - the complete
- * set of suppliers needed to assemble a product. The runtime equivalent is the `team()` utility.
+ * Recursively collects direct dependencies
+ * Used by ToSupply
  *
- * @typeParam SUPPLIERS - The array of suppliers to collect transitive dependencies from
- * @returns A flattened array containing all suppliers and their transitive dependencies
- * @public
+ * @internal
  */
 export type TransitiveSuppliers<SUPPLIERS extends Supplier[]> =
     SUPPLIERS extends [infer FIRST, ...infer REST]
         ? FIRST extends ProductSupplier
             ? [
                   FIRST,
-                  ...TransitiveSuppliers<FIRST["suppliers"]>,
+                  ...TransitiveSuppliers<
+                      MergeSuppliers<FIRST["suppliers"], FIRST["hired"]>
+                  >,
                   ...TransitiveSuppliers<REST extends Supplier[] ? REST : []>
               ]
             : FIRST extends ResourceSupplier
             ? [
                   FIRST,
                   ...TransitiveSuppliers<REST extends Supplier[] ? REST : []>
+              ]
+            : never
+        : []
+
+/**
+ * Recursively collects ALL transitive dependencies (including assemblers, optionals, and hired)
+ * for strict circular dependency detection. Unlike TransitiveSuppliers, this traverses
+ * "weak" links that are not part of the immediate supply chain but could form cycles.
+ *
+ * @internal
+ */
+export type AllTransitiveSuppliers<SUPPLIERS extends Supplier[]> =
+    SUPPLIERS extends [infer FIRST, ...infer REST]
+        ? FIRST extends ProductSupplier
+            ? [
+                  FIRST,
+                  ...AllTransitiveSuppliers<
+                      MergeSuppliers<FIRST["suppliers"], FIRST["hired"]>
+                  >,
+                  ...AllTransitiveSuppliers<FIRST["optionals"]>,
+                  ...AllTransitiveSuppliers<
+                      MergeSuppliers<FIRST["assemblers"], FIRST["hired"]>
+                  >,
+                  ...AllTransitiveSuppliers<REST extends Supplier[] ? REST : []>
+              ]
+            : FIRST extends ResourceSupplier
+            ? [
+                  FIRST,
+                  ...AllTransitiveSuppliers<REST extends Supplier[] ? REST : []>
               ]
             : never
         : []
@@ -478,12 +505,11 @@ export type CircularDependencyGuard<
         "name" | "suppliers" | "optionals" | "assemblers" | "hired"
     >
 > = SUPPLIER["name"] extends (
-    TransitiveSuppliers<
+    AllTransitiveSuppliers<
         [
-            ...SUPPLIER["suppliers"],
+            ...MergeSuppliers<SUPPLIER["suppliers"], SUPPLIER["hired"]>,
             ...SUPPLIER["optionals"],
-            ...SUPPLIER["assemblers"],
-            ...SUPPLIER["hired"]
+            ...MergeSuppliers<SUPPLIER["assemblers"], SUPPLIER["hired"]>
         ]
     >[number] extends infer S
         ? S extends Supplier
