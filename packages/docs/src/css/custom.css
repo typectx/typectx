@@ -204,6 +204,10 @@ body {
     box-shadow: 0 20px 35px rgba(4, 12, 24, 0.45);
 }
 
+p > code {
+    white-space: nowrap;
+}
+
 .theme-doc-markdown code,
 code {
     background: rgba(12, 25, 45, 0.8);
@@ -222,6 +226,12 @@ code {
 
 .theme-code-block:hover {
     border-color: rgba(124, 232, 255, 0.35);
+}
+
+/* Ensure code blocks are accessible */
+.theme-code-block:focus-within {
+    outline: 3px solid var(--ifm-color-primary-lightest);
+    outline-offset: 2px;
 }
 
 .footer {
@@ -252,12 +262,6 @@ a:focus-visible {
     outline: 3px solid var(--ifm-color-primary-lightest);
     outline-offset: 2px;
     border-radius: 4px;
-}
-
-/* Ensure code blocks are accessible */
-.theme-code-block:focus-within {
-    outline: 3px solid var(--ifm-color-primary-lightest);
-    outline-offset: 2px;
 }
 
 .pagination-nav__link {
