@@ -11,6 +11,7 @@
         "clean": "turbo clean"
     },
     "devDependencies": {
+        "prettier": "3.6.2",
         "turbo": "^2.5.8"
     },
     "packageManager": "pnpm@10.22.0",

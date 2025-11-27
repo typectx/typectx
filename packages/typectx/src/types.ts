@@ -52,13 +52,15 @@ export type ResourceSupplier<NAME extends string = string, CONSTRAINT = any> = {
 export type Product<
     VALUE = any,
     SUPPLIER extends BaseProductSupplier = BaseProductSupplier,
-    SUPPLIES = (supplier: any) => unknown
+    SUPPLIES = $<Supplier[], ResourceSupplier[]>,
+    ASSEMBLERS_MAP = $$<Supplier[], ResourceSupplier[], ProductSupplier[]>
 > = {
     /** Unpacks and returns the current value of this product */
     unpack: () => VALUE
     $: SUPPLIES
     supplier: SUPPLIER
     _: {
+        $$: ASSEMBLERS_MAP
         packed: boolean
     }
 }
@@ -167,20 +169,15 @@ export type AsProductParameters<
     lazy?: LAZY
 }
 
+type MaybeFn<A extends any[], R> = R | ((...args: A) => R)
+
 /**
  * A generic map of supplies where keys are supplier names and values are products or resources.
  * @public
  */
-export type SupplyMap<
+export type SupplyRecord<
     SUPPLIER extends BaseProductSupplier = BaseProductSupplier
-> = Record<
-    string,
-    | Product<any, SUPPLIER>
-    | Resource
-    | (() => Product<any, SUPPLIER>)
-    | (() => Resource)
-    | undefined
->
+> = Record<string, MaybeFn<[], Product<any, SUPPLIER>> | Resource | undefined>
 
 /**
  * Converts an array of suppliers and optionals into a corresponding $ supply map.
@@ -190,44 +187,62 @@ export type SupplyMap<
  * @returns A map where keys are supplier names and values are their assembled products/resources
  * @public
  */
-export type SupplyMapFromSuppliers<
+export type Supplies<
     SUPPLIERS extends BaseSupplier[],
-    OPTIONALS extends BaseSupplier[],
+    OPTIONALS extends ResourceSupplier[],
     WIDE extends boolean = true,
-    $ = (supplier: any) => unknown
-> = {
-    [SUPPLIER in SUPPLIERS[number] as SUPPLIER["name"]]: SUPPLIER extends ProductSupplier
-        ? Product<
-              SUPPLIER["_"]["constraint"],
-              WIDE extends true
-                  ? BaseProductSupplier<
-                        SUPPLIER["name"],
-                        SUPPLIER["_"]["constraint"]
+    $MAP extends $<SUPPLIERS, OPTIONALS, WIDE> = $<SUPPLIERS, OPTIONALS, WIDE>
+> =
+    ProductSupplier[] & ResourceSupplier[] extends SUPPLIERS | OPTIONALS ?
+        Record<
+            string,
+            | MaybeFn<[], Product<any, BaseProductSupplier>>
+            | Resource
+            | undefined
+        >
+    :   {
+            [SUPPLIER in SUPPLIERS[number] as SUPPLIER["name"]]: SUPPLIER extends (
+                ProductSupplier
+            ) ?
+                MaybeFn<
+                    [],
+                    Product<
+                        SUPPLIER["_"]["constraint"],
+                        WIDE extends true ?
+                            BaseProductSupplier<
+                                SUPPLIER["name"],
+                                SUPPLIER["_"]["constraint"]
+                            >
+                        :   SUPPLIER,
+                        $MAP
                     >
-                  : SUPPLIER,
-              $
-          >
-        : SUPPLIER extends ResourceSupplier
-        ? Resource<SUPPLIER["_"]["constraint"], SUPPLIER>
-        : never
-} & {
-    [OPTIONAL in OPTIONALS[number] as OPTIONAL["name"]]?: OPTIONAL extends ProductSupplier
-        ? Product<
-              OPTIONAL["_"]["constraint"],
-              WIDE extends true
-                  ? BaseProductSupplier<
-                        OPTIONAL["name"],
-                        OPTIONAL["_"]["constraint"]
+                >
+            : SUPPLIER extends ResourceSupplier ?
+                Resource<SUPPLIER["_"]["constraint"], SUPPLIER>
+            :   never
+        } & {
+            [OPTIONAL in OPTIONALS[number] as OPTIONAL["name"]]?: OPTIONAL extends (
+                ProductSupplier
+            ) ?
+                MaybeFn<
+                    [$MAP],
+                    Product<
+                        OPTIONAL["_"]["constraint"],
+                        WIDE extends true ?
+                            BaseProductSupplier<
+                                OPTIONAL["name"],
+                                OPTIONAL["_"]["constraint"]
+                            >
+                        :   OPTIONAL,
+                        $MAP
                     >
-                  : OPTIONAL,
-              $
-          >
-        : OPTIONAL extends ResourceSupplier
-        ? Resource<OPTIONAL["_"]["constraint"], OPTIONAL>
-        : never
-}
+                >
+            : OPTIONAL extends ResourceSupplier ?
+                Resource<OPTIONAL["_"]["constraint"], OPTIONAL>
+            :   never
+        }
 /**
- * Adds callable access to SupplyMapFromSuppliers type defined above.
+ * Adds callable access to Supplies type defined above.
  * This type represents the resolved dependencies that can be passed to factory functions.
  * It enables accessing dependencies either as properties or by calling with a supplier object.
  *
@@ -237,22 +252,26 @@ export type SupplyMapFromSuppliers<
  */
 export type $<
     SUPPLIERS extends BaseSupplier[],
-    OPTIONALS extends BaseSupplier[],
+    OPTIONALS extends ResourceSupplier[],
     WIDE extends boolean = true
 > = {
-    keys: (keyof SupplyMapFromSuppliers<SUPPLIERS, OPTIONALS> & string)[]
+    keys: (keyof Supplies<SUPPLIERS, OPTIONALS> & string)[]
 } & (<
     SUPPLIER extends {
-        name: keyof SupplyMapFromSuppliers<SUPPLIERS, OPTIONALS> & string
+        name: keyof Supplies<SUPPLIERS, OPTIONALS> & string
     }
 >(
     supplier: SUPPLIER
-) => SupplyMapFromSuppliers<
+) => Supplies<
     SUPPLIERS,
     OPTIONALS,
     WIDE,
     $<SUPPLIERS, OPTIONALS, WIDE>
->[SUPPLIER["name"]])
+>[SUPPLIER["name"]] extends infer S ?
+    S extends (...args: any[]) => any ?
+        ReturnType<S>
+    :   S
+:   never)
 
 /**
  * Assembler accessor type used in factory functions for lazy dependency assembly.
@@ -269,57 +288,58 @@ export type $$<
     SUPPLIERS extends Supplier[],
     OPTIONALS extends ResourceSupplier[],
     ASSEMBLERS extends ProductSupplier[]
-> = <
+> = {
+    _?: {
+        setter?: ($: $<[], []>) => void
+        update?: () => void
+    }
+} & (<
     ASSEMBLER extends SUPPLIERS[number] | OPTIONALS[number] | ASSEMBLERS[number]
 >(
     assembler?: ASSEMBLER
-) => ASSEMBLER extends ProductSupplier
-    ? BaseProductSupplier<ASSEMBLER["name"], ASSEMBLER["_"]["constraint"]> & {
-          hire: <HIRED extends ProductSupplier[]>(
-              ...hired: [...HIRED]
-          ) => CircularDependencyGuard<{
-              name: ASSEMBLER["name"]
-              suppliers: ASSEMBLER["suppliers"]
-              optionals: ASSEMBLER["optionals"]
-              assemblers: ASSEMBLER["assemblers"]
-              hired: MergeSuppliers<ASSEMBLER["hired"], HIRED>
-              assemble: (
-                  supplied: Omit<
-                      ToSupply<
-                          ASSEMBLER["suppliers"],
-                          ASSEMBLER["optionals"],
-                          MergeSuppliers<ASSEMBLER["hired"], HIRED>
-                      >,
-                      keyof ToSupply<SUPPLIERS, OPTIONALS, []>
-                  >
-              ) => Product<
-                  ASSEMBLER["_"]["constraint"],
-                  BaseProductSupplier<
-                      ASSEMBLER["name"],
-                      ASSEMBLER["_"]["constraint"]
-                  >,
-                  $<HIRED, []>
-              >
-          }>
-          assemble: (
-              supplied: Omit<
-                  ToSupply<
-                      ASSEMBLER["suppliers"],
-                      ASSEMBLER["optionals"],
-                      ASSEMBLER["hired"]
-                  >,
-                  keyof ToSupply<SUPPLIERS, OPTIONALS, []>
-              >
-          ) => Product<
-              ASSEMBLER["_"]["constraint"],
-              BaseProductSupplier<
-                  ASSEMBLER["name"],
-                  ASSEMBLER["_"]["constraint"]
-              >
-          >
-      }
-    : ASSEMBLER //Matched by optionals, simply returns the optional itself.
-
+) => ASSEMBLER extends ProductSupplier ?
+    BaseProductSupplier<ASSEMBLER["name"], ASSEMBLER["_"]["constraint"]> & {
+        hire: <HIRED extends ProductSupplier[]>(
+            ...hired: [...HIRED]
+        ) => CircularDependencyGuard<{
+            name: ASSEMBLER["name"]
+            suppliers: ASSEMBLER["suppliers"]
+            optionals: ASSEMBLER["optionals"]
+            assemblers: ASSEMBLER["assemblers"]
+            hired: MergeSuppliers<ASSEMBLER["hired"], HIRED>
+            assemble: (
+                supplied: Omit<
+                    ToSupply<
+                        ASSEMBLER["suppliers"],
+                        ASSEMBLER["optionals"],
+                        MergeSuppliers<ASSEMBLER["hired"], HIRED>
+                    >,
+                    keyof ToSupply<SUPPLIERS, OPTIONALS, []>
+                >
+            ) => Product<
+                ASSEMBLER["_"]["constraint"],
+                BaseProductSupplier<
+                    ASSEMBLER["name"],
+                    ASSEMBLER["_"]["constraint"]
+                >,
+                $<HIRED, []>
+            >
+        }>
+        assemble: (
+            supplied: Omit<
+                ToSupply<
+                    ASSEMBLER["suppliers"],
+                    ASSEMBLER["optionals"],
+                    ASSEMBLER["hired"]
+                >,
+                keyof ToSupply<SUPPLIERS, OPTIONALS, []>
+            >
+        ) => Product<
+            ASSEMBLER["_"]["constraint"],
+            BaseProductSupplier<ASSEMBLER["name"], ASSEMBLER["_"]["constraint"]>
+        >
+    }
+:   ASSEMBLER) //Matched by optionals, simply returns the optional itself.
 /**
  * Recursively filters out suppliers of a specific type from a supplier array.
  * This is used internally to separate product suppliers from resource suppliers
@@ -333,15 +353,15 @@ export type $$<
 export type ExcludeSuppliersType<
     SUPPLIERS extends Supplier[],
     TYPE extends Supplier
-> = SUPPLIERS extends [infer Head, ...infer Tail]
-    ? Head extends TYPE
-        ? Tail extends Supplier[]
-            ? ExcludeSuppliersType<Tail, TYPE>
-            : []
-        : Tail extends Supplier[]
-        ? [Head, ...ExcludeSuppliersType<Tail, TYPE>]
+> =
+    SUPPLIERS extends [infer Head, ...infer Tail] ?
+        Head extends TYPE ?
+            Tail extends Supplier[] ?
+                ExcludeSuppliersType<Tail, TYPE>
+            :   []
+        : Tail extends Supplier[] ? [Head, ...ExcludeSuppliersType<Tail, TYPE>]
         : [Head]
-    : []
+    :   []
 
 /**
  * Recursively collects transitive suppliers (excluding optionals and assemblers)
@@ -353,22 +373,19 @@ export type ExcludeSuppliersType<
  * @internal
  */
 export type TransitiveSuppliers<SUPPLIERS extends Supplier[]> =
-    SUPPLIERS extends [infer FIRST, ...infer REST]
-        ? FIRST extends ProductSupplier
-            ? [
-                  FIRST,
-                  ...TransitiveSuppliers<
-                      MergeSuppliers<FIRST["suppliers"], FIRST["hired"]>
-                  >,
-                  ...TransitiveSuppliers<REST extends Supplier[] ? REST : []>
-              ]
-            : FIRST extends ResourceSupplier
-            ? [
-                  FIRST,
-                  ...TransitiveSuppliers<REST extends Supplier[] ? REST : []>
-              ]
-            : never
-        : []
+    SUPPLIERS extends [infer FIRST, ...infer REST] ?
+        FIRST extends ProductSupplier ?
+            [
+                FIRST,
+                ...TransitiveSuppliers<
+                    MergeSuppliers<FIRST["suppliers"], FIRST["hired"]>
+                >,
+                ...TransitiveSuppliers<REST extends Supplier[] ? REST : []>
+            ]
+        : FIRST extends ResourceSupplier ?
+            [FIRST, ...TransitiveSuppliers<REST extends Supplier[] ? REST : []>]
+        :   never
+    :   []
 
 /**
  * Recursively collects ALL transitive dependencies (including assemblers and optionals)
@@ -378,26 +395,26 @@ export type TransitiveSuppliers<SUPPLIERS extends Supplier[]> =
  * @internal
  */
 export type AllTransitiveSuppliers<SUPPLIERS extends Supplier[]> =
-    SUPPLIERS extends [infer FIRST, ...infer REST]
-        ? FIRST extends ProductSupplier
-            ? [
-                  FIRST,
-                  ...AllTransitiveSuppliers<
-                      MergeSuppliers<FIRST["suppliers"], FIRST["hired"]>
-                  >,
-                  ...AllTransitiveSuppliers<FIRST["optionals"]>,
-                  ...AllTransitiveSuppliers<
-                      MergeSuppliers<FIRST["assemblers"], FIRST["hired"]>
-                  >,
-                  ...AllTransitiveSuppliers<REST extends Supplier[] ? REST : []>
-              ]
-            : FIRST extends ResourceSupplier
-            ? [
-                  FIRST,
-                  ...AllTransitiveSuppliers<REST extends Supplier[] ? REST : []>
-              ]
-            : never
-        : []
+    SUPPLIERS extends [infer FIRST, ...infer REST] ?
+        FIRST extends ProductSupplier ?
+            [
+                FIRST,
+                ...AllTransitiveSuppliers<
+                    MergeSuppliers<FIRST["suppliers"], FIRST["hired"]>
+                >,
+                ...AllTransitiveSuppliers<FIRST["optionals"]>,
+                ...AllTransitiveSuppliers<
+                    MergeSuppliers<FIRST["assemblers"], FIRST["hired"]>
+                >,
+                ...AllTransitiveSuppliers<REST extends Supplier[] ? REST : []>
+            ]
+        : FIRST extends ResourceSupplier ?
+            [
+                FIRST,
+                ...AllTransitiveSuppliers<REST extends Supplier[] ? REST : []>
+            ]
+        :   never
+    :   []
 
 /**
  * Recursively collects all optional suppliers from a supplier array.
@@ -408,19 +425,17 @@ export type AllTransitiveSuppliers<SUPPLIERS extends Supplier[]> =
  * @returns A flattened array of all optional resource suppliers
  * @internal
  */
-export type Optionals<SUPPLIERS extends Supplier[]> = SUPPLIERS extends [
-    infer FIRST,
-    ...infer REST
-]
-    ? FIRST extends ProductSupplier
-        ? [
-              ...FIRST["optionals"],
-              ...Optionals<REST extends Supplier[] ? REST : []>
-          ]
-        : FIRST extends ResourceSupplier
-        ? Optionals<REST extends Supplier[] ? REST : []>
-        : never
-    : []
+export type Optionals<SUPPLIERS extends Supplier[]> =
+    SUPPLIERS extends [infer FIRST, ...infer REST] ?
+        FIRST extends ProductSupplier ?
+            [
+                ...FIRST["optionals"],
+                ...Optionals<REST extends Supplier[] ? REST : []>
+            ]
+        : FIRST extends ResourceSupplier ?
+            Optionals<REST extends Supplier[] ? REST : []>
+        :   never
+    :   []
 
 /**
  * Determines which suppliers need to be supplied externally when assembling a product.
@@ -439,7 +454,7 @@ export type ToSupply<
     SUPPLIERS extends Supplier[],
     OPTIONALS extends ResourceSupplier[],
     HIRED extends ProductSupplier[]
-> = SupplyMapFromSuppliers<
+> = Supplies<
     ExcludeSuppliersType<
         TransitiveSuppliers<MergeSuppliers<SUPPLIERS, HIRED>>,
         ProductSupplier
@@ -472,15 +487,15 @@ export type ToSupply<
 export type FilterSuppliers<
     OLD extends Supplier[],
     NEW extends ProductSupplier[]
-> = OLD extends [infer Head, ...infer Tail]
-    ? Tail extends Supplier[]
-        ? Head extends { name: NEW[number]["name"] }
-            ? FilterSuppliers<Tail, NEW>
-            : [Head, ...FilterSuppliers<Tail, NEW>]
-        : Head extends { name: NEW[number]["name"] }
-        ? []
+> =
+    OLD extends [infer Head, ...infer Tail] ?
+        Tail extends Supplier[] ?
+            Head extends { name: NEW[number]["name"] } ?
+                FilterSuppliers<Tail, NEW>
+            :   [Head, ...FilterSuppliers<Tail, NEW>]
+        : Head extends { name: NEW[number]["name"] } ? []
         : [Head]
-    : []
+    :   []
 
 /**
  * Merges two supplier arrays by filtering out OLD suppliers that match NEW supplier names,
@@ -507,21 +522,22 @@ export type CircularDependencyGuard<
         ProductSupplier,
         "name" | "suppliers" | "optionals" | "assemblers" | "hired"
     >
-> = SUPPLIER["name"] extends (
-    AllTransitiveSuppliers<
-        [
-            ...MergeSuppliers<SUPPLIER["suppliers"], SUPPLIER["hired"]>,
-            ...SUPPLIER["optionals"],
-            ...MergeSuppliers<SUPPLIER["assemblers"], SUPPLIER["hired"]>
-        ]
-    >[number] extends infer S
-        ? S extends Supplier
-            ? S["name"]
-            : never
-        : never
-)
-    ? CircularDependencyError
-    : SUPPLIER
+> =
+    SUPPLIER["name"] extends (
+        AllTransitiveSuppliers<
+            [
+                ...MergeSuppliers<SUPPLIER["suppliers"], SUPPLIER["hired"]>,
+                ...SUPPLIER["optionals"],
+                ...MergeSuppliers<SUPPLIER["assemblers"], SUPPLIER["hired"]>
+            ]
+        >[number] extends infer S ?
+            S extends Supplier ?
+                S["name"]
+            :   never
+        :   never
+    ) ?
+        CircularDependencyError
+    :   SUPPLIER
 
 export type CircularDependencyError = {
     ERROR: "Circular dependency detected"

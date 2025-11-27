@@ -7,13 +7,15 @@ import type { User } from "@/api"
 import { useState } from "react"
 import { index } from "typectx"
 import { useQuery } from "@tanstack/react-query"
+import { use$ } from "@typectx/react-client"
 
 export const $$App = market.offer("App").asProduct({
     suppliers: [$$userQuery],
     assemblers: [$$SelectSession, $$Feed],
-    factory:
-        ($, $$) =>
-        ({ defaultUserId }: { defaultUserId: string }) => {
+    factory: (init$, $$) => {
+        console.log("App factory called")
+        return ({ defaultUserId }: { defaultUserId: string }) => {
+            const $ = use$(init$, $$)
             const { data: defaultSession } = useQuery(
                 $($$userQuery).unpack()(defaultUserId)
             )
@@ -51,4 +53,5 @@ export const $$App = market.offer("App").asProduct({
                 </div>
             )
         }
+    }
 })

@@ -3,12 +3,14 @@ import { market } from "@/market"
 import { type Comment, type Reply } from "@/api"
 import { $$Reply } from "@/components/reply"
 import { useQuery } from "@tanstack/react-query"
+import { use$ } from "@typectx/react-client"
 
 export const $$Comment = market.offer("Comment").asProduct({
     suppliers: [$$repliesQuery, $$Reply],
-    factory:
-        ($) =>
-        ({ comment }: { comment: Comment }) => {
+    factory: (init$, $$) => {
+        console.log("Comment factory called")
+        return ({ comment }: { comment: Comment }) => {
+            const $ = use$(init$, $$)
             const { data: replies } = useQuery(
                 $($$repliesQuery).unpack()(comment.id)
             )
@@ -32,4 +34,5 @@ export const $$Comment = market.offer("Comment").asProduct({
                 </div>
             )
         }
+    }
 })

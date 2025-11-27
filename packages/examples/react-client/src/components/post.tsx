@@ -7,6 +7,7 @@ import { index } from "typectx"
 import { ctx } from "@/context"
 import { useQuery } from "@tanstack/react-query"
 import { $$SelectSession } from "./session"
+import { use$ } from "@typectx/react-client"
 
 export const $$Post = market.offer("Post").asProduct({
     suppliers: [
@@ -17,44 +18,50 @@ export const $$Post = market.offer("Post").asProduct({
         $$Comment,
         $$SelectSession
     ],
-    factory: ($, $$) => () => {
-        const post = $(ctx.$$post).unpack()
-        const [session] = $(ctx.$$session).unpack()
-        const { data: users } = useQuery($($$usersQuery).unpack())
-        const { data: comments } = useQuery(
-            $($$commentsQuery).unpack()(post.id)
-        )
-        const [postSession, setPostSession] = useState(session)
+    factory: (init$, $$) => {
+        console.log("Post factory called")
+        return () => {
+            const $ = use$(init$, $$)
+            const post = $(ctx.$$post).unpack()
+            const [session] = $(ctx.$$session).unpack()
+            const { data: users } = useQuery($($$usersQuery).unpack())
+            const { data: comments } = useQuery(
+                $($$commentsQuery).unpack()(post.id)
+            )
+            const [postSession, setPostSession] = useState(session)
 
-        if (!users || !comments) {
-            return <div>Loading users or comments...</div>
+            if (!users || !comments) {
+                return <div>Loading users or comments...</div>
+            }
+
+            const newCtx = index(
+                ctx.$$session.pack([postSession, setPostSession]),
+                $(ctx.$$post)
+            )
+
+            const $Comment = $$($$Comment)
+                .hire($$SelectSession)
+                .assemble(newCtx)
+
+            const SelectSession = $Comment.$($$SelectSession).unpack()
+            const Comment = $Comment.unpack()
+
+            return (
+                <div className="border-2 border-purple-500 rounded-lg p-4 bg-gray-800">
+                    <div className="flex justify-between items-center mb-3">
+                        <h3 className="text-lg font-semibold text-purple-300">
+                            📝 Post: {post.id}
+                        </h3>
+                        <SelectSession />
+                    </div>
+
+                    <div className="space-y-3">
+                        {comments.map((comment: Comment) => (
+                            <Comment key={comment.id} comment={comment} />
+                        ))}
+                    </div>
+                </div>
+            )
         }
-
-        const newCtx = index(
-            ctx.$$session.pack([postSession, setPostSession]),
-            $(ctx.$$post)
-        )
-
-        const $Comment = $$($$Comment).hire($$SelectSession).assemble(newCtx)
-
-        const SelectSession = $Comment.$($$SelectSession).unpack()
-        const Comment = $Comment.unpack()
-
-        return (
-            <div className="border-2 border-purple-500 rounded-lg p-4 bg-gray-800">
-                <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-lg font-semibold text-purple-300">
-                        📝 Post: {post.id}
-                    </h3>
-                    <SelectSession />
-                </div>
-
-                <div className="space-y-3">
-                    {comments.map((comment: Comment) => (
-                        <Comment key={comment.id} comment={comment} />
-                    ))}
-                </div>
-            </div>
-        )
     }
 })

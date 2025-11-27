@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { createMarket } from "#index"
+import {
+    createMarket,
+    ExcludeSuppliersType,
+    ProductSupplier,
+    ResourceSupplier,
+    ToSupply
+} from "#index"
 import { index, once, sleep } from "#utils"
 
 describe("typectx", () => {

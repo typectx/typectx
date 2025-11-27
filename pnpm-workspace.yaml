@@ -6,3 +6,4 @@ packages:
     - "packages/*"
     - "packages/examples/*"
     - "packages/config/*"
+    - "packages/@typectx/*"
