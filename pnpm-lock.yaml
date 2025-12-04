@@ -23,6 +23,9 @@ importers:
       react-dom:
         specifier: ^19.0.0
         version: 19.2.0(react@19.2.0)
+      typectx:
+        specifier: workspace:^
+        version: link:../../typectx
     devDependencies:
       '@config.typectx/eslint':
         specifier: '*'

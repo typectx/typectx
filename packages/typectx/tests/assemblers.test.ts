@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, expectTypeOf } from "vitest"
-import { createMarket, Product } from "#index"
+import { BaseProductSupplier, createMarket, Product } from "#index"
 import { index } from "#utils"
 
 describe("Assemblers Feature", () => {
@@ -571,7 +571,9 @@ describe("Assemblers Feature", () => {
                         .assemble({})
 
                     const $assembler2 = $product.$($$assembler2)
-                    expectTypeOf($assembler2).toExtend<Product>()
+                    expectTypeOf($assembler2).toExtend<
+                        Product<any, BaseProductSupplier>
+                    >()
                     expect($assembler2.unpack()).toBe("assembler2-value")
                 }
             })
@@ -653,7 +655,8 @@ describe("Assemblers Feature", () => {
 
             const $$productB = $$productA.mock({
                 suppliers: [$$resource],
-                factory: ($) => $($$resource).unpack()
+                factory: ($) => $($$resource).unpack(),
+                lazy: true
             })
 
             const $$productC = market.offer("productC").asProduct({
@@ -669,11 +672,12 @@ describe("Assemblers Feature", () => {
                         $$($$productA).hire($$productB).assemble({}).unpack()
                     }).toThrow("Circular dependency detected")
 
+                    const hired = $$($$productC).hire($$productB)
+
                     // @ts-expect-error - resource is not supplied
-                    $$($$productC).hire($$productB).assemble({}).unpack()
+                    hired.assemble({}).unpack()
                     expect(
-                        $$($$productC)
-                            .hire($$productB)
+                        hired
                             .assemble(index($$resource.pack("resource-value")))
                             .unpack()
                     ).toBe("resource-value")

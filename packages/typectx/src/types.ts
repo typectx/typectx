@@ -51,7 +51,7 @@ export type ResourceSupplier<NAME extends string = string, CONSTRAINT = any> = {
  */
 export type Product<
     VALUE = any,
-    SUPPLIER extends BaseProductSupplier = BaseProductSupplier,
+    SUPPLIER extends BaseProductSupplier = ProductSupplier,
     SUPPLIES = $<Supplier[], ResourceSupplier[]>,
     ASSEMBLERS_MAP = $$<Supplier[], ResourceSupplier[], ProductSupplier[]>
 > = {
@@ -255,6 +255,7 @@ export type $<
     OPTIONALS extends ResourceSupplier[],
     WIDE extends boolean = true
 > = {
+    allKeys: (keyof Supplies<SUPPLIERS, OPTIONALS> & string)[]
     keys: (keyof Supplies<SUPPLIERS, OPTIONALS> & string)[]
 } & (<
     SUPPLIER extends {
@@ -288,12 +289,7 @@ export type $$<
     SUPPLIERS extends Supplier[],
     OPTIONALS extends ResourceSupplier[],
     ASSEMBLERS extends ProductSupplier[]
-> = {
-    _?: {
-        setter?: ($: $<[], []>) => void
-        update?: () => void
-    }
-} & (<
+> = <
     ASSEMBLER extends SUPPLIERS[number] | OPTIONALS[number] | ASSEMBLERS[number]
 >(
     assembler?: ASSEMBLER
@@ -339,7 +335,7 @@ export type $$<
             BaseProductSupplier<ASSEMBLER["name"], ASSEMBLER["_"]["constraint"]>
         >
     }
-:   ASSEMBLER) //Matched by optionals, simply returns the optional itself.
+:   ASSEMBLER //Matched by optionals, simply returns the optional itself.
 /**
  * Recursively filters out suppliers of a specific type from a supplier array.
  * This is used internally to separate product suppliers from resource suppliers

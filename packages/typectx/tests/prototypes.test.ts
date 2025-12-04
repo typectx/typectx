@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, type Mock, expectTypeOf } from "vitest"
-import { CircularDependencyError, createMarket, index, Product } from "#index"
+import {
+    BaseProductSupplier,
+    CircularDependencyError,
+    createMarket,
+    index,
+    Product
+} from "#index"
 import { sleep, once } from "#utils"
 
 describe("Mocks Feature", () => {
@@ -393,7 +399,9 @@ describe("Mocks Feature", () => {
                         .assemble({})
 
                     const $assembler = $product.$($$assembler)
-                    expectTypeOf($assembler).toExtend<Product>()
+                    expectTypeOf($assembler).toExtend<
+                        Product<any, BaseProductSupplier>
+                    >()
                     expect($assembler.unpack()).toBe("assembler-value")
                 }
             })

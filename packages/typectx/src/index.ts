@@ -13,8 +13,7 @@ import {
     MainSupplier,
     MainProductSupplier,
     MergeSuppliers,
-    TransitiveSuppliers,
-    Supplies
+    TransitiveSuppliers
 } from "#types"
 
 import { once, team as buildTeam, isProductSupplier, isPacked } from "#utils"
@@ -147,6 +146,7 @@ export const createMarket = () => {
                         } = config
 
                         type TEAM = [
+                            ...OPTIONALS,
                             ...TransitiveSuppliers<
                                 MergeSuppliers<SUPPLIERS, HIRED>
                             >
@@ -154,6 +154,7 @@ export const createMarket = () => {
 
                         const team = buildTeam(name, [
                             ...suppliers,
+                            ...optionals,
                             ...hired
                         ]) as TEAM
 
@@ -223,6 +224,7 @@ export const createMarket = () => {
                                 value: VALUE
                             ) {
                                 const $ = () => undefined as any
+                                $.allKeys = [] as any[]
                                 $.keys = [] as any[]
                                 return {
                                     unpack: () => value,
@@ -335,7 +337,14 @@ export const createMarket = () => {
                                         return supply
                                     }) as $<TEAM, OPTIONALS>
 
-                                    $.keys = Object.keys(supplies)
+                                    $.allKeys = Object.keys(supplies)
+                                    $.keys = $.allKeys.filter(
+                                        (key) =>
+                                            !![
+                                                ...thisSupplier.team,
+                                                ...thisSupplier.optionals
+                                            ].find((s) => s.name === key)
+                                    )
 
                                     // Prerun supplier factories
                                     for (const supplier of Object.values(
@@ -392,7 +401,7 @@ export const createMarket = () => {
                                         ...hired: ProductSupplier[]
                                     ) {
                                         const prev = Object.fromEntries(
-                                            $.keys.map((name) => [
+                                            $.allKeys.map((name) => [
                                                 name,
                                                 $({
                                                     name
@@ -404,9 +413,7 @@ export const createMarket = () => {
                                         const preserved: SupplyRecord<ProductSupplier> =
                                             {}
 
-                                        for (const name of Object.keys(
-                                            prev
-                                        ) as (keyof typeof prev)[]) {
+                                        for (const name of $.allKeys as (keyof typeof prev)[]) {
                                             const prevSupply = prev[name] as
                                                 | Product<any, ProductSupplier>
                                                 | Resource
@@ -459,17 +466,18 @@ export const createMarket = () => {
                                             preserved[name as any] = prevSupply
                                         }
 
-                                        const new$ = assembler._.assemble(
-                                            assembler.hire(...hired),
-                                            {
-                                                ...preserved,
-                                                ...supplied
-                                            }
-                                        )
+                                        const newSupplies =
+                                            assembler._.assemble(
+                                                assembler.hire(...hired),
+                                                {
+                                                    ...preserved,
+                                                    ...supplied
+                                                }
+                                            )
 
                                         return assembler._.build(
                                             assembler,
-                                            new$
+                                            newSupplies
                                         )
                                     }
 
@@ -625,5 +633,5 @@ export const createMarket = () => {
     return market
 }
 
-export { index, sleep } from "#utils"
+export { index, sleep, isProduct } from "#utils"
 export * from "#types"
