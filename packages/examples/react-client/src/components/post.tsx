@@ -1,28 +1,22 @@
 import { $$commentsQuery, $$usersQuery } from "@/api"
 import { market } from "@/market"
-import type { Comment } from "@/api"
+import type { Comment, Post } from "@/api"
 import { useState } from "react"
 import { $$Comment } from "@/components/comment"
 import { index } from "typectx"
 import { ctx } from "@/context"
 import { useQuery } from "@tanstack/react-query"
 import { $$SelectSession } from "./session"
-import { use$ } from "@typectx/react-client"
+import { useAssemble, useStored } from "@typectx/react-client"
 
 export const $$Post = market.offer("Post").asProduct({
-    suppliers: [
-        ctx.$$post,
-        ctx.$$session,
-        $$usersQuery,
-        $$commentsQuery,
-        $$Comment,
-        $$SelectSession
-    ],
+    suppliers: [ctx.$$session, $$usersQuery, $$commentsQuery],
+    optionals: [ctx.$$post],
+    assemblers: [$$Comment, $$SelectSession],
     factory: (init$, $$) => {
         console.log("Post factory called")
-        return () => {
-            const $ = use$(init$, $$)
-            const post = $(ctx.$$post).unpack()
+        return ({ post }: { post: Post }) => {
+            const $ = useStored(init$)
             const [session] = $(ctx.$$session).unpack()
             const { data: users } = useQuery($($$usersQuery).unpack())
             const { data: comments } = useQuery(
@@ -30,18 +24,19 @@ export const $$Post = market.offer("Post").asProduct({
             )
             const [postSession, setPostSession] = useState(session)
 
+            const newCtx = index(
+                $$(ctx.$$session).pack([postSession, setPostSession]),
+                $$(ctx.$$post).pack(post)
+            )
+
+            const $Comment = useAssemble(
+                $$($$Comment).hire($$SelectSession),
+                newCtx
+            )
+
             if (!users || !comments) {
                 return <div>Loading users or comments...</div>
             }
-
-            const newCtx = index(
-                ctx.$$session.pack([postSession, setPostSession]),
-                $(ctx.$$post)
-            )
-
-            const $Comment = $$($$Comment)
-                .hire($$SelectSession)
-                .assemble(newCtx)
 
             const SelectSession = $Comment.$($$SelectSession).unpack()
             const Comment = $Comment.unpack()

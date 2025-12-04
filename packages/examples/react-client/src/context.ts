@@ -4,6 +4,6 @@ import type { Post, User } from "@/api"
 export const ctx = {
     $$session: market
         .offer("session")
-        .asResource<[User, (user: User) => void]>(),
+        .asResource<[User | undefined, (user: User | undefined) => void]>(),
     $$post: market.offer("post").asResource<Post>()
 }

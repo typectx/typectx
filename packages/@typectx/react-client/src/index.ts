@@ -4,31 +4,40 @@ import {
     type ResourceSupplier,
     type Supplier,
     type Product,
-    isProduct
+    isProduct,
+    Resource,
+    ProductSupplier,
+    BaseProductSupplier
 } from "typectx"
 
-export function useElement$<COMPONENT$ extends $<[], []>>(
-    component$: COMPONENT$
+export function useStored<INIT$ extends $<Supplier[], ResourceSupplier[]>>(
+    init$: INIT$
 ) {
-    const element$ = useSyncExternalStore(
-        (listener: () => unknown) => store.subscribe(component$, listener),
-        () => store.get(component$),
-        () => component$
-    )
-    return element$ ?? component$
+    const stored$ = useSyncExternalStore(
+        (listener: () => unknown) => store.subscribe(init$, listener),
+        () => store.get(init$),
+        () => init$
+    ) as INIT$
+    return stored$ ?? init$
 }
 
-export function useAssemble(
+export function useAssemble<
+    CONSTRAINT,
+    TOSUPPLY,
+    SUPPLIED extends TOSUPPLY & Record<string, Product | Resource | undefined>,
+    SUPPLIES extends $<Supplier[], ResourceSupplier[]>
+>(
     supplier: {
-        name: string
-        assemble: (supplied: any) => Product
+        assemble: (
+            supplied: TOSUPPLY & Record<string, Product | Resource | undefined>
+        ) => Product<CONSTRAINT, BaseProductSupplier, SUPPLIES>
     },
-    supplied: any
+    supplied: SUPPLIED
 ) {
     // First render captures the initial assembly.
     // Child components won't be in `components` until they've mounted and
-    // subscribed via useElement$. On subsequent renders, subscribed children
-    // are detected and notified of changes. The useElement$ fallback
+    // subscribed via useStored. On subsequent renders, subscribed children
+    // are detected and notified of changes. The useStored fallback
     // (element$ ?? component$) ensures children receive initial values
     // before they're registered in the store.
     const [first] = useState(() => supplier.assemble(supplied))

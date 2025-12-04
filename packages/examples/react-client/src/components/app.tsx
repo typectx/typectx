@@ -7,37 +7,33 @@ import type { User } from "@/api"
 import { useState } from "react"
 import { index } from "typectx"
 import { useQuery } from "@tanstack/react-query"
-import { use$ } from "@typectx/react-client"
+import { useAssemble, useStored } from "@typectx/react-client"
+import { $$Post } from "./post"
 
 export const $$App = market.offer("App").asProduct({
     suppliers: [$$userQuery],
-    assemblers: [$$SelectSession, $$Feed],
+    assemblers: [$$SelectSession, $$Feed, $$Post],
     factory: (init$, $$) => {
         console.log("App factory called")
         return ({ defaultUserId }: { defaultUserId: string }) => {
-            const $ = use$(init$, $$)
+            const $ = useStored(init$)
             const { data: defaultSession } = useQuery(
                 $($$userQuery).unpack()(defaultUserId)
             )
             const [session, setSession] = useState<User | undefined>()
 
+            const $Feed = useAssemble(
+                $$($$Feed).hire($$($$SelectSession), $$($$Post)),
+                index(
+                    ctx.$$session.pack([session ?? defaultSession, setSession])
+                )
+            )
             if (!defaultSession) {
                 return <div>Loading default user...</div>
             }
 
-            const $FeedProduct = $$($$Feed)
-                .hire($$SelectSession)
-                .assemble(
-                    index(
-                        ctx.$$session.pack([
-                            session ?? defaultSession,
-                            setSession
-                        ])
-                    )
-                )
-
-            const Feed = $FeedProduct.unpack()
-            const SelectSession = $FeedProduct.$($$SelectSession).unpack()
+            const Feed = $Feed.unpack()
+            const SelectSession = $Feed.$($$SelectSession).unpack()
 
             return (
                 <div className="min-h-screen bg-gray-900 text-white p-6">
