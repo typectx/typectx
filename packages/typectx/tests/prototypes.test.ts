@@ -399,9 +399,7 @@ describe("Mocks Feature", () => {
                         .assemble({})
 
                     const $assembler = $product.$($$assembler)
-                    expectTypeOf($assembler).toExtend<
-                        Product<any, BaseProductSupplier>
-                    >()
+                    expectTypeOf($assembler).toExtend<Product>()
                     expect($assembler.unpack()).toBe("assembler-value")
                 }
             })

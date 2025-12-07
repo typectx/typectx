@@ -1,13 +1,12 @@
 import { market } from "@/market"
 import { ctx } from "@/context"
 import type { Reply } from "@/api"
-import { use$ } from "@typectx/react-client"
+import { useInit$ } from "@typectx/react-client"
 export const $$Reply = market.offer("reply").asProduct({
     suppliers: [ctx.$$post, ctx.$$session],
-    factory: (init$, $$) => {
-        console.log("Reply factory called")
-        return ({ reply }: { reply: Reply }) => {
-            const $ = use$(init$, $$)
+    factory: (init$, $$) =>
+        function Reply({ reply }: { reply: Reply }) {
+            const $ = useInit$(init$)
             const [session] = $(ctx.$$session).unpack()
             const post = $(ctx.$$post).unpack()
             return (
@@ -23,7 +22,7 @@ export const $$Reply = market.offer("reply").asProduct({
                             <div>
                                 👤 Current User:{" "}
                                 <span className="text-orange-300">
-                                    {session.id}
+                                    {session?.id ?? "Guest"}
                                 </span>
                             </div>
                             <div>
@@ -49,5 +48,4 @@ export const $$Reply = market.offer("reply").asProduct({
                 </div>
             )
         }
-    }
 })

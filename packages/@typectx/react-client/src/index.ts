@@ -1,4 +1,4 @@
-import { useState, useSyncExternalStore } from "react"
+import { useLayoutEffect, useState, useSyncExternalStore } from "react"
 import {
     type $,
     type ResourceSupplier,
@@ -6,22 +6,27 @@ import {
     type Product,
     isProduct,
     Resource,
-    ProductSupplier,
-    BaseProductSupplier
+    ProductSupplier
 } from "typectx"
 
-export function useStored<INIT$ extends $<Supplier[], ResourceSupplier[]>>(
+export function useInit$<INIT$ extends $<Supplier[], ResourceSupplier[]>>(
     init$: INIT$
 ) {
-    const stored$ = useSyncExternalStore(
-        (listener: () => unknown) => store.subscribe(init$, listener),
+    // useSyncExternalStore subscribes to store updates.
+    // Combined with the two-phase update in useAssembleComponent (silent set + deferred trigger),
+    // all components get single render pass regardless of memoization.
+    if (!store.has(init$)) {
+        store.set(init$, init$)
+    }
+    const $ = useSyncExternalStore(
+        (listener) => store.subscribe(init$, listener),
         () => store.get(init$),
         () => init$
     ) as INIT$
-    return stored$ ?? init$
+    return $ ?? init$
 }
 
-export function useAssemble<
+export function useAssembleComponent<
     CONSTRAINT,
     TOSUPPLY,
     SUPPLIED extends TOSUPPLY & Record<string, Product | Resource | undefined>,
@@ -30,50 +35,68 @@ export function useAssemble<
     supplier: {
         assemble: (
             supplied: TOSUPPLY & Record<string, Product | Resource | undefined>
-        ) => Product<CONSTRAINT, BaseProductSupplier, SUPPLIES>
+        ) => Product<CONSTRAINT, ProductSupplier, SUPPLIES>
     },
     supplied: SUPPLIED
 ) {
     // First render captures the initial assembly.
     // Child components won't be in `components` until they've mounted and
-    // subscribed via useStored. On subsequent renders, subscribed children
-    // are detected and notified of changes. The useStored fallback
-    // (element$ ?? component$) ensures children receive initial values
-    // before they're registered in the store.
+    // initialized their store.
     const [first] = useState(() => supplier.assemble(supplied))
 
-    const components = [first.supplier.name, ...first.$.keys].reduce<
-        Record<string, Product>
-    >((acc, key) => {
-        const supply = first.$({ name: key })
-        if (!isProduct(supply)) return acc
-        return store.isSubscribed(supply.$) ? { ...acc, [key]: supply } : acc
-    }, {})
+    const components = first.$.keys.reduce<Record<string, Product>>(
+        (acc, key) => {
+            const supply = first.$({ name: key })
+            if (!isProduct(supply)) return acc
+            return store.has(supply.$) ? { ...acc, [key]: supply } : acc
+        },
+        store.has(first.$) ? { [first.supplier.name]: first } : {}
+    )
 
-    Object.entries(components).forEach(([key, component]) => {
-        if (
-            ![
-                ...component.supplier.suppliers,
-                ...component.supplier.optionals,
-                ...component.supplier.hired
-            ].some(
-                (supplier) =>
-                    supplier.name in supplied &&
-                    supplied[supplier.name] !==
-                        (store.get(component.$)?.({ name: supplier.name }) ??
-                            undefined)
+    const triggered = Object.entries(components)
+        .map(([key, component]) => {
+            if (
+                ![
+                    ...component.supplier.suppliers,
+                    ...component.supplier.optionals,
+                    ...component.supplier.hired
+                ].some(
+                    (supplier) =>
+                        supplier.name in supplied &&
+                        supplied[supplier.name] !==
+                            (store.get(component.$)?.({
+                                name: supplier.name
+                            }) ?? undefined)
+                )
             )
-        )
-            return
-        store.set(
-            component.$,
-            component.supplier.assemble({ ...supplied, ...components }).$
-        )
+                return
+
+            store.set(
+                component.$,
+                first._.$$(component.supplier).assemble({
+                    ...supplied,
+                    ...components
+                }).$
+            )
+
+            return component
+        })
+        .filter((component) => component !== undefined)
+
+    // Always only one render pass!
+    // If component is memoed, then the synchronous render from parent will be skipped,
+    // If component is not memoed, then the synchronous render from parent will be executed,
+    // the snapshot will get updated, meaning the re-render from useLayoutEffect will be aborted.
+    // Since snapshot has not changed since synchronous render.
+    // Result: single render for all children, equivalent to React Context!
+    useLayoutEffect(() => {
+        triggered.forEach((component) => store.trigger(component.$))
     })
 
-    return first.supplier.name in components ?
-            first
-        :   supplier.assemble({ ...supplied, ...components })
+    // Always return first for referential stability.
+    // Updates to child components propagate via store.set() above,
+    // which useInit$ reads via useSyncExternalStore.
+    return first
 }
 
 const store = {
@@ -82,10 +105,15 @@ const store = {
         element$: $<Supplier[], ResourceSupplier[]>
     ) {
         store._.state.set(component$, element$)
-        store._.listeners.get(component$)?.forEach((listener) => listener())
     },
     get(component$: $<Supplier[], ResourceSupplier[]>) {
         return store._.state.get(component$)
+    },
+    has(component$: $<Supplier[], ResourceSupplier[]>) {
+        return store._.state.has(component$)
+    },
+    trigger(component$: $<Supplier[], ResourceSupplier[]>) {
+        store._.listeners.get(component$)?.forEach((listener) => listener())
     },
     subscribe(
         component$: $<Supplier[], ResourceSupplier[]>,
@@ -104,9 +132,6 @@ const store = {
                     ?.filter((l) => l !== listener) ?? []
             )
         }
-    },
-    isSubscribed(component$: $<Supplier[], ResourceSupplier[]>) {
-        return !!store._.listeners.get(component$)
     },
     _: {
         state: new WeakMap<

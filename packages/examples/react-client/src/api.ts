@@ -89,6 +89,7 @@ export const $$userQuery = market.offer("userQuery").asProduct({
         }
     }
 })
+
 export const $$usersQuery = market.offer("usersQuery").asProduct({
     suppliers: [$$userQuery],
     factory: () => {

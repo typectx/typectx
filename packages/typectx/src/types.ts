@@ -51,7 +51,7 @@ export type ResourceSupplier<NAME extends string = string, CONSTRAINT = any> = {
  */
 export type Product<
     VALUE = any,
-    SUPPLIER extends BaseProductSupplier = ProductSupplier,
+    SUPPLIER extends ProductSupplier = ProductSupplier,
     SUPPLIES = $<Supplier[], ResourceSupplier[]>,
     ASSEMBLERS_MAP = $$<Supplier[], ResourceSupplier[], ProductSupplier[]>
 > = {
@@ -175,9 +175,8 @@ type MaybeFn<A extends any[], R> = R | ((...args: A) => R)
  * A generic map of supplies where keys are supplier names and values are products or resources.
  * @public
  */
-export type SupplyRecord<
-    SUPPLIER extends BaseProductSupplier = BaseProductSupplier
-> = Record<string, MaybeFn<[], Product<any, SUPPLIER>> | Resource | undefined>
+export type SupplyRecord<SUPPLIER extends ProductSupplier = ProductSupplier> =
+    Record<string, MaybeFn<[], Product<any, SUPPLIER>> | Resource | undefined>
 
 /**
  * Converts an array of suppliers and optionals into a corresponding $ supply map.
@@ -194,12 +193,7 @@ export type Supplies<
     $MAP extends $<SUPPLIERS, OPTIONALS, WIDE> = $<SUPPLIERS, OPTIONALS, WIDE>
 > =
     ProductSupplier[] & ResourceSupplier[] extends SUPPLIERS | OPTIONALS ?
-        Record<
-            string,
-            | MaybeFn<[], Product<any, BaseProductSupplier>>
-            | Resource
-            | undefined
-        >
+        Record<string, MaybeFn<[], Product> | Resource | undefined>
     :   {
             [SUPPLIER in SUPPLIERS[number] as SUPPLIER["name"]]: SUPPLIER extends (
                 ProductSupplier
@@ -209,7 +203,7 @@ export type Supplies<
                     Product<
                         SUPPLIER["_"]["constraint"],
                         WIDE extends true ?
-                            BaseProductSupplier<
+                            ProductSupplier<
                                 SUPPLIER["name"],
                                 SUPPLIER["_"]["constraint"]
                             >
@@ -229,7 +223,7 @@ export type Supplies<
                     Product<
                         OPTIONAL["_"]["constraint"],
                         WIDE extends true ?
-                            BaseProductSupplier<
+                            ProductSupplier<
                                 OPTIONAL["name"],
                                 OPTIONAL["_"]["constraint"]
                             >
@@ -314,7 +308,7 @@ export type $$<
                 >
             ) => Product<
                 ASSEMBLER["_"]["constraint"],
-                BaseProductSupplier<
+                ProductSupplier<
                     ASSEMBLER["name"],
                     ASSEMBLER["_"]["constraint"]
                 >,
@@ -332,7 +326,7 @@ export type $$<
             >
         ) => Product<
             ASSEMBLER["_"]["constraint"],
-            BaseProductSupplier<ASSEMBLER["name"], ASSEMBLER["_"]["constraint"]>
+            ProductSupplier<ASSEMBLER["name"], ASSEMBLER["_"]["constraint"]>
         >
     }
 :   ASSEMBLER //Matched by optionals, simply returns the optional itself.

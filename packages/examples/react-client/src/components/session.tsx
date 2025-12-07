@@ -2,20 +2,19 @@ import { market } from "@/market"
 import { $$usersQuery } from "@/api"
 import { ctx } from "@/context"
 import { useQuery } from "@tanstack/react-query"
-import { use$ } from "@typectx/react-client"
+import { useInit$ } from "@typectx/react-client"
 
 export const $$SelectSession = market.offer("SelectSession").asProduct({
     suppliers: [$$usersQuery, ctx.$$session],
     optionals: [ctx.$$post],
-    factory: (init$, $$) => {
-        console.log("SelectSession factory called")
-        return () => {
-            const $ = use$(init$, $$)
+    factory: (init$, $$) =>
+        function SelectSession() {
+            const $ = useInit$(init$)
             const [session, setSession] = $(ctx.$$session).unpack()
             const { data: users } = useQuery($($$usersQuery).unpack())
             const post = $(ctx.$$post)?.unpack()
 
-            if (!users) {
+            if (!users || !session) {
                 return <div>Loading users...</div>
             }
             return (
@@ -30,9 +29,9 @@ export const $$SelectSession = market.offer("SelectSession").asProduct({
                                     key={user.id}
                                     onClick={() => setSession(user)}
                                     className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                                        session.id === user.id
-                                            ? "bg-blue-600 text-white"
-                                            : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                                        session.id === user.id ?
+                                            "bg-blue-600 text-white"
+                                        :   "bg-gray-700 text-gray-300 hover:bg-gray-600"
                                     }`}
                                 >
                                     {user.id}
@@ -50,5 +49,4 @@ export const $$SelectSession = market.offer("SelectSession").asProduct({
                 </div>
             )
         }
-    }
 })

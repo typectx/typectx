@@ -3,22 +3,24 @@ import { market } from "@/market"
 import { type Comment, type Reply } from "@/api"
 import { $$Reply } from "@/components/reply"
 import { useQuery } from "@tanstack/react-query"
-import { use$ } from "@typectx/react-client"
+import { useInit$ } from "@typectx/react-client"
+import { useAssertStable } from "@/hooks"
 
 export const $$Comment = market.offer("Comment").asProduct({
     suppliers: [$$repliesQuery, $$Reply],
-    factory: (init$, $$) => {
-        console.log("Comment factory called")
-        return ({ comment }: { comment: Comment }) => {
-            const $ = use$(init$, $$)
+    factory: (init$, $$) =>
+        function Comment({ comment }: { comment: Comment }) {
+            const $ = useInit$(init$)
             const { data: replies } = useQuery(
                 $($$repliesQuery).unpack()(comment.id)
             )
+
+            const assertStableReply = useAssertStable()
             if (!replies) {
                 return <div>Loading replies...</div>
             }
 
-            const Reply = $($$Reply).unpack()
+            const Reply = assertStableReply($($$Reply).unpack())
 
             return (
                 <div className="border-2 border-green-500 rounded-lg p-3 bg-gray-800 ml-4">
@@ -34,5 +36,4 @@ export const $$Comment = market.offer("Comment").asProduct({
                 </div>
             )
         }
-    }
 })

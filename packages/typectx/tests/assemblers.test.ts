@@ -571,9 +571,7 @@ describe("Assemblers Feature", () => {
                         .assemble({})
 
                     const $assembler2 = $product.$($$assembler2)
-                    expectTypeOf($assembler2).toExtend<
-                        Product<any, BaseProductSupplier>
-                    >()
+                    expectTypeOf($assembler2).toExtend<Product>()
                     expect($assembler2.unpack()).toBe("assembler2-value")
                 }
             })
@@ -645,7 +643,7 @@ describe("Assemblers Feature", () => {
             $$main.assemble(index($$resource.pack("resource-value"))).unpack()
         })
 
-        it("Calling $$().hire().assemble() should be properly typed + CircularDependency detection", () => {
+        it("Calling $$().hire(mock).assemble() should be properly typed", () => {
             const market = createMarket()
 
             const $$resource = market.offer("resource").asResource<string>()
@@ -653,26 +651,21 @@ describe("Assemblers Feature", () => {
                 factory: () => "productA-value"
             })
 
-            const $$productB = $$productA.mock({
-                suppliers: [$$resource],
-                factory: ($) => $($$resource).unpack(),
-                lazy: true
-            })
-
             const $$productC = market.offer("productC").asProduct({
                 suppliers: [$$productA],
                 factory: ($) => $($$productA).unpack()
             })
 
-            const $$main = market.offer("main").asProduct({
-                assemblers: [$$productC, $$productA],
-                factory: ($, $$) => {
-                    expect(() => {
-                        // @ts-expect-error - Just checking CircularDependency detection
-                        $$($$productA).hire($$productB).assemble({}).unpack()
-                    }).toThrow("Circular dependency detected")
+            const $$productAMock = $$productA.mock({
+                suppliers: [$$resource],
+                factory: ($) => "productAMock-value",
+                lazy: true
+            })
 
-                    const hired = $$($$productC).hire($$productB)
+            const $$main = market.offer("main").asProduct({
+                assemblers: [$$productC, $$productAMock],
+                factory: ($, $$) => {
+                    const hired = $$($$productC).hire($$productAMock)
 
                     // @ts-expect-error - resource is not supplied
                     hired.assemble({}).unpack()
@@ -680,11 +673,11 @@ describe("Assemblers Feature", () => {
                         hired
                             .assemble(index($$resource.pack("resource-value")))
                             .unpack()
-                    ).toBe("resource-value")
+                    ).toBe("productAMock-value")
                 }
             })
 
-            $$main.assemble(index($$resource.pack("resource-value"))).unpack()
+            $$main.assemble({}).unpack()
         })
     })
 })

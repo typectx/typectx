@@ -99,10 +99,10 @@ export function assertProductConfig(
     const hiredSuppliers = config.hiredSuppliers ?? []
     const hiredAssemblers = config.hiredAssemblers ?? []
 
-    assertSuppliers(name,suppliers)
-    assertResourceSuppliers(name,optionals)
-    assertProductSuppliers(name,assemblers)
-    assertSuppliers(name,hiredSuppliers, true)
+    assertSuppliers(name, suppliers)
+    assertResourceSuppliers(name, optionals)
+    assertProductSuppliers(name, assemblers, true)
+    assertSuppliers(name, hiredSuppliers, true)
     assertProductSuppliers(name, hiredAssemblers, true)
 
     if (config.init !== undefined) {
@@ -122,7 +122,7 @@ export function assertResourceSupplier(
     assertHasProperty("noname", supplier, "name")
     assertString("noname", supplier.name)
     assertHasProperty(supplier.name, supplier, "_")
-    assertHasProperty(supplier.name,  supplier._, "resource")
+    assertHasProperty(supplier.name, supplier._, "resource")
 }
 
 export function assertProductSupplier(

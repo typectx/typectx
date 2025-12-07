@@ -1,4 +1,4 @@
-import { $$commentsQuery, $$usersQuery } from "@/api"
+import { $$commentsQuery, $$userQuery, $$usersQuery } from "@/api"
 import { market } from "@/market"
 import type { Comment, Post } from "@/api"
 import { useState } from "react"
@@ -7,29 +7,46 @@ import { index } from "typectx"
 import { ctx } from "@/context"
 import { useQuery } from "@tanstack/react-query"
 import { $$SelectSession } from "./session"
-import { useAssemble, useStored } from "@typectx/react-client"
+import { useAssembleComponent, useInit$ } from "@typectx/react-client"
+import { useAssertStable } from "@/hooks"
 
 export const $$Post = market.offer("Post").asProduct({
-    suppliers: [ctx.$$session, $$usersQuery, $$commentsQuery],
+    suppliers: [
+        ctx.$$session,
+        $$usersQuery,
+        $$commentsQuery,
+        $$userQuery,
+        ctx.$$defaultUser
+    ],
     optionals: [ctx.$$post],
     assemblers: [$$Comment, $$SelectSession],
-    factory: (init$, $$) => {
-        console.log("Post factory called")
-        return ({ post }: { post: Post }) => {
-            const $ = useStored(init$)
+    factory: (init$, $$) =>
+        function Post({ post }: { post: Post }) {
+            const $ = useInit$(init$)
+            const { data: defaultSession } = useQuery(
+                $($$userQuery).unpack()($(ctx.$$defaultUser).unpack())
+            )
             const [session] = $(ctx.$$session).unpack()
             const { data: users } = useQuery($($$usersQuery).unpack())
             const { data: comments } = useQuery(
                 $($$commentsQuery).unpack()(post.id)
             )
-            const [postSession, setPostSession] = useState(session)
+            // Local session override - falls back to parent session until user changes it
+            const [postSession, setPostSession] =
+                useState<typeof session>(undefined)
+
+            const assertStableSelectSession = useAssertStable()
+            const assertStableComment = useAssertStable()
 
             const newCtx = index(
-                $$(ctx.$$session).pack([postSession, setPostSession]),
+                $$(ctx.$$session).pack([
+                    postSession ?? session ?? defaultSession,
+                    setPostSession
+                ]),
                 $$(ctx.$$post).pack(post)
             )
 
-            const $Comment = useAssemble(
+            const $Comment = useAssembleComponent(
                 $$($$Comment).hire($$SelectSession),
                 newCtx
             )
@@ -38,8 +55,10 @@ export const $$Post = market.offer("Post").asProduct({
                 return <div>Loading users or comments...</div>
             }
 
-            const SelectSession = $Comment.$($$SelectSession).unpack()
-            const Comment = $Comment.unpack()
+            const SelectSession = assertStableSelectSession(
+                $Comment.$($$SelectSession).unpack()
+            )
+            const Comment = assertStableComment($Comment.unpack())
 
             return (
                 <div className="border-2 border-purple-500 rounded-lg p-4 bg-gray-800">
@@ -58,5 +77,4 @@ export const $$Post = market.offer("Post").asProduct({
                 </div>
             )
         }
-    }
 })

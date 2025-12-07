@@ -11,7 +11,6 @@ import {
     AsProductParameters,
     Resource,
     MainSupplier,
-    MainProductSupplier,
     MergeSuppliers,
     TransitiveSuppliers
 } from "#types"
@@ -106,7 +105,7 @@ export const createMarket = () => {
                     LAZY extends boolean = false,
                     SUPPLIERS extends MainSupplier[] = [],
                     OPTIONALS extends ResourceSupplier[] = [],
-                    ASSEMBLERS extends MainProductSupplier[] = []
+                    ASSEMBLERS extends ProductSupplier[] = []
                 >(
                     config: AsProductParameters<
                         CONSTRAINT,
@@ -121,7 +120,7 @@ export const createMarket = () => {
                         LAZY extends boolean = false,
                         SUPPLIERS extends MainSupplier[] = [],
                         OPTIONALS extends ResourceSupplier[] = [],
-                        ASSEMBLERS extends MainProductSupplier[] = [],
+                        ASSEMBLERS extends ProductSupplier[] = [],
                         HIRED extends ProductSupplier[] = []
                     >(
                         config: AsProductParameters<
@@ -363,11 +362,19 @@ export const createMarket = () => {
                                     }
                                     const $$ = ((assembler: any) => {
                                         const actual =
-                                            assemblersTeam.find(
-                                                (member) =>
-                                                    member.name ===
-                                                    assembler.name
-                                            ) ?? assembler
+                                            assembler.name === name ?
+                                                supplier
+                                            :   assemblersTeam.find(
+                                                    (member) =>
+                                                        member.name ===
+                                                        assembler.name
+                                                )
+
+                                        if (!actual) {
+                                            throw new Error(
+                                                `Assembler ${assembler.name} not found`
+                                            )
+                                        }
 
                                         if (!isProductSupplier(actual)) {
                                             return actual
@@ -376,18 +383,42 @@ export const createMarket = () => {
                                         return {
                                             ...actual,
                                             hire<
-                                                HIRED extends ProductSupplier[]
+                                                HIRED extends { name: string }[]
                                             >(...hired: [...HIRED]) {
+                                                const actualHired = hired.map(
+                                                    (hired) => {
+                                                        const actual =
+                                                            assemblersTeam.find(
+                                                                (assembler) =>
+                                                                    assembler.name ===
+                                                                    hired.name
+                                                            )
+                                                        if (!actual) {
+                                                            throw new Error(
+                                                                `Hired assembler ${hired.name} not found`
+                                                            )
+                                                        }
+
+                                                        if (
+                                                            !isProductSupplier(
+                                                                actual
+                                                            )
+                                                        ) {
+                                                            throw new Error(
+                                                                `Hired assembler ${hired.name} is not a product supplier`
+                                                            )
+                                                        }
+                                                        return actual
+                                                    }
+                                                )
+
                                                 return {
-                                                    assemble: (
-                                                        supplied: any
-                                                    ) => {
-                                                        return reassemble(
+                                                    assemble: (supplied: any) =>
+                                                        reassemble(
                                                             actual,
                                                             supplied,
-                                                            ...hired
+                                                            ...actualHired
                                                         )
-                                                    }
                                                 }
                                             },
                                             assemble: (supplied: any) =>
@@ -466,17 +497,20 @@ export const createMarket = () => {
                                             preserved[name as any] = prevSupply
                                         }
 
+                                        const hiredAssembler = assembler.hire(
+                                            ...hired
+                                        )
                                         const newSupplies =
-                                            assembler._.assemble(
-                                                assembler.hire(...hired),
+                                            hiredAssembler._.assemble(
+                                                hiredAssembler,
                                                 {
                                                     ...preserved,
                                                     ...supplied
                                                 }
                                             )
 
-                                        return assembler._.build(
-                                            assembler,
+                                        return hiredAssembler._.build(
+                                            hiredAssembler,
                                             newSupplies
                                         )
                                     }
@@ -538,7 +572,7 @@ export const createMarket = () => {
                             LAZY extends boolean = false,
                             SUPPLIERS extends MainSupplier[] = [],
                             OPTIONALS extends ResourceSupplier[] = [],
-                            ASSEMBLERS extends MainProductSupplier[] = []
+                            ASSEMBLERS extends ProductSupplier[] = []
                         >(
                             this: THIS & {
                                 mock: MOCK
@@ -586,7 +620,7 @@ export const createMarket = () => {
                             LAZY extends boolean,
                             SUPPLIERS extends MainSupplier[],
                             OPTIONALS extends ResourceSupplier[],
-                            ASSEMBLERS extends MainProductSupplier[],
+                            ASSEMBLERS extends ProductSupplier[],
                             HIRED extends ProductSupplier[],
                             HIRED_2 extends ProductSupplier[]
                         >(
