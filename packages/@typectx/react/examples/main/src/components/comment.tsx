@@ -3,7 +3,7 @@ import { market } from "@/market"
 import { type Comment, type Reply } from "@/api"
 import { $$Reply } from "@/components/reply"
 import { useQuery } from "@tanstack/react-query"
-import { useInit$ } from "@typectx/react-client"
+import { useInit$ } from "@typectx/react"
 import { useAssertStable } from "@/hooks"
 
 export const $$Comment = market.offer("Comment").asProduct({

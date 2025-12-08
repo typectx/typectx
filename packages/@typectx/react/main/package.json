@@ -1,8 +1,8 @@
 {
-    "name": "@typectx/react-client",
+    "name": "@typectx/react",
     "type": "module",
     "version": "0.0.0",
-    "description": "Hook to synchronize React client components with typectx",
+    "description": "Hooks to synchronize React client components with typectx",
     "main": "dist/index.cjs",
     "module": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -12,6 +12,10 @@
     "repository": {
         "type": "git",
         "url": "git+https://github.com/typectx/typectx.git"
+    },
+    "homepage": "https://github.com/typectx/typectx/tree/main/packages/@typectx/react/main#readme",
+    "bugs": {
+        "url": "https://github.com/typectx/typectx/issues"
     },
     "imports": {
         "#*": "./src/*.ts"
@@ -30,9 +34,12 @@
         "build": "tsup",
         "dev": "tsup --watch"
     },
+    "publishConfig": {
+        "access": "public"
+    },
     "devDependencies": {
-        "@config.typectx/eslint": "*",
-        "@config.typectx/typescript": "*",
+        "@typectx/config.eslint": "*",
+        "@typectx/config.typescript": "*",
         "@types/react": "^19.2.6",
         "tsup": "^8.5.0",
         "turbo": "^2.5.5"

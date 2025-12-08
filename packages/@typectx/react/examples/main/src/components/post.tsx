@@ -7,7 +7,7 @@ import { index } from "typectx"
 import { ctx } from "@/context"
 import { useQuery } from "@tanstack/react-query"
 import { $$SelectSession } from "./session"
-import { useAssembleComponent, useInit$ } from "@typectx/react-client"
+import { useAssembleComponent, useInit$ } from "@typectx/react"
 import { useAssertStable } from "@/hooks"
 
 export const $$Post = market.offer("Post").asProduct({

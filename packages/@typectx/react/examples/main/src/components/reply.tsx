@@ -1,7 +1,7 @@
 import { market } from "@/market"
 import { ctx } from "@/context"
 import type { Reply } from "@/api"
-import { useInit$ } from "@typectx/react-client"
+import { useInit$ } from "@typectx/react"
 export const $$Reply = market.offer("reply").asProduct({
     suppliers: [ctx.$$post, ctx.$$session],
     factory: (init$, $$) =>

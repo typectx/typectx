@@ -1,5 +1,5 @@
 {
-    "name": "@typectx/examples-react-client",
+    "name": "@typectx/react.example",
     "version": "0.0.0",
     "type": "module",
     "private": false,
@@ -16,11 +16,11 @@
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "https://github.com/typectx/examples-react-client.git"
+        "url": "https://github.com/typectx/typectx.git"
     },
-    "homepage": "https://github.com/typectx/examples-react-client#readme",
+    "homepage": "https://github.com/typectx/typectx/tree/main/packages/@typectx/react/examples/main#readme",
     "bugs": {
-        "url": "https://github.com/typectx/examples-react-client/issues"
+        "url": "https://github.com/typectx/typectx/issues"
     },
     "scripts": {
         "dev": "vite",
@@ -31,7 +31,6 @@
         "test:ui": "vitest --ui"
     },
     "dependencies": {
-        "@config.typectx/eslint": "workspace:*",
         "@tailwindcss/vite": "^4.1.17",
         "@tanstack/query-core": "^5.90.9",
         "@tanstack/react-query": "^5.90.9",
@@ -40,7 +39,8 @@
         "react": "^19.2.0",
         "react-dom": "^19.2.0",
         "typectx": "workspace:*",
-        "@typectx/react-client": "workspace:*"
+        "@typectx/config.eslint": "workspace:*",
+        "@typectx/react": "workspace:*"
     },
     "devDependencies": {
         "@testing-library/jest-dom": "^6.9.1",

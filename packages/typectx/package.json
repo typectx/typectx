@@ -34,8 +34,8 @@
         "typecheck": "vitest run --typecheck.only"
     },
     "devDependencies": {
-        "@config.typectx/eslint": "*",
-        "@config.typectx/typescript": "*",
+        "@typectx/config.eslint": "*",
+        "@typectx/config.typescript": "*",
         "vitest": "^4.0.10",
         "@vitest/coverage-v8": "^4.0.10",
         "memoize": "^10.1.0",

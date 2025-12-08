@@ -1,3 +1,3 @@
-import baseConfig from "@config.typectx/eslint"
+import baseConfig from "@typectx/config.eslint"
 
 export default baseConfig

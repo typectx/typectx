@@ -2,7 +2,7 @@ import { market } from "@/market"
 import { $$usersQuery } from "@/api"
 import { ctx } from "@/context"
 import { useQuery } from "@tanstack/react-query"
-import { useInit$ } from "@typectx/react-client"
+import { useInit$ } from "@typectx/react"
 
 export const $$SelectSession = market.offer("SelectSession").asProduct({
     suppliers: [$$usersQuery, ctx.$$session],

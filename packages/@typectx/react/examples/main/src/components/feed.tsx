@@ -2,7 +2,7 @@ import { $$postsQuery } from "@/api"
 import { market } from "@/market"
 import { $$Post } from "@/components/post"
 import { useQuery } from "@tanstack/react-query"
-import { useInit$ } from "@typectx/react-client"
+import { useInit$ } from "@typectx/react"
 import { useAssertStable } from "@/hooks"
 
 export const $$Feed = market.offer("Feed").asProduct({

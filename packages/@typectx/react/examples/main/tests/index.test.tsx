@@ -5,7 +5,7 @@ import { QueryClientProvider } from "@tanstack/react-query"
 import { queryClient } from "@/query"
 import { StrictMode } from "react"
 import { createMarket } from "typectx"
-import { use$ } from "@typectx/react-client"
+import { use$ } from "../../../@typectx/react/dist"
 
 describe("React Client", () => {
     it("should be able to render the app", async () => {

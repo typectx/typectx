@@ -5,7 +5,7 @@ import { ctx } from "@/context"
 import { $$userQuery, type User } from "@/api"
 import { useState } from "react"
 import { index } from "typectx"
-import { useAssembleComponent, useInit$ } from "@typectx/react-client"
+import { useAssembleComponent, useInit$ } from "@typectx/react"
 import { useAssertStable } from "@/hooks"
 import { useQuery } from "@tanstack/react-query"
 
