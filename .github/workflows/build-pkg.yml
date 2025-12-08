@@ -23,8 +23,10 @@ jobs:
             - name: Install dependencies
               run: pnpm install
 
-            - name: Build package
-              run: pnpm run build --filter=typectx
+            - name: Build packages
+              run: |
+                  pnpm run build --filter=typectx
+                  pnpm run build --filter=@typectx/react
 
             - name: Upload build artifacts
               if: ${{ github.event_name == 'release' }}
@@ -34,3 +36,5 @@ jobs:
                   path: |
                       packages/typectx/dist
                       packages/typectx/package.json
+                      packages/@typectx/react/main/dist
+                      packages/@typectx/react/main/package.json
