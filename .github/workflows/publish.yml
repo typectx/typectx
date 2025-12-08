@@ -56,13 +56,13 @@ jobs:
               uses: actions/download-artifact@v5
               with:
                   name: typectx-build
-                  path: ./packages/typectx
+                  path: ./packages/typectx/dist
 
             - name: Download @typectx/react build artifacts
               uses: actions/download-artifact@v5
               with:
                   name: "typectx-react-build"
-                  path: ./packages/@typectx/react/main
+                  path: ./packages/@typectx/react/main/dist
 
             - name: Set version from release tag
               run: |
