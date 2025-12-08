@@ -41,6 +41,7 @@
         "@typectx/config.eslint": "*",
         "@typectx/config.typescript": "*",
         "@types/react": "^19.2.6",
+        "typectx": "workspace:^",
         "tsup": "^8.5.0",
         "turbo": "^2.5.5"
     },
