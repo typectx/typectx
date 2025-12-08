@@ -36,5 +36,7 @@ jobs:
                   path: |
                       packages/typectx/dist
                       packages/typectx/package.json
+                      packages/typectx/README.md
                       packages/@typectx/react/main/dist
                       packages/@typectx/react/main/package.json
+                      packages/@typectx/react/main/README.md
