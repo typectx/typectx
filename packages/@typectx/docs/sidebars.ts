@@ -36,12 +36,7 @@ const sidebars: SidebarsConfig = {
                 {
                     "Context propagation": [
                         "guides/context-propagation/optionals",
-                        "guides/context-propagation/assemblers",
-                        {
-                            type: "doc",
-                            id: "guides/context-propagation/react-context-alternative",
-                            label: "React Context alternative"
-                        }
+                        "guides/context-propagation/assemblers"
                     ]
                 },
                 "guides/testing",
@@ -50,7 +45,12 @@ const sidebars: SidebarsConfig = {
             ]
         },
         "api-reference",
-        "troubleshooting"
+        "troubleshooting",
+        {
+            type: "doc",
+            id: "@typectx-react",
+            label: "@typectx/react"
+        }
     ]
 }
 

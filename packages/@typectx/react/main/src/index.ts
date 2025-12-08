@@ -99,6 +99,8 @@ export function useAssembleComponent<
     return first
 }
 
+export const useAssembleHook = useAssembleComponent
+
 const store = {
     set(
         component$: $<Supplier[], ResourceSupplier[]>,
