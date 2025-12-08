@@ -28,15 +28,18 @@ jobs:
                   pnpm run build --filter=typectx
                   pnpm run build --filter=@typectx/react
 
-            - name: Upload build artifacts
+            - name: Upload typectx build artifacts
               if: ${{ github.event_name == 'release' }}
               uses: actions/upload-artifact@v4
               with:
                   name: typectx-build
                   path: |
                       packages/typectx/dist
-                      packages/typectx/package.json
-                      packages/typectx/README.md
+
+            - name: Upload @typectx/react build artifacts
+              if: ${{ github.event_name == 'release' }}
+              uses: actions/upload-artifact@v4
+              with:
+                  name: "@typectx/react-build"
+                  path: |
                       packages/@typectx/react/main/dist
-                      packages/@typectx/react/main/package.json
-                      packages/@typectx/react/main/README.md
