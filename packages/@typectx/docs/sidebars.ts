@@ -16,19 +16,11 @@ const sidebars: SidebarsConfig = {
     // Manually defined sidebar for better organization
     sidebar: [
         "getting-started",
+
         {
-            Examples: [
-                {
-                    type: "doc",
-                    id: "examples/simple-example",
-                    label: "Simple example"
-                },
-                {
-                    type: "link",
-                    href: "/examples/react-client",
-                    label: "React example"
-                }
-            ]
+            type: "doc",
+            id: "examples/simple-example",
+            label: "Simple example"
         },
         {
             Guides: [
@@ -44,13 +36,22 @@ const sidebars: SidebarsConfig = {
                 "guides/design-philosophy"
             ]
         },
-        "api-reference",
-        "troubleshooting",
         {
-            type: "doc",
-            id: "@typectx-react",
-            label: "@typectx/react"
-        }
+            "@typectx/react": [
+                {
+                    type: "doc",
+                    id: "@typectx-react",
+                    label: "Usage"
+                },
+                {
+                    type: "link",
+                    href: "/examples/react-client",
+                    label: "Example"
+                }
+            ]
+        },
+        "api-reference",
+        "troubleshooting"
     ]
 }
 
