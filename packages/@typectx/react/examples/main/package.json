@@ -38,9 +38,8 @@
         "date-fns": "^2.30.0",
         "react": "^19.2.0",
         "react-dom": "^19.2.0",
-        "typectx": "workspace:*",
-        "@typectx/config.eslint": "workspace:*",
-        "@typectx/react": "workspace:*"
+        "typectx": "*",
+        "@typectx/react": "*"
     },
     "devDependencies": {
         "@testing-library/jest-dom": "^6.9.1",
@@ -52,6 +51,10 @@
         "@vitejs/plugin-react": "^4.7.0",
         "@vitest/ui": "^1.6.1",
         "autoprefixer": "^10.4.22",
+        "eslint": "^9.26.0",
+        "@eslint/js": "^9.26.0",
+        "typescript-eslint": "^8.32.0",
+        "eslint-config-prettier": "^10.1.5",
         "eslint-plugin-react-hooks": "^7.0.1",
         "jsdom": "^27.2.0",
         "postcss": "^8.5.6",

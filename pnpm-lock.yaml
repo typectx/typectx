@@ -99,11 +99,8 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.90.9
         version: 5.90.12(react@19.2.0)
-      '@typectx/config.eslint':
-        specifier: workspace:*
-        version: link:../../../config/eslint
       '@typectx/react':
-        specifier: workspace:*
+        specifier: '*'
         version: link:../../main
       clsx:
         specifier: ^2.1.1
@@ -118,9 +115,12 @@ importers:
         specifier: ^19.2.0
         version: 19.2.0(react@19.2.0)
       typectx:
-        specifier: workspace:*
+        specifier: '*'
         version: link:../../../../typectx
     devDependencies:
+      '@eslint/js':
+        specifier: ^9.26.0
+        version: 9.32.0
       '@testing-library/dom':
         specifier: ^10.4.1
         version: 10.4.1
@@ -148,6 +148,12 @@ importers:
       autoprefixer:
         specifier: ^10.4.22
         version: 10.4.22(postcss@8.5.6)
+      eslint:
+        specifier: ^9.26.0
+        version: 9.32.0(jiti@2.6.1)
+      eslint-config-prettier:
+        specifier: ^10.1.5
+        version: 10.1.8(eslint@9.32.0(jiti@2.6.1))
       eslint-plugin-react-hooks:
         specifier: ^7.0.1
         version: 7.0.1(eslint@9.32.0(jiti@2.6.1))
@@ -163,6 +169,9 @@ importers:
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
+      typescript-eslint:
+        specifier: ^8.32.0
+        version: 8.39.1(eslint@9.32.0(jiti@2.6.1))(typescript@5.9.3)
       vite:
         specifier: ^5.4.21
         version: 5.4.21(@types/node@20.19.9)(lightningcss@1.30.2)(terser@5.43.1)
