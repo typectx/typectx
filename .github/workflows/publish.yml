@@ -61,7 +61,7 @@ jobs:
             - name: Download @typectx/react build artifacts
               uses: actions/download-artifact@v5
               with:
-                  name: "@typectx/react-build"
+                  name: "typectx/react-build"
                   path: ./packages/@typectx/react/main
 
             - name: Set version from release tag
