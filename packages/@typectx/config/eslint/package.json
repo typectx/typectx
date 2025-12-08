@@ -1,5 +1,5 @@
 {
-    "name": "@config.typectx/eslint",
+    "name": "@typectx/config.eslint",
     "version": "0.1.0",
     "type": "module",
     "exports": {

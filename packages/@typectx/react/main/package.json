@@ -1,8 +1,8 @@
 {
-    "name": "typectx",
+    "name": "@typectx/react",
     "type": "module",
     "version": "0.0.0",
-    "description": "Fully type-inferred Context and DI container for Typescript",
+    "description": "Hooks to synchronize React client components with typectx",
     "main": "dist/index.cjs",
     "module": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -12,6 +12,10 @@
     "repository": {
         "type": "git",
         "url": "git+https://github.com/typectx/typectx.git"
+    },
+    "homepage": "https://github.com/typectx/typectx/tree/main/packages/@typectx/react/main#readme",
+    "bugs": {
+        "url": "https://github.com/typectx/typectx/issues"
     },
     "imports": {
         "#*": "./src/*.ts"
@@ -28,18 +32,22 @@
     ],
     "scripts": {
         "build": "tsup",
-        "dev": "tsup --watch",
-        "test": "vitest",
-        "test:run": "vitest run --typecheck",
-        "typecheck": "vitest run --typecheck.only"
+        "dev": "tsup --watch"
+    },
+    "publishConfig": {
+        "access": "public"
     },
     "devDependencies": {
         "@typectx/config.eslint": "*",
         "@typectx/config.typescript": "*",
-        "vitest": "^4.0.10",
-        "@vitest/coverage-v8": "^4.0.10",
-        "memoize": "^10.1.0",
+        "@types/react": "^19.2.6",
+        "typectx": "workspace:^",
         "tsup": "^8.5.0",
         "turbo": "^2.5.5"
+    },
+    "peerDependencies": {
+        "react": "^19.0.0",
+        "react-dom": "^19.0.0",
+        "typectx": "workspace:^"
     }
 }

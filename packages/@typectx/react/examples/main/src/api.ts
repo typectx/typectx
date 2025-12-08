@@ -89,6 +89,7 @@ export const $$userQuery = market.offer("userQuery").asProduct({
         }
     }
 })
+
 export const $$usersQuery = market.offer("usersQuery").asProduct({
     suppliers: [$$userQuery],
     factory: () => {
@@ -126,7 +127,6 @@ export const $$repliesQuery = market.offer("repliesQuery").asProduct({
 })
 
 export const $$commentsQuery = market.offer("commentsQuery").asProduct({
-    suppliers: [$$repliesQuery],
     factory: () => (postId: string) => {
         return {
             queryKey: ["comments", postId],

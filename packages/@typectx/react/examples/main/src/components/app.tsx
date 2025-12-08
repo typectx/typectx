@@ -1,41 +1,39 @@
 import { $$Feed } from "@/components/feed"
 import { market } from "@/market"
-import { $$userQuery } from "@/api"
 import { $$SelectSession } from "@/components/session"
 import { ctx } from "@/context"
-import type { User } from "@/api"
+import { $$userQuery, type User } from "@/api"
 import { useState } from "react"
 import { index } from "typectx"
+import { useAssembleComponent, useInit$ } from "@typectx/react"
+import { useAssertStable } from "@/hooks"
 import { useQuery } from "@tanstack/react-query"
 
 export const $$App = market.offer("App").asProduct({
-    suppliers: [$$userQuery],
+    suppliers: [$$userQuery, ctx.$$defaultUser],
     assemblers: [$$SelectSession, $$Feed],
-    factory:
-        ($, $$) =>
-        ({ defaultUserId }: { defaultUserId: string }) => {
+    factory: (init$, $$) =>
+        function App() {
+            const $ = useInit$(init$)
             const { data: defaultSession } = useQuery(
-                $($$userQuery).unpack()(defaultUserId)
+                $($$userQuery).unpack()($(ctx.$$defaultUser).unpack())
             )
-            const [session, setSession] = useState<User | undefined>()
+            const [session, setSession] = useState<User | undefined>(undefined)
+            const assertStableFeed = useAssertStable()
+            const assertStableSelectSession = useAssertStable()
 
-            if (!defaultSession) {
-                return <div>Loading default user...</div>
-            }
-
-            const $FeedProduct = $$($$Feed)
-                .hire($$SelectSession)
-                .assemble(
-                    index(
-                        ctx.$$session.pack([
-                            session ?? defaultSession,
-                            setSession
-                        ])
-                    )
+            const $Feed = useAssembleComponent(
+                $$($$Feed).hire($$SelectSession),
+                index(
+                    ctx.$$session.pack([session ?? defaultSession, setSession])
                 )
+            )
 
-            const Feed = $FeedProduct.unpack()
-            const SelectSession = $FeedProduct.$($$SelectSession).unpack()
+            const Feed = assertStableFeed($Feed.unpack())
+
+            const SelectSession = assertStableSelectSession(
+                $Feed.$($$SelectSession).unpack()
+            )
 
             return (
                 <div className="min-h-screen bg-gray-900 text-white p-6">

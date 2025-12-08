@@ -4,5 +4,7 @@ linkWorkspacePackages: deep
 preferWorkspacePackages: true
 packages:
     - "packages/*"
-    - "packages/examples/*"
-    - "packages/config/*"
+    - "packages/@typectx/*"
+    - "packages/@typectx/config/*"
+    - "packages/@typectx/react/*"
+    - "packages/@typectx/react/examples/*"

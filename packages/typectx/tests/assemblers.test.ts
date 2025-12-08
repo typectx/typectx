@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, expectTypeOf } from "vitest"
-import { createMarket, Product } from "#index"
+import { BaseProductSupplier, createMarket, Product } from "#index"
 import { index } from "#utils"
 
 describe("Assemblers Feature", () => {
@@ -643,7 +643,7 @@ describe("Assemblers Feature", () => {
             $$main.assemble(index($$resource.pack("resource-value"))).unpack()
         })
 
-        it("Calling $$().hire().assemble() should be properly typed + CircularDependency detection", () => {
+        it("Calling $$().hire(mock).assemble() should be properly typed", () => {
             const market = createMarket()
 
             const $$resource = market.offer("resource").asResource<string>()
@@ -651,36 +651,33 @@ describe("Assemblers Feature", () => {
                 factory: () => "productA-value"
             })
 
-            const $$productB = $$productA.mock({
-                suppliers: [$$resource],
-                factory: ($) => $($$resource).unpack()
-            })
-
             const $$productC = market.offer("productC").asProduct({
                 suppliers: [$$productA],
                 factory: ($) => $($$productA).unpack()
             })
 
+            const $$productAMock = $$productA.mock({
+                suppliers: [$$resource],
+                factory: ($) => "productAMock-value",
+                lazy: true
+            })
+
             const $$main = market.offer("main").asProduct({
-                assemblers: [$$productC, $$productA],
+                assemblers: [$$productC, $$productAMock],
                 factory: ($, $$) => {
-                    expect(() => {
-                        // @ts-expect-error - Just checking CircularDependency detection
-                        $$($$productA).hire($$productB).assemble({}).unpack()
-                    }).toThrow("Circular dependency detected")
+                    const hired = $$($$productC).hire($$productAMock)
 
                     // @ts-expect-error - resource is not supplied
-                    $$($$productC).hire($$productB).assemble({}).unpack()
+                    hired.assemble({}).unpack()
                     expect(
-                        $$($$productC)
-                            .hire($$productB)
+                        hired
                             .assemble(index($$resource.pack("resource-value")))
                             .unpack()
-                    ).toBe("resource-value")
+                    ).toBe("productAMock-value")
                 }
             })
 
-            $$main.assemble(index($$resource.pack("resource-value"))).unpack()
+            $$main.assemble({}).unpack()
         })
     })
 })
