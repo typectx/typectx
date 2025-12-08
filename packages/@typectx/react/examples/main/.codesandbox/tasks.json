@@ -16,6 +16,10 @@
             "preview": {
                 "port": 3001
             }
+        },
+        "update-deps": {
+            "name": "update-deps",
+            "command": "pnpm install"
         }
     }
 }
