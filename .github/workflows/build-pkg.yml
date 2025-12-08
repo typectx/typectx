@@ -40,6 +40,6 @@ jobs:
               if: ${{ github.event_name == 'release' }}
               uses: actions/upload-artifact@v4
               with:
-                  name: "typectx/react-build"
+                  name: "typectx-react-build"
                   path: |
                       packages/@typectx/react/main/dist
