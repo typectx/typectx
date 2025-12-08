@@ -56,7 +56,7 @@ jobs:
               uses: actions/download-artifact@v5
               with:
                   name: typectx-build
-                  path: .
+                  path: ./artifacts
 
             - name: Set version from release tag
               run: |
@@ -66,85 +66,85 @@ jobs:
                   echo "VERSION=$VERSION" >> $GITHUB_ENV
 
             - name: Set version for typectx
-              working-directory: ./packages/typectx
+              working-directory: ./artifacts/typectx
               run: |
                   npm version $VERSION --no-git-tag-version
                   echo "typectx package.json version is now: $(cat package.json | jq -r .version)"
 
             - name: Set version for @typectx/react
-              working-directory: ./packages/@typectx/react/main
+              working-directory: ./artifacts/@typectx/react/main
               run: |
                   npm version $VERSION --no-git-tag-version
                   echo "@typectx/react package.json version is now: $(cat package.json | jq -r .version)"
 
             - name: Dry publish typectx
               if: contains(github.event.release.tag_name, 'dry')
-              working-directory: ./packages/typectx
+              working-directory: ./artifacts/typectx
               run: |
                   npm publish --tag dry --dry-run
 
             - name: Dry publish @typectx/react
               if: contains(github.event.release.tag_name, 'dry')
-              working-directory: ./packages/@typectx/react/main
+              working-directory: ./artifacts/@typectx/react/main
               run: |
                   npm publish --tag dry --dry-run
 
             - name: Publish typectx to Canary
               if: contains(github.event.release.tag_name, 'canary')
-              working-directory: ./packages/typectx
+              working-directory: ./artifacts/typectx
               run: |
                   npm publish --tag canary
 
             - name: Publish @typectx/react to Canary
               if: contains(github.event.release.tag_name, 'canary')
-              working-directory: ./packages/@typectx/react/main
+              working-directory: ./artifacts/@typectx/react/main
               run: |
                   npm publish --tag canary
 
             - name: Publish typectx to Alpha
               if: contains(github.event.release.tag_name, 'alpha')
-              working-directory: ./packages/typectx
+              working-directory: ./artifacts/typectx
               run: |
                   npm publish --tag alpha
 
             - name: Publish @typectx/react to Alpha
               if: contains(github.event.release.tag_name, 'alpha')
-              working-directory: ./packages/@typectx/react/main
+              working-directory: ./artifacts/@typectx/react/main
               run: |
                   npm publish --tag alpha
 
             - name: Publish typectx to Beta
               if: contains(github.event.release.tag_name, 'beta')
-              working-directory: ./packages/typectx
+              working-directory: ./artifacts/typectx
               run: |
                   npm publish --tag beta
 
             - name: Publish @typectx/react to Beta
               if: contains(github.event.release.tag_name, 'beta')
-              working-directory: ./packages/@typectx/react/main
+              working-directory: ./artifacts/@typectx/react/main
               run: |
                   npm publish --tag beta
 
             - name: Publish typectx to RC
               if: contains(github.event.release.tag_name, 'rc')
-              working-directory: ./packages/typectx
+              working-directory: ./artifacts/typectx
               run: |
                   npm publish --tag rc
 
             - name: Publish @typectx/react to RC
               if: contains(github.event.release.tag_name, 'rc')
-              working-directory: ./packages/@typectx/react/main
+              working-directory: ./artifacts/@typectx/react/main
               run: |
                   npm publish --tag rc
 
             - name: Publish typectx to Latest
               if: contains(github.event.release.tag_name, '-') == false
-              working-directory: ./packages/typectx
+              working-directory: ./artifacts/typectx
               run: |
                   npm publish --tag latest
 
             - name: Publish @typectx/react to Latest
               if: contains(github.event.release.tag_name, '-') == false
-              working-directory: ./packages/@typectx/react/main
+              working-directory: ./artifacts/@typectx/react/main
               run: |
                   npm publish --tag latest
