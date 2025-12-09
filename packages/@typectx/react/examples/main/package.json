@@ -36,8 +36,8 @@
         "@tanstack/react-query": "^5.90.9",
         "clsx": "^2.1.1",
         "date-fns": "^2.30.0",
-        "react": "^19.2.0",
-        "react-dom": "^19.2.0",
+        "react": "^19.2.1",
+        "react-dom": "^19.2.1",
         "typectx": "^0.4.2",
         "@typectx/react": "^0.4.2"
     },
