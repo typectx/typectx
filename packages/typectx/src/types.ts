@@ -490,24 +490,16 @@ export type ToSupply<
  */
 export type FilterSuppliers<
     OLD extends Supplier[],
-    NEW extends ProductSupplier[],
-    ACC extends Supplier[] = []
+    NEW extends ProductSupplier[]
 > =
-    // Flat conditional 1: Head matches a name in NEW - skip it
-    OLD extends (
-        [
-            infer Head extends { name: NEW[number]["name"] },
-            ...infer Tail extends Supplier[]
-        ]
-    ) ?
-        FilterSuppliers<Tail, NEW, ACC>
-    : // Flat conditional 2: Head doesn't match - keep it
-    OLD extends (
-        [infer Head extends Supplier, ...infer Tail extends Supplier[]]
-    ) ?
-        FilterSuppliers<Tail, NEW, [...ACC, Head]>
-    :   // Base case
-        ACC
+    OLD extends [infer Head, ...infer Tail] ?
+        Tail extends Supplier[] ?
+            Head extends { name: NEW[number]["name"] } ?
+                FilterSuppliers<Tail, NEW>
+            :   [Head, ...FilterSuppliers<Tail, NEW>]
+        : Head extends { name: NEW[number]["name"] } ? []
+        : [Head]
+    :   []
 
 /**
  * Merges two supplier arrays by filtering out OLD suppliers that match NEW supplier names,
