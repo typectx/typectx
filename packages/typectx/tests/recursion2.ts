@@ -44,19 +44,24 @@ const $$d10 = market2.offer("d10").asProduct({
     suppliers: [$$d8, $$d9],
     factory: ($) => $($$d8).unpack() + $($$d9).unpack() + 1
 })
-
-// Test the 2-dependency chain
-// When tested incrementally (d7, then d8, then d9), d8 and d9 work!
-// But d8 alone fails - TypeScript benefits from incremental type checking
-const result = $$d7.assemble({})
-const result2 = $$d8.assemble({})
-const result3 = $$d9.assemble({})
-const result4 = $$d10.assemble({}) // This fails even incrementally
+const $$d11 = market2.offer("d11").asProduct({
+    suppliers: [$$d9, $$d10],
+    factory: ($) => $($$d9).unpack() + $($$d10).unpack() + 1
+})
+const $$d12 = market2.offer("d12").asProduct({
+    suppliers: [$$d10, $$d11],
+    factory: ($) => $($$d10).unpack() + $($$d11).unpack() + 1
+})
+const $$d13 = market2.offer("d13").asProduct({
+    suppliers: [$$d11, $$d12],
+    factory: ($) => $($$d11).unpack() + $($$d12).unpack() + 1
+})
+const $$d14 = market2.offer("d14").asProduct({
+    suppliers: [$$d12, $$d13],
+    factory: ($) => $($$d12).unpack() + $($$d13).unpack() + 1
+})
+// Test the 2-dependency chain - finding the limit
+const result = $$d14.assemble({})
 
 // If we get here without type error, the depth is OK
-console.log(
-    "Result 2-deps:",
-    result.unpack(),
-    result2.unpack(),
-    result3.unpack()
-)
+console.log("Result 2-deps d14:", result.unpack())

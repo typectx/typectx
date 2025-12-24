@@ -242,4 +242,4 @@ const $$s80 = market
     .offer("s80")
     .asProduct({ suppliers: [$$s79], factory: ($) => $($$s79).unpack() + 1 })
 
-const result = $$s48.assemble({})
+const result = $$s80.assemble({})

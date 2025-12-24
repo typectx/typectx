@@ -342,19 +342,21 @@ export type $$<
  */
 export type ExcludeSuppliersType<
     SUPPLIERS extends Supplier[],
-    TYPE extends Supplier
+    TYPE extends Supplier,
+    ACC extends Supplier[] = []
 > =
     // Flat conditional 1: Head matches TYPE - skip it
     SUPPLIERS extends (
         [infer Head extends TYPE, ...infer Tail extends Supplier[]]
     ) ?
-        ExcludeSuppliersType<Tail, TYPE>
+        ExcludeSuppliersType<Tail, TYPE, ACC>
     : // Flat conditional 2: Head doesn't match TYPE - keep it
     SUPPLIERS extends (
         [infer Head extends Supplier, ...infer Tail extends Supplier[]]
     ) ?
-        [Head, ...ExcludeSuppliersType<Tail, TYPE>]
-    :   []
+        ExcludeSuppliersType<Tail, TYPE, [...ACC, Head]>
+    :   // Base case
+        ACC
 
 /**
  * Recursively collects transitive suppliers (excluding optionals and assemblers)
@@ -507,19 +509,6 @@ export type FilterSuppliers<
     :   // Base case
         ACC
 
-export type FilterSuppliers2<
-    OLD extends Supplier[],
-    NEW extends ProductSupplier[]
-> =
-    OLD extends [infer Head, ...infer Tail] ?
-        Tail extends Supplier[] ?
-            Head extends { name: NEW[number]["name"] } ?
-                FilterSuppliers2<Tail, NEW>
-            :   [Head, ...FilterSuppliers2<Tail, NEW>]
-        : Head extends { name: NEW[number]["name"] } ? []
-        : [Head]
-    :   []
-
 /**
  * Merges two supplier arrays by filtering out OLD suppliers that match NEW supplier names,
  * then appending NEW suppliers. This ensures hired suppliers override existing ones.
@@ -533,7 +522,7 @@ export type FilterSuppliers2<
 export type MergeSuppliers<
     OLD extends Supplier[],
     NEW extends ProductSupplier[]
-> = [...FilterSuppliers2<OLD, NEW>, ...NEW]
+> = [...FilterSuppliers<OLD, NEW>, ...NEW]
 
 /**
  * Checks if a supplier has a circular dependency by seeing if its name appears
@@ -553,11 +542,7 @@ export type CircularDependencyGuard<
                 ...SUPPLIER["optionals"],
                 ...MergeSuppliers<SUPPLIER["assemblers"], SUPPLIER["hired"]>
             ]
-        >[number] extends infer S ?
-            S extends Supplier ?
-                S["name"]
-            :   never
-        :   never
+        >[number]["name"]
     ) ?
         CircularDependencyError
     :   SUPPLIER
