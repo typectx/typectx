@@ -1,3 +1,5 @@
+import type { assertProductConfig } from "#validation"
+
 /**
  * Represents a resource - a simple value container that can be packed and unpacked.
  * Resources are immutable value holders that don't depend on other suppliers.
@@ -371,20 +373,24 @@ export type TransitiveSuppliers<
     SUPPLIERS extends Supplier[],
     ACC extends Supplier[] = []
 > =
-    SUPPLIERS extends [infer FIRST extends ProductSupplier, ...infer REST] ?
-        // Tail-recursive: queue up FIRST's suppliers + REST, accumulate FIRST
+    SUPPLIERS extends (
+        [infer FIRST extends ProductSupplier, ...infer REST extends Supplier[]]
+    ) ?
+        // Tail-recursive: queue up FIRST's suppliers + REST (both filtered), accumulate FIRST
         TransitiveSuppliers<
-            [
-                ...MergeSuppliers<FIRST["suppliers"], FIRST["hired"]>,
-                ...(REST extends Supplier[] ? REST : [])
-            ],
+            MergeSuppliers<
+                FilterSuppliers<
+                    MergeSuppliers<FIRST["suppliers"], FIRST["hired"]>,
+                    ACC
+                >,
+                REST
+            >,
             [...ACC, FIRST]
         >
-    : SUPPLIERS extends [infer FIRST extends ResourceSupplier, ...infer REST] ?
-        TransitiveSuppliers<
-            REST extends Supplier[] ? REST : [],
-            [...ACC, FIRST]
-        >
+    : SUPPLIERS extends (
+        [infer FIRST extends ResourceSupplier, ...infer REST extends Supplier[]]
+    ) ?
+        TransitiveSuppliers<REST, [...ACC, FIRST]>
     :   ACC
 
 /**
@@ -399,22 +405,28 @@ export type AllTransitiveSuppliers<
     ACC extends Supplier[] = []
 > =
     // Flat conditional 1: ProductSupplier
-    SUPPLIERS extends [infer FIRST extends ProductSupplier, ...infer REST] ?
+    SUPPLIERS extends (
+        [infer FIRST extends ProductSupplier, ...infer REST extends Supplier[]]
+    ) ?
         AllTransitiveSuppliers<
-            [
-                ...MergeSuppliers<FIRST["suppliers"], FIRST["hired"]>,
-                ...FIRST["optionals"],
-                ...MergeSuppliers<FIRST["assemblers"], FIRST["hired"]>,
-                ...(REST extends Supplier[] ? REST : [])
-            ],
+            MergeSuppliers<
+                FilterSuppliers<
+                    [
+                        ...MergeSuppliers<FIRST["suppliers"], FIRST["hired"]>,
+                        ...FIRST["optionals"],
+                        ...MergeSuppliers<FIRST["assemblers"], FIRST["hired"]>
+                    ],
+                    ACC
+                >,
+                REST
+            >,
             [...ACC, FIRST]
         >
     : // Flat conditional 2: ResourceSupplier
-    SUPPLIERS extends [infer FIRST extends ResourceSupplier, ...infer REST] ?
-        AllTransitiveSuppliers<
-            REST extends Supplier[] ? REST : [],
-            [...ACC, FIRST]
-        >
+    SUPPLIERS extends (
+        [infer FIRST extends ResourceSupplier, ...infer REST extends Supplier[]]
+    ) ?
+        AllTransitiveSuppliers<REST, [...ACC, FIRST]>
     :   ACC
 
 /**
@@ -490,16 +502,19 @@ export type ToSupply<
  */
 export type FilterSuppliers<
     OLD extends Supplier[],
-    NEW extends ProductSupplier[]
+    DEL extends Supplier[],
+    ACC extends Supplier[] = []
 > =
-    OLD extends [infer Head, ...infer Tail] ?
-        Tail extends Supplier[] ?
-            Head extends { name: NEW[number]["name"] } ?
-                FilterSuppliers<Tail, NEW>
-            :   [Head, ...FilterSuppliers<Tail, NEW>]
-        : Head extends { name: NEW[number]["name"] } ? []
-        : [Head]
-    :   []
+    OLD extends [infer Head extends Supplier, ...infer Tail] ?
+        Head extends { name: DEL[number]["name"] } ?
+            FilterSuppliers<Tail extends Supplier[] ? Tail : [], DEL, ACC>
+        :   FilterSuppliers<
+                Tail extends Supplier[] ? Tail : [],
+                DEL,
+                [...ACC, Head]
+            >
+    :   // Base case
+        ACC
 
 /**
  * Merges two supplier arrays by filtering out OLD suppliers that match NEW supplier names,
@@ -511,10 +526,10 @@ export type FilterSuppliers<
  * @returns A merged array with NEW suppliers replacing matching OLD suppliers
  * @public
  */
-export type MergeSuppliers<
-    OLD extends Supplier[],
-    NEW extends ProductSupplier[]
-> = [...FilterSuppliers<OLD, NEW>, ...NEW]
+export type MergeSuppliers<OLD extends Supplier[], WITH extends Supplier[]> = [
+    ...FilterSuppliers<OLD, WITH>,
+    ...WITH
+]
 
 /**
  * Checks if a supplier has a circular dependency by seeing if its name appears
@@ -526,18 +541,7 @@ export type CircularDependencyGuard<
         ProductSupplier,
         "name" | "suppliers" | "optionals" | "assemblers" | "hired"
     >
-> =
-    SUPPLIER["name"] extends (
-        AllTransitiveSuppliers<
-            [
-                ...MergeSuppliers<SUPPLIER["suppliers"], SUPPLIER["hired"]>,
-                ...SUPPLIER["optionals"],
-                ...MergeSuppliers<SUPPLIER["assemblers"], SUPPLIER["hired"]>
-            ]
-        >[number]["name"]
-    ) ?
-        CircularDependencyError
-    :   SUPPLIER
+> = SUPPLIER
 
 export type CircularDependencyError = {
     ERROR: "Circular dependency detected"

@@ -60,8 +60,73 @@ const $$d14 = market2.offer("d14").asProduct({
     suppliers: [$$d12, $$d13],
     factory: ($) => $($$d12).unpack() + $($$d13).unpack() + 1
 })
-// Test the 2-dependency chain - finding the limit
-const result = $$d14.assemble({})
+const $$d15 = market2.offer("d15").asProduct({
+    suppliers: [$$d13, $$d14],
+    factory: ($) => $($$d13).unpack() + $($$d14).unpack() + 1
+})
+const $$d16 = market2.offer("d16").asProduct({
+    suppliers: [$$d14, $$d15],
+    factory: ($) => $($$d14).unpack() + $($$d15).unpack() + 1
+})
+const $$d17 = market2.offer("d17").asProduct({
+    suppliers: [$$d15, $$d16],
+    factory: ($) => $($$d15).unpack() + $($$d16).unpack() + 1
+})
+const $$d18 = market2.offer("d18").asProduct({
+    suppliers: [$$d16, $$d17],
+    factory: ($) => $($$d16).unpack() + $($$d17).unpack() + 1
+})
+const $$d19 = market2.offer("d19").asProduct({
+    suppliers: [$$d17, $$d18],
+    factory: ($) => $($$d17).unpack() + $($$d18).unpack() + 1
+})
+const $$d20 = market2.offer("d20").asProduct({
+    suppliers: [$$d18, $$d19],
+    factory: ($) => $($$d18).unpack() + $($$d19).unpack() + 1
+})
+const $$d21 = market2.offer("d21").asProduct({
+    suppliers: [$$d19, $$d20],
+    factory: ($) => $($$d19).unpack() + $($$d20).unpack() + 1
+})
+const $$d22 = market2.offer("d22").asProduct({
+    suppliers: [$$d20, $$d21],
+    factory: ($) => $($$d20).unpack() + $($$d21).unpack() + 1
+})
+const $$d23 = market2.offer("d23").asProduct({
+    suppliers: [$$d21, $$d22],
+    factory: ($) => $($$d21).unpack() + $($$d22).unpack() + 1
+})
+const $$d24 = market2.offer("d24").asProduct({
+    suppliers: [$$d22, $$d23],
+    factory: ($) => $($$d22).unpack() + $($$d23).unpack() + 1
+})
+const $$d25 = market2.offer("d25").asProduct({
+    suppliers: [$$d23, $$d24],
+    factory: ($) => $($$d23).unpack() + $($$d24).unpack() + 1
+})
+const $$d26 = market2.offer("d26").asProduct({
+    suppliers: [$$d24, $$d25],
+    factory: ($) => $($$d24).unpack() + $($$d25).unpack() + 1
+})
+const $$d27 = market2.offer("d27").asProduct({
+    suppliers: [$$d25, $$d26],
+    factory: ($) => $($$d25).unpack() + $($$d26).unpack() + 1
+})
+const $$d28 = market2.offer("d28").asProduct({
+    suppliers: [$$d26, $$d27],
+    factory: ($) => $($$d26).unpack() + $($$d27).unpack() + 1
+})
+const $$d29 = market2.offer("d29").asProduct({
+    suppliers: [$$d27, $$d28],
+    factory: ($) => $($$d27).unpack() + $($$d28).unpack() + 1
+})
+const $$d30 = market2.offer("d30").asProduct({
+    suppliers: [$$d28, $$d29],
+    factory: ($) => $($$d28).unpack() + $($$d29).unpack() + 1
+})
+
+// Test the 2-dependency chain up to d30
+const result = $$d30.assemble({})
 
 // If we get here without type error, the depth is OK
-console.log("Result 2-deps d14:", result.unpack())
+console.log("Result 2-deps d30:", result.unpack())
