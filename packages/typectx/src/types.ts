@@ -536,12 +536,28 @@ export type MergeSuppliers<OLD extends Supplier[], WITH extends Supplier[]> = [
  * in the transitive dependencies of its own suppliers.
  * @public
  */
+
 export type CircularDependencyGuard<
     SUPPLIER extends Pick<
         ProductSupplier,
         "name" | "suppliers" | "optionals" | "assemblers" | "hired"
     >
-> = SUPPLIER
+> =
+    SUPPLIER["name"] extends (
+        AllTransitiveSuppliers<
+            [
+                ...MergeSuppliers<SUPPLIER["suppliers"], SUPPLIER["hired"]>,
+                ...SUPPLIER["optionals"],
+                ...MergeSuppliers<SUPPLIER["assemblers"], SUPPLIER["hired"]>
+            ]
+        >[number] extends infer S ?
+            S extends Supplier ?
+                S["name"]
+            :   never
+        :   never
+    ) ?
+        CircularDependencyError
+    :   SUPPLIER
 
 export type CircularDependencyError = {
     ERROR: "Circular dependency detected"
