@@ -1,3 +1,5 @@
+import type { assertProductConfig } from "#validation"
+
 /**
  * Represents a resource - a simple value container that can be packed and unpacked.
  * Resources are immutable value holders that don't depend on other suppliers.
@@ -342,16 +344,21 @@ export type $$<
  */
 export type ExcludeSuppliersType<
     SUPPLIERS extends Supplier[],
-    TYPE extends Supplier
+    TYPE extends Supplier,
+    ACC extends Supplier[] = []
 > =
-    SUPPLIERS extends [infer Head, ...infer Tail] ?
-        Head extends TYPE ?
-            Tail extends Supplier[] ?
-                ExcludeSuppliersType<Tail, TYPE>
-            :   []
-        : Tail extends Supplier[] ? [Head, ...ExcludeSuppliersType<Tail, TYPE>]
-        : [Head]
-    :   []
+    // Flat conditional 1: Head matches TYPE - skip it
+    SUPPLIERS extends (
+        [infer Head extends TYPE, ...infer Tail extends Supplier[]]
+    ) ?
+        ExcludeSuppliersType<Tail, TYPE, ACC>
+    : // Flat conditional 2: Head doesn't match TYPE - keep it
+    SUPPLIERS extends (
+        [infer Head extends Supplier, ...infer Tail extends Supplier[]]
+    ) ?
+        ExcludeSuppliersType<Tail, TYPE, [...ACC, Head]>
+    :   // Base case
+        ACC
 
 /**
  * Recursively collects transitive suppliers (excluding optionals and assemblers)
@@ -362,20 +369,29 @@ export type ExcludeSuppliersType<
  *
  * @internal
  */
-export type TransitiveSuppliers<SUPPLIERS extends Supplier[]> =
-    SUPPLIERS extends [infer FIRST, ...infer REST] ?
-        FIRST extends ProductSupplier ?
-            [
-                FIRST,
-                ...TransitiveSuppliers<
-                    MergeSuppliers<FIRST["suppliers"], FIRST["hired"]>
+export type TransitiveSuppliers<
+    SUPPLIERS extends Supplier[],
+    ACC extends Supplier[] = []
+> =
+    SUPPLIERS extends (
+        [infer FIRST extends ProductSupplier, ...infer REST extends Supplier[]]
+    ) ?
+        // Tail-recursive: queue up FIRST's suppliers + REST (both filtered), accumulate FIRST
+        TransitiveSuppliers<
+            MergeSuppliers<
+                FilterSuppliers<
+                    MergeSuppliers<FIRST["suppliers"], FIRST["hired"]>,
+                    ACC
                 >,
-                ...TransitiveSuppliers<REST extends Supplier[] ? REST : []>
-            ]
-        : FIRST extends ResourceSupplier ?
-            [FIRST, ...TransitiveSuppliers<REST extends Supplier[] ? REST : []>]
-        :   never
-    :   []
+                REST
+            >,
+            [...ACC, FIRST]
+        >
+    : SUPPLIERS extends (
+        [infer FIRST extends ResourceSupplier, ...infer REST extends Supplier[]]
+    ) ?
+        TransitiveSuppliers<REST, [...ACC, FIRST]>
+    :   ACC
 
 /**
  * Recursively collects ALL transitive dependencies (including assemblers and optionals)
@@ -384,27 +400,34 @@ export type TransitiveSuppliers<SUPPLIERS extends Supplier[]> =
  *
  * @internal
  */
-export type AllTransitiveSuppliers<SUPPLIERS extends Supplier[]> =
-    SUPPLIERS extends [infer FIRST, ...infer REST] ?
-        FIRST extends ProductSupplier ?
-            [
-                FIRST,
-                ...AllTransitiveSuppliers<
-                    MergeSuppliers<FIRST["suppliers"], FIRST["hired"]>
+export type AllTransitiveSuppliers<
+    SUPPLIERS extends Supplier[],
+    ACC extends Supplier[] = []
+> =
+    // Flat conditional 1: ProductSupplier
+    SUPPLIERS extends (
+        [infer FIRST extends ProductSupplier, ...infer REST extends Supplier[]]
+    ) ?
+        AllTransitiveSuppliers<
+            MergeSuppliers<
+                FilterSuppliers<
+                    [
+                        ...MergeSuppliers<FIRST["suppliers"], FIRST["hired"]>,
+                        ...FIRST["optionals"],
+                        ...MergeSuppliers<FIRST["assemblers"], FIRST["hired"]>
+                    ],
+                    ACC
                 >,
-                ...AllTransitiveSuppliers<FIRST["optionals"]>,
-                ...AllTransitiveSuppliers<
-                    MergeSuppliers<FIRST["assemblers"], FIRST["hired"]>
-                >,
-                ...AllTransitiveSuppliers<REST extends Supplier[] ? REST : []>
-            ]
-        : FIRST extends ResourceSupplier ?
-            [
-                FIRST,
-                ...AllTransitiveSuppliers<REST extends Supplier[] ? REST : []>
-            ]
-        :   never
-    :   []
+                REST
+            >,
+            [...ACC, FIRST]
+        >
+    : // Flat conditional 2: ResourceSupplier
+    SUPPLIERS extends (
+        [infer FIRST extends ResourceSupplier, ...infer REST extends Supplier[]]
+    ) ?
+        AllTransitiveSuppliers<REST, [...ACC, FIRST]>
+    :   ACC
 
 /**
  * Recursively collects all optional suppliers from a supplier array.
@@ -415,17 +438,20 @@ export type AllTransitiveSuppliers<SUPPLIERS extends Supplier[]> =
  * @returns A flattened array of all optional resource suppliers
  * @internal
  */
-export type Optionals<SUPPLIERS extends Supplier[]> =
-    SUPPLIERS extends [infer FIRST, ...infer REST] ?
-        FIRST extends ProductSupplier ?
-            [
-                ...FIRST["optionals"],
-                ...Optionals<REST extends Supplier[] ? REST : []>
-            ]
-        : FIRST extends ResourceSupplier ?
-            Optionals<REST extends Supplier[] ? REST : []>
-        :   never
-    :   []
+export type Optionals<
+    SUPPLIERS extends Supplier[],
+    ACC extends ResourceSupplier[] = []
+> =
+    // Flat conditional 1: ProductSupplier - collect its optionals
+    SUPPLIERS extends [infer FIRST extends ProductSupplier, ...infer REST] ?
+        Optionals<
+            REST extends Supplier[] ? REST : [],
+            [...ACC, ...FIRST["optionals"]]
+        >
+    : // Flat conditional 2: ResourceSupplier - skip (no optionals)
+    SUPPLIERS extends [infer FIRST extends ResourceSupplier, ...infer REST] ?
+        Optionals<REST extends Supplier[] ? REST : [], ACC>
+    :   ACC
 
 /**
  * Determines which suppliers need to be supplied externally when assembling a product.
@@ -459,7 +485,7 @@ export type ToSupply<
         >,
         ...ExcludeSuppliersType<
             TransitiveSuppliers<MergeSuppliers<SUPPLIERS, HIRED>>,
-            ResourceSupplier
+            ProductSupplier
         >
     ]
 >
@@ -476,16 +502,19 @@ export type ToSupply<
  */
 export type FilterSuppliers<
     OLD extends Supplier[],
-    NEW extends ProductSupplier[]
+    DEL extends Supplier[],
+    ACC extends Supplier[] = []
 > =
-    OLD extends [infer Head, ...infer Tail] ?
-        Tail extends Supplier[] ?
-            Head extends { name: NEW[number]["name"] } ?
-                FilterSuppliers<Tail, NEW>
-            :   [Head, ...FilterSuppliers<Tail, NEW>]
-        : Head extends { name: NEW[number]["name"] } ? []
-        : [Head]
-    :   []
+    OLD extends [infer Head extends Supplier, ...infer Tail] ?
+        Head extends { name: DEL[number]["name"] } ?
+            FilterSuppliers<Tail extends Supplier[] ? Tail : [], DEL, ACC>
+        :   FilterSuppliers<
+                Tail extends Supplier[] ? Tail : [],
+                DEL,
+                [...ACC, Head]
+            >
+    :   // Base case
+        ACC
 
 /**
  * Merges two supplier arrays by filtering out OLD suppliers that match NEW supplier names,
@@ -497,16 +526,17 @@ export type FilterSuppliers<
  * @returns A merged array with NEW suppliers replacing matching OLD suppliers
  * @public
  */
-export type MergeSuppliers<
-    OLD extends Supplier[],
-    NEW extends ProductSupplier[]
-> = [...FilterSuppliers<OLD, NEW>, ...NEW]
+export type MergeSuppliers<OLD extends Supplier[], WITH extends Supplier[]> = [
+    ...FilterSuppliers<OLD, WITH>,
+    ...WITH
+]
 
 /**
  * Checks if a supplier has a circular dependency by seeing if its name appears
  * in the transitive dependencies of its own suppliers.
  * @public
  */
+
 export type CircularDependencyGuard<
     SUPPLIER extends Pick<
         ProductSupplier,
