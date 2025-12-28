@@ -1,7 +1,7 @@
 {
     "name": "typectx",
     "type": "module",
-    "version": "0.4.2",
+    "version": "0.5.0",
     "description": "Fully type-inferred Context and DI container for Typescript",
     "main": "dist/index.cjs",
     "module": "dist/index.js",

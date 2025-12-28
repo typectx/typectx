@@ -1,5 +1,6 @@
 publicHoistPattern:
     - "*eslint*"
+    - "!@typectx/config.eslint"
 linkWorkspacePackages: deep
 preferWorkspacePackages: true
 packages:

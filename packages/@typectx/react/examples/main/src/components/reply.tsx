@@ -1,14 +1,16 @@
 import { market } from "@/market"
-import { ctx } from "@/context"
+import { resources } from "@/resources"
 import type { Reply } from "@/api"
-import { useInit$ } from "@typectx/react"
-export const $$Reply = market.offer("reply").asProduct({
-    suppliers: [ctx.$$post, ctx.$$session],
-    factory: (init$, $$) =>
+import { useDeps } from "@typectx/react"
+
+export const $Reply = market.offer("Reply").asProduct({
+    suppliers: [resources.$post, resources.$session],
+    factory: (initDeps, ctx) =>
         function Reply({ reply }: { reply: Reply }) {
-            const $ = useInit$(init$)
-            const [session] = $(ctx.$$session).unpack()
-            const post = $(ctx.$$post).unpack()
+            const {
+                post,
+                session: [session]
+            } = useDeps(initDeps)
             return (
                 <div className="border-2 border-orange-500 rounded-lg p-2 bg-gray-800 ml-6">
                     <div className="flex justify-between items-center">

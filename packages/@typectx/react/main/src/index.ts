@@ -1,41 +1,41 @@
 import { useLayoutEffect, useState, useSyncExternalStore } from "react"
 import {
-    type $,
     type ResourceSupplier,
     type Supplier,
     type Product,
     isProduct,
     Resource,
+    Deps,
     ProductSupplier
 } from "typectx"
 
-export function useInit$<INIT$ extends $<Supplier[], ResourceSupplier[]>>(
-    init$: INIT$
+export function useDeps<INIT_DEPS extends Deps<Supplier[], ResourceSupplier[]>>(
+    initDeps: INIT_DEPS
 ) {
     // useSyncExternalStore subscribes to store updates.
     // Combined with the two-phase update in useAssembleComponent (silent set + deferred trigger),
     // all components get single render pass regardless of memoization.
-    if (!store.has(init$)) {
-        store.set(init$, init$)
+    if (!store.has(initDeps)) {
+        store.set(initDeps, initDeps)
     }
-    const $ = useSyncExternalStore(
-        (listener) => store.subscribe(init$, listener),
-        () => store.get(init$),
-        () => init$
-    ) as INIT$
-    return $ ?? init$
+    const deps = useSyncExternalStore(
+        (listener) => store.subscribe(initDeps, listener),
+        () => store.get(initDeps),
+        () => initDeps
+    ) as INIT_DEPS
+    return deps ?? initDeps
 }
 
 export function useAssembleComponent<
     CONSTRAINT,
     TOSUPPLY,
     SUPPLIED extends TOSUPPLY & Record<string, Product | Resource | undefined>,
-    SUPPLIES extends $<Supplier[], ResourceSupplier[]>
+    DEPS extends Deps<Supplier[], ResourceSupplier[]>
 >(
     supplier: {
         assemble: (
             supplied: TOSUPPLY & Record<string, Product | Resource | undefined>
-        ) => Product<CONSTRAINT, ProductSupplier, SUPPLIES>
+        ) => Product<CONSTRAINT, ProductSupplier, DEPS>
     },
     supplied: SUPPLIED
 ) {
@@ -44,18 +44,20 @@ export function useAssembleComponent<
     // initialized their store.
     const [first] = useState(() => supplier.assemble(supplied))
 
-    const components = first.$.keys.reduce<Record<string, Product>>(
-        (acc, key) => {
-            const supply = first.$({ name: key })
+    const components = Object.entries(first.supplies).reduce<
+        Record<string, Product>
+    >(
+        (acc, [key, supply]) => {
             if (!isProduct(supply)) return acc
-            return store.has(supply.$) ? { ...acc, [key]: supply } : acc
+            return store.has(supply.deps) ? { ...acc, [key]: supply } : acc
         },
-        store.has(first.$) ? { [first.supplier.name]: first } : {}
+        store.has(first.deps) ? { [first.supplier.name]: first } : {}
     )
 
     const triggered = Object.entries(components)
         .map(([key, component]) => {
             if (
+                // This is not the team! Team is transitive, this is just the direct dependencies!
                 ![
                     ...component.supplier.suppliers,
                     ...component.supplier.optionals,
@@ -64,19 +66,18 @@ export function useAssembleComponent<
                     (supplier) =>
                         supplier.name in supplied &&
                         supplied[supplier.name] !==
-                            (store.get(component.$)?.({
-                                name: supplier.name
-                            }) ?? undefined)
+                            (store.get(component.deps)?.[supplier.name] ??
+                                undefined)
                 )
             )
                 return
 
             store.set(
-                component.$,
-                first._.$$(component.supplier).assemble({
+                component.deps,
+                first._.ctx(component.supplier).assemble({
                     ...supplied,
                     ...components
-                }).$
+                }).deps
             )
 
             return component
@@ -90,7 +91,7 @@ export function useAssembleComponent<
     // Since snapshot has not changed since synchronous render.
     // Result: single render for all children, equivalent to React Context!
     useLayoutEffect(() => {
-        triggered.forEach((component) => store.trigger(component.$))
+        triggered.forEach((component) => store.trigger(component.deps))
     })
 
     // Always return first for referential stability.
@@ -103,45 +104,45 @@ export const useAssembleHook = useAssembleComponent
 
 const store = {
     set(
-        component$: $<Supplier[], ResourceSupplier[]>,
-        element$: $<Supplier[], ResourceSupplier[]>
+        componentDeps: Deps<Supplier[], ResourceSupplier[]>,
+        elementDeps: Deps<Supplier[], ResourceSupplier[]>
     ) {
-        store._.state.set(component$, element$)
+        store._.state.set(componentDeps, elementDeps)
     },
-    get(component$: $<Supplier[], ResourceSupplier[]>) {
-        return store._.state.get(component$)
+    get(componentDeps: Deps<Supplier[], ResourceSupplier[]>) {
+        return store._.state.get(componentDeps)
     },
-    has(component$: $<Supplier[], ResourceSupplier[]>) {
-        return store._.state.has(component$)
+    has(componentDeps: Deps<Supplier[], ResourceSupplier[]>) {
+        return store._.state.has(componentDeps)
     },
-    trigger(component$: $<Supplier[], ResourceSupplier[]>) {
-        store._.listeners.get(component$)?.forEach((listener) => listener())
+    trigger(componentDeps: Deps<Supplier[], ResourceSupplier[]>) {
+        store._.listeners.get(componentDeps)?.forEach((listener) => listener())
     },
     subscribe(
-        component$: $<Supplier[], ResourceSupplier[]>,
+        componentDeps: Deps<Supplier[], ResourceSupplier[]>,
         listener: () => unknown
     ) {
-        store._.listeners.set(component$, [
-            ...(store._.listeners.get(component$) ?? []),
+        store._.listeners.set(componentDeps, [
+            ...(store._.listeners.get(componentDeps) ?? []),
             listener
         ])
 
         return () => {
             store._.listeners.set(
-                component$,
+                componentDeps,
                 store._.listeners
-                    .get(component$)
+                    .get(componentDeps)
                     ?.filter((l) => l !== listener) ?? []
             )
         }
     },
     _: {
         state: new WeakMap<
-            $<Supplier[], ResourceSupplier[]>,
-            $<Supplier[], ResourceSupplier[]>
+            Deps<Supplier[], ResourceSupplier[]>,
+            Deps<Supplier[], ResourceSupplier[]>
         >(),
         listeners: new WeakMap<
-            $<Supplier[], ResourceSupplier[]>,
+            Deps<Supplier[], ResourceSupplier[]>,
             (() => unknown)[]
         >()
     }

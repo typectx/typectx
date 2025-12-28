@@ -1,18 +1,20 @@
 import { market } from "@/market"
-import { $$usersQuery } from "@/api"
-import { ctx } from "@/context"
+import { $usersQuery } from "@/api"
+import { resources } from "@/resources"
 import { useQuery } from "@tanstack/react-query"
-import { useInit$ } from "@typectx/react"
+import { useDeps } from "@typectx/react"
 
-export const $$SelectSession = market.offer("SelectSession").asProduct({
-    suppliers: [$$usersQuery, ctx.$$session],
-    optionals: [ctx.$$post],
-    factory: (init$, $$) =>
+export const $SelectSession = market.offer("SelectSession").asProduct({
+    suppliers: [$usersQuery, resources.$session],
+    optionals: [resources.$post],
+    factory: (initDeps, ctx) =>
         function SelectSession() {
-            const $ = useInit$(init$)
-            const [session, setSession] = $(ctx.$$session).unpack()
-            const { data: users } = useQuery($($$usersQuery).unpack())
-            const post = $(ctx.$$post)?.unpack()
+            const {
+                usersQuery,
+                session: [session, setSession],
+                post
+            } = useDeps(initDeps)
+            const { data: users } = useQuery(usersQuery)
 
             if (!users || !session) {
                 return <div>Loading users...</div>
