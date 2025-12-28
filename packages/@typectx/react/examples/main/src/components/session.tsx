@@ -7,7 +7,7 @@ import { useDeps } from "@typectx/react"
 export const $SelectSession = market.offer("SelectSession").asProduct({
     suppliers: [$usersQuery, resources.$session],
     optionals: [resources.$post],
-    factory: (initDeps, ctx) =>
+    factory: (initDeps) =>
         function SelectSession() {
             const {
                 usersQuery,

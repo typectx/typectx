@@ -22,7 +22,7 @@
             "url": "http://localhost:3001",
             "sourceMaps": true,
             "smartStep": true,
-            "webRoot": "${workspaceFolder}/packages/examples/react-client"
+            "webRoot": "${workspaceFolder}/packages/@typectx/react/examples/main"
         }
     ]
 }

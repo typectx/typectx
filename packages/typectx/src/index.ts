@@ -344,20 +344,14 @@ export const createMarket = () => {
                                         )
                                     )
 
-                                    const deps = Object.keys(resolve()).reduce(
+                                    const deps = Object.keys(supplies).reduce(
                                         (acc, name) => {
-                                            Object.defineProperty(acc, name, {
-                                                get() {
-                                                    return resolve()[
-                                                        name
-                                                    ]?.unpack()
-                                                },
-                                                enumerable: true,
-                                                configurable: true
-                                            })
+                                            acc[name] = () => {
+                                                return resolve()[name]?.unpack()
+                                            }
                                             return acc
                                         },
-                                        {} as Record<string, any>
+                                        {} as Record<string, () => any>
                                     )
 
                                     // Prerun supplier factories in the background (non-blocking)
@@ -368,8 +362,8 @@ export const createMarket = () => {
                                             continue
 
                                         try {
-                                            Promise.resolve().then(
-                                                () => deps[supplier.name]
+                                            Promise.resolve().then(() =>
+                                                deps[supplier.name]?.()
                                             )
                                         } catch (e) {
                                             // console.error(e)
@@ -454,7 +448,9 @@ export const createMarket = () => {
                                         const preserved: SuppliesRecord<ProductSupplier> =
                                             {}
 
-                                        for (const name of Object.keys(deps)) {
+                                        for (const name of Object.keys(
+                                            resolved
+                                        )) {
                                             const supply = resolved[name] as
                                                 | Product<any, ProductSupplier>
                                                 | Resource
@@ -525,17 +521,44 @@ export const createMarket = () => {
                                     }
 
                                     const { filteredDeps, filteredResolved } =
-                                        Object.keys(deps).reduce(
-                                            (acc, key) => {
+                                        Object.entries(deps).reduce(
+                                            (acc, [key, dep]) => {
                                                 if (
-                                                    !(key in thisSupplier.team)
+                                                    !thisSupplier.team.some(
+                                                        (member) =>
+                                                            member.name === key
+                                                    )
                                                 ) {
                                                     return acc
                                                 }
-                                                acc.filteredDeps[key] =
-                                                    deps[key]
-                                                acc.filteredResolved[key] =
-                                                    resolve()[key]
+
+                                                // Transform method to getter for better api design
+                                                Object.defineProperty(
+                                                    acc.filteredDeps,
+                                                    key,
+                                                    {
+                                                        get() {
+                                                            return dep()
+                                                        },
+                                                        enumerable: true,
+                                                        configurable: true
+                                                    }
+                                                )
+
+                                                Object.defineProperty(
+                                                    acc.filteredResolved,
+                                                    key,
+                                                    {
+                                                        get() {
+                                                            return resolve()[
+                                                                key
+                                                            ]
+                                                        },
+                                                        enumerable: true,
+                                                        configurable: true
+                                                    }
+                                                )
+
                                                 return acc
                                             },
                                             {

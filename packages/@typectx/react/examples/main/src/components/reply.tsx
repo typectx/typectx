@@ -5,7 +5,7 @@ import { useDeps } from "@typectx/react"
 
 export const $Reply = market.offer("Reply").asProduct({
     suppliers: [resources.$post, resources.$session],
-    factory: (initDeps, ctx) =>
+    factory: (initDeps) =>
         function Reply({ reply }: { reply: Reply }) {
             const {
                 post,

@@ -7,7 +7,7 @@ import { useAssertStable } from "@/hooks"
 
 export const $Feed = market.offer("Feed").asProduct({
     suppliers: [$postsQuery, $Post],
-    factory: (initDeps, ctx) =>
+    factory: (initDeps) =>
         function Feed() {
             const { postsQuery, Post } = useDeps(initDeps)
             const { data: posts } = useQuery(postsQuery)

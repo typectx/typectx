@@ -8,7 +8,7 @@ import { useAssertStable } from "@/hooks"
 
 export const $Comment = market.offer("Comment").asProduct({
     suppliers: [$repliesQuery, $Reply],
-    factory: (initDeps, ctx) =>
+    factory: (initDeps) =>
         function Comment({ comment }: { comment: Comment }) {
             const { repliesQuery, Reply } = useDeps(initDeps)
             const { data: replies } = useQuery(repliesQuery(comment.id))
