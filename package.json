@@ -8,7 +8,8 @@
         "test": "turbo test:run",
         "vitest": "vitest",
         "lint": "turbo lint",
-        "clean": "turbo clean"
+        "clean": "turbo clean",
+        "devtools": "turbo devtools"
     },
     "devDependencies": {
         "prettier": "3.6.2",
