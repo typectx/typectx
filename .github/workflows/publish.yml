@@ -83,6 +83,10 @@ jobs:
                   npm version $VERSION --no-git-tag-version
                   echo "@typectx/react package.json version is now: $(cat package.json | jq -r .version)"
 
+            - name: Install dependencies to resolve workspace:^
+              working-directory: .
+              run: pnpm install
+
             - name: Dry publish typectx
               if: contains(github.event.release.tag_name, 'dry')
               working-directory: ./packages/typectx
