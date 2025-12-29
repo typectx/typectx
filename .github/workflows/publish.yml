@@ -42,15 +42,15 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v5
 
+            - name: Setup pnpm
+              uses: pnpm/action-setup@v4
+
             - name: Setup Node.js
               uses: actions/setup-node@v5
               with:
                   node-version: "lts/*"
                   registry-url: "https://registry.npmjs.org"
                   package-manager-cache: false
-
-            - name: Update npm
-              run: npm install -g npm@latest
 
             - name: Download typectx build artifacts
               uses: actions/download-artifact@v5
@@ -87,70 +87,70 @@ jobs:
               if: contains(github.event.release.tag_name, 'dry')
               working-directory: ./packages/typectx
               run: |
-                  npm publish --tag dry --dry-run
+                  pnpm publish --tag dry --dry-run
 
             - name: Dry publish @typectx/react
               if: contains(github.event.release.tag_name, 'dry')
               working-directory: ./packages/@typectx/react/main
               run: |
-                  npm publish --tag dry --dry-run
+                  pnpm publish --tag dry --dry-run
 
             - name: Publish typectx to Canary
               if: contains(github.event.release.tag_name, 'canary')
               working-directory: ./packages/typectx
               run: |
-                  npm publish --tag canary
+                  pnpm publish --tag canary
 
             - name: Publish @typectx/react to Canary
               if: contains(github.event.release.tag_name, 'canary')
               working-directory: ./packages/@typectx/react/main
               run: |
-                  npm publish --tag canary
+                  pnpm publish --tag canary
 
             - name: Publish typectx to Alpha
               if: contains(github.event.release.tag_name, 'alpha')
               working-directory: ./packages/typectx
               run: |
-                  npm publish --tag alpha
+                  pnpm publish --tag alpha
 
             - name: Publish @typectx/react to Alpha
               if: contains(github.event.release.tag_name, 'alpha')
               working-directory: ./packages/@typectx/react/main
               run: |
-                  npm publish --tag alpha
+                  pnpm publish --tag alpha
 
             - name: Publish typectx to Beta
               if: contains(github.event.release.tag_name, 'beta')
               working-directory: ./packages/typectx
               run: |
-                  npm publish --tag beta
+                  pnpm publish --tag beta
 
             - name: Publish @typectx/react to Beta
               if: contains(github.event.release.tag_name, 'beta')
               working-directory: ./packages/@typectx/react/main
               run: |
-                  npm publish --tag beta
+                  pnpm publish --tag beta
 
             - name: Publish typectx to RC
               if: contains(github.event.release.tag_name, 'rc')
               working-directory: ./packages/typectx
               run: |
-                  npm publish --tag rc
+                  pnpm publish --tag rc
 
             - name: Publish @typectx/react to RC
               if: contains(github.event.release.tag_name, 'rc')
               working-directory: ./packages/@typectx/react/main
               run: |
-                  npm publish --tag rc
+                  pnpm publish --tag rc
 
             - name: Publish typectx to Latest
               if: contains(github.event.release.tag_name, '-') == false
               working-directory: ./packages/typectx
               run: |
-                  npm publish --tag latest
+                  pnpm publish --tag latest
 
             - name: Publish @typectx/react to Latest
               if: contains(github.event.release.tag_name, '-') == false
               working-directory: ./packages/@typectx/react/main
               run: |
-                  npm publish --tag latest
+                  pnpm publish --tag latest
