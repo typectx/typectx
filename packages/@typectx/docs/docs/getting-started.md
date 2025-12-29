@@ -39,13 +39,14 @@ Suppliers create your app's dependencies. **Resources** hold data (like config o
 
 ```typescript
 // A Resource supplier for the user session
-const $$session = market.offer("session").asResource<{ userId: string }>()
+const $session = market.offer("session").asResource<{ userId: string }>()
 
 // A Product supplier that depends on the session
-const $$userService = market.offer("userService").asProduct({
+const $userService = market.offer("userService").asProduct({
     suppliers: [$session],
-    factory: ($) => {
-        const session = $($$session).unpack() // Access the session data
+    // Access the session by destructuring the factory's 1st argument.
+    // The property name is the name passed to market.offer() during supplier creation.
+    factory: ({ session }) => {
         return {
             id: session.userId,
             name: "Jane Doe"
@@ -64,8 +65,8 @@ import { index } from "typectx"
 const session = { userId: "user-123" }
 
 // Assemble the user service with a concrete session
-const userService = $$userService
-    .assemble(index($$session.pack(session)))
+const userService = $userService
+    .assemble(index($session.pack(session)))
     .unpack()
 
 console.log(userService.id) // "user-123"
@@ -73,6 +74,6 @@ console.log(userService.id) // "user-123"
 
 ## Next Steps
 
--   Walk through a **[Basic Example](examples/simple-example)** of a complete application.
--   Follow the more in-depth **[Basic Usage](guides/basic-usage)** guide.
--   Dive into the **[Design philosophy and semantics](guides/design-philosophy)** of typectx.
+- Walk through a **[Basic Example](examples/simple-example)** of a complete application.
+- Follow the more in-depth **[Basic Usage](guides/basic-usage)** guide.
+- Dive into the **[Design philosophy and semantics](guides/design-philosophy)** of typectx.

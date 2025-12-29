@@ -16,18 +16,18 @@ keywords:
 
 ### I get the following Typescript error: "The inferred type of this node exceeds the maximum length the compiler will serialize. An explicit type annotation is needed TS(7056)"
 
-This is unfortunately expected if you have declaration: true in your tsconfig.json. typectx heavily relies on recursive types which cannot be serialized to a declaration file when your dependency graph becomes too deep. If your app is not a library depended upon by other users, you should turn declarations off, and this error will go away. Otherwise, you need to follow what the error message says: Provide some explicit type annotations to break the recursive chain. You should type some of your ProductSuppliers explicitely by importing the ProductSupplier type utility from "typectx" and providing the generic types required.
+This is unfortunately expected if you have declaration: true in your tsconfig.json. typectx heavily relies on recursive types which cannot be serialized to a declaration file when your dependency graph becomes too deep. If your app is not a library depended upon by other users, you should turn declarations off, and this error will go away. Otherwise, you need to follow what the error message says: Provide some explicit type annotations to break the recursive chain. You should type some of your product suppliers explicitely by importing the ProductSupplier type utility from "typectx" and providing the generic types you want.
 
 ### Can I use typectx with vanilla Javascript
 
 typectx has been designed with a Typescript-first mindset, but nothing stops you from using it without Typescript, but you'd lose on a lot of typectx's power. Some basic runtime validations of API inputs have been added for this scenario.
-
-### I'm getting runtime circular dependencies errors
-
-Typescript detects circular dependencies automatically by setting the type of vars stuck in the dependency loop to any. This will not show as an error however unless you specify noImplicitAny: true in your tsconfig.json.
 
 ### My Typescript development experience (e.g. ts linter, ts IntelliSense, etc.) becomes incredibly slow or unresponsive
 
 typectx's recursive types are complex, but they should not have a heavy impact on Typescript's performance because they are designed to be lazily evaluated by Typescript's compiler. However, some VSCode Typescript extensions might try to evaluate some types early to provide more detailed Type IntelliSence, which will get them stuck in a deep recursive loop. I had this issue using the VSCode extension ["Prettify TypeScript: Better Type Previews"](https://open-vsx.org/extension/MylesMurphy/prettify-ts), which expands types one level deep by default (just set max-depth to 0 in settings should fix the issue).
 
 The popular ["Pretty TypeScript Errors"](https://open-vsx.org/extension/yoavbls/pretty-ts-errors) extension doesn't have this issue by default, but may have a setting to expand types that may trigger the issue.
+
+### I'm getting the error: "Type instantiation is excessively deep and possibly infinite"
+
+Typescript has a limit for tail-recursive types of 1 000 in depth, meaning you should be able to represent a dependency chain of up to 1 000 suppliers. Even if a supplier depends on multiple suppliers, these don't count towards the limit, only depth counts (a supplier that depends on a supplier that depends on a supplier, etc.) I haven't been able to reach this limit in testing, so I think it should be more than sufficient for most projects. If you ever have a need for more depth, you should type some of your product suppliers explicitely by importing the ProductSupplier type utility from "typectx" and providing the generic types you want.

@@ -1,11 +1,5 @@
-import { describe, it, expect, vi, type Mock, expectTypeOf } from "vitest"
-import {
-    BaseProductSupplier,
-    CircularDependencyError,
-    createMarket,
-    index,
-    Product
-} from "#index"
+import { describe, it, expect, vi, expectTypeOf } from "vitest"
+import { CircularDependencyError, createMarket, index, Product } from "#index"
 import { sleep, once } from "#utils"
 
 describe("Mocks Feature", () => {
@@ -13,34 +7,32 @@ describe("Mocks Feature", () => {
         it("should handle mock with less suppliers", () => {
             const market = createMarket()
 
-            const $$resource = market.offer("resource").asResource<boolean>()
+            const $resource = market.offer("resource").asResource<boolean>()
 
-            const $$base = market.offer("base").asProduct({
-                suppliers: [$$resource],
-                factory: ($) => ({ base: $($$resource).unpack() })
+            const $base = market.offer("base").asProduct({
+                suppliers: [$resource],
+                factory: ({ resource }) => ({ base: resource })
             })
 
-            const $$mocked = $$base.mock({
+            const $mocked = $base.mock({
                 factory: () => ({ base: true, enhanced: true }),
                 suppliers: []
             })
 
-            const $result = $$mocked.assemble({})
+            const result = $mocked.assemble({}).unpack()
 
-            expect($result.unpack()).toEqual({
-                base: true,
-                enhanced: true
-            })
+            expect(result.base).toBe(true)
+            expect(result.enhanced).toBe(true)
         })
 
         it("should not allow mocks in suppliers array", () => {
             const market = createMarket()
 
-            const $$base = market.offer("mock").asProduct({
+            const $base = market.offer("mock").asProduct({
                 factory: () => "base"
             })
 
-            const $$mock = $$base.mock({
+            const $mock = $base.mock({
                 suppliers: [],
                 factory: () => "mock"
             })
@@ -59,24 +51,24 @@ describe("Mocks Feature", () => {
             const baseSpy = vi.fn().mockReturnValue("base")
             const initedSpy = vi.fn().mockReturnValue("inited")
 
-            const $$base = market.offer("base").asProduct({
+            const $base = market.offer("base").asProduct({
                 factory: () => baseSpy
             })
 
-            const $$mocked = $$base.mock({
+            const $mocked = $base.mock({
                 factory: () => once(initedSpy),
                 init: (value) => value()
             })
 
-            const $$test = market.offer("test").asProduct({
-                suppliers: [$$base],
-                factory: ($) => $($$base).unpack()
+            const $test = market.offer("test").asProduct({
+                suppliers: [$base],
+                factory: ({ base }) => base
             })
 
-            const $$hired = $$test.hire($$mocked)
+            const $hired = $test.hire($mocked)
 
-            $$hired.assemble({})
-            $$test.assemble({})
+            $hired.assemble({})
+            $test.assemble({})
 
             await sleep(10)
 
@@ -87,39 +79,39 @@ describe("Mocks Feature", () => {
         it("should compute precise TOSUPPLY types with mock", () => {
             const market = createMarket()
 
-            const $$config = market.offer("config").asResource<string>()
-            const $$apiKey = market.offer("apiKey").asResource<string>()
+            const $config = market.offer("config").asResource<string>()
+            const $apiKey = market.offer("apiKey").asResource<string>()
 
-            const $$logger = market.offer("logger").asProduct({
+            const $logger = market.offer("logger").asProduct({
                 factory: () => "logger"
             })
 
             // Base service - return compatible type that can be extended
-            const $$base = market.offer("base").asProduct({
+            const $base = market.offer("base").asProduct({
                 factory: () => "base"
             })
 
             // mock with mixed resource and product suppliers
-            const $$mocked = $$base.mock({
-                suppliers: [$$config, $$apiKey, $$logger],
-                factory: ($) => "proto"
+            const $mocked = $base.mock({
+                suppliers: [$config, $apiKey, $logger],
+                factory: () => "proto"
             })
 
-            $$mocked.assemble(
+            $mocked.assemble(
                 //@ts-expect-error - missing $apiKeyResource
-                index($$config.pack("test"))
+                index($config.pack("test"))
             )
 
-            $$mocked.assemble(
+            $mocked.assemble(
                 //@ts-expect-error - missing $configResource
-                index($$apiKey.pack("secret-key"))
+                index($apiKey.pack("secret-key"))
             )
 
             // The type system should now know exactly what needs to be supplied:
             // - config and apiKey (resources must be provided)
             // - logger should NOT need to be provided (it's a product supplier)
-            const $result = $$mocked.assemble(
-                index($$config.pack("test"), $$apiKey.pack("secret-key"))
+            const $result = $mocked.assemble(
+                index($config.pack("test"), $apiKey.pack("secret-key"))
             )
 
             const output = $result.unpack()
@@ -129,33 +121,33 @@ describe("Mocks Feature", () => {
         it("should detect circular dependencies in mocks", () => {
             const market = createMarket()
 
-            const $$A = market.offer("A").asProduct({
+            const $A = market.offer("A").asProduct({
                 factory: () => "serviceA"
             })
 
-            const $$B = market.offer("B").asProduct({
-                suppliers: [$$A],
-                factory: ($) => "serviceB uses " + $($$A)
+            const $B = market.offer("B").asProduct({
+                suppliers: [$A],
+                factory: ({ A }) => "serviceB uses " + A
             })
 
             // Try to create circular dependency using mock
             // This should be caught by the circular dependency detection
             expect(() => {
-                const $$mockA = $$A.mock({
-                    suppliers: [$$B], // This creates a potential circle
-                    factory: ($) => "mockA uses " + $($$B)
+                const $mockA = $A.mock({
+                    suppliers: [$B], // This creates a potential circle
+                    factory: ({ B }) => "mockA uses " + B
                 })
 
-                expectTypeOf($$mockA).toExtend<CircularDependencyError>()
+                expectTypeOf($mockA).toExtend<CircularDependencyError>()
             }).toThrow("Circular dependency detected")
 
             expect(() => {
-                const $$mockA = $$A.mock({
-                    assemblers: [$$B], // This creates a potential circle
+                const $mockA = $A.mock({
+                    assemblers: [$B], // This creates a potential circle
                     factory: () => "mockA"
                 })
 
-                expectTypeOf($$mockA).toExtend<CircularDependencyError>()
+                expectTypeOf($mockA).toExtend<CircularDependencyError>()
             }).toThrow("Circular dependency detected")
         })
     })
@@ -164,216 +156,205 @@ describe("Mocks Feature", () => {
         it("should allow trying alternative suppliers for testing", () => {
             const market = createMarket()
 
-            const $$db = market.offer("db").asProduct({
+            const $db = market.offer("db").asProduct({
                 factory: () => "real-db"
             })
 
-            const $$cache = market.offer("cache").asProduct({
+            const $cache = market.offer("cache").asProduct({
                 factory: () => "real-cache"
             })
 
-            const $$logger = market.offer("logger").asProduct({
+            const $logger = market.offer("logger").asProduct({
                 factory: () => "real-logger"
             })
 
-            const $$service = market.offer("service").asProduct({
-                suppliers: [$$db, $$cache, $$logger],
-                factory: ($) => ({
-                    db: $($$db).unpack(),
-                    cache: $($$cache).unpack(),
-                    logger: $($$logger).unpack()
+            const $service = market.offer("service").asProduct({
+                suppliers: [$db, $cache, $logger],
+                factory: ({ db, cache, logger }) => ({
+                    db,
+                    cache,
+                    logger
                 })
             })
 
             // Multiple mock suppliers using mock
-            const $$mockDb = $$db.mock({
+            const $mockDb = $db.mock({
                 factory: () => "mock-db",
                 suppliers: []
             })
 
-            const $$mockCache = $$cache.mock({
+            const $mockCache = $cache.mock({
                 factory: () => "mock-cache",
                 suppliers: []
             })
 
-            const $$hired = $$service.hire($$mockDb, $$mockCache)
-            const $test = $$hired.assemble({})
+            const $hired = $service.hire($mockDb, $mockCache)
+            const test = $hired.assemble({}).unpack()
 
-            expect($test.unpack()).toEqual({
-                db: "mock-db",
-                cache: "mock-cache",
-                logger: "real-logger" // unchanged
-            })
+            expect(test.db).toBe("mock-db")
+            expect(test.cache).toBe("mock-cache")
+            expect(test.logger).toBe("real-logger")
         })
 
         it("should handle trying unused suppliers", () => {
             const market = createMarket()
 
-            const $$db = market.offer("db").asProduct({
+            const $db = market.offer("db").asProduct({
                 factory: () => "db"
             })
 
-            const $$main = market.offer("main").asProduct({
-                suppliers: [$$db],
-                factory: ($) => "main-" + $($$db).unpack()
+            const $main = market.offer("main").asProduct({
+                suppliers: [$db],
+                factory: ({ db }) => "main-" + db
             })
 
-            const $$unused = market.offer("unused").asProduct({
+            const $unused = market.offer("unused").asProduct({
                 factory: () => "base-extra"
             })
 
-            const $$unusedMock = $$unused.mock({
+            const $unusedMock = $unused.mock({
                 suppliers: [],
                 factory: () => "extra-service"
             })
 
-            const $$hired = $$main.hire($$unusedMock)
-            const $test = $$hired.assemble({})
+            const $hired = $main.hire($unusedMock)
+            const test = $hired.assemble({}).unpack()
 
             // The extra supplier is added to the suppliers list, but not to the result
-            expect($test.unpack()).toEqual("main-db")
+            expect(test).toEqual("main-db")
         })
 
         it("should handle empty hire calls gracefully", () => {
             const market = createMarket()
 
-            const $$main = market.offer("main").asProduct({
+            const $main = market.offer("main").asProduct({
                 factory: () => "main"
             })
 
             // Hire with no suppliers - should work fine
-            const $$hired = $$main.hire()
-            const $test = $$hired.assemble({})
+            const $hired = $main.hire()
+            const test = $hired.assemble({}).unpack()
 
-            expect($test.unpack()).toBe("main")
+            expect(test).toBe("main")
         })
 
         it("should handle duplicate supplier names in hire (last one wins)", () => {
             const market = createMarket()
 
-            const $$db = market.offer("db").asProduct({
+            const $db = market.offer("db").asProduct({
                 factory: () => "db"
             })
 
-            const $$main = market.offer("main").asProduct({
-                suppliers: [$$db],
-                factory: ($) => "main-" + $($$db).unpack()
+            const $main = market.offer("main").asProduct({
+                suppliers: [$db],
+                factory: ({ db }) => "main-" + db
             })
 
-            const $$mockDb1 = $$db.mock({
+            const $mockDb1 = $db.mock({
                 factory: () => "mock-db-1",
                 suppliers: []
             })
 
-            const $$mockDb2 = $$db.mock({
+            const $mockDb2 = $db.mock({
                 factory: () => "mock-db-2",
                 suppliers: []
             })
 
-            const $$hired = $$main.hire($$mockDb1, $$mockDb2)
-            expect($$hired.hired.map((s) => s.name)).toEqual([
-                $$mockDb1.name,
-                $$mockDb2.name
+            const $hired = $main.hire($mockDb1, $mockDb2)
+            expect($hired.hired.map((s) => s.name)).toEqual([
+                $mockDb1.name,
+                $mockDb2.name
             ])
-            const result = $$hired.assemble({}).unpack()
+            const result = $hired.assemble({}).unpack()
             expect(result).toEqual("main-mock-db-2")
         })
 
         it("should allow assembling multiple suppliers together", () => {
             const market = createMarket()
 
-            const $$shared = market.offer("shared").asResource<string>()
-            const $$unique = market.offer("unique").asResource<number>()
+            const $shared = market.offer("shared").asResource<string>()
+            const $unique = market.offer("unique").asResource<number>()
 
-            const $$A = market.offer("A").asProduct({
-                suppliers: [$$shared],
-                factory: ($) => {
-                    const shared = $($$shared).unpack()
+            const $A = market.offer("A").asProduct({
+                suppliers: [$shared],
+                factory: ({ shared }) => {
                     return "A-" + shared
                 }
             })
 
-            const $$B = market.offer("B").asProduct({
-                suppliers: [$$shared, $$unique],
-                factory: ($) => {
-                    const shared = $($$shared).unpack()
-                    const unique = $($$unique).unpack()
+            const $B = market.offer("B").asProduct({
+                suppliers: [$shared, $unique],
+                factory: ({ shared, unique }) => {
                     return "B-" + shared + "-" + unique
                 }
             })
 
-            const $result = $$A
-                .hire($$B)
-                .assemble(
-                    index($$shared.pack("shared-data"), $$unique.pack(123))
-                )
+            const resultProduct = $A
+                .hire($B)
+                .assemble(index($shared.pack("shared-data"), $unique.pack(123)))
 
-            expect($result.unpack()).toEqual("A-shared-data")
-            const BResult = $result.$($$B).unpack()
+            expect(resultProduct.unpack()).toEqual("A-shared-data")
+            const BResult = resultProduct.deps[$B.name]
             expect(BResult).toEqual("B-shared-data-123")
         })
 
         it("should type check that all required resources are provided", () => {
             const market = createMarket()
 
-            const $$db = market.offer("db").asResource<string>()
-            const $$cache = market.offer("cache").asResource<string>()
+            const $db = market.offer("db").asResource<string>()
+            const $cache = market.offer("cache").asResource<string>()
 
-            const $$user = market.offer("user").asProduct({
-                suppliers: [$$db],
-                factory: ($) => {
-                    const db = $($$db).unpack()
+            const $user = market.offer("user").asProduct({
+                suppliers: [$db],
+                factory: ({ db }) => {
                     return "user-" + db
                 }
             })
 
-            const $$session = market.offer("session").asProduct({
-                suppliers: [$$cache],
-                factory: ($) => {
-                    const cache = $($$cache).unpack()
+            const $session = market.offer("session").asProduct({
+                suppliers: [$cache],
+                factory: ({ cache }) => {
                     return "session-" + cache
                 }
             })
 
-            const $$combined = $$user.hire($$session)
+            const $combined = $user.hire($session)
 
-            const db = $$db.pack("postgresql://localhost:5432/db")
-            const cache = $$cache.pack("redis://localhost:6379")
+            const db = $db.pack("postgresql://localhost:5432/db")
+            const cache = $cache.pack("redis://localhost:6379")
 
-            expect(() => {
-                // @ts-expect-error - cache is missing
-                const $combined = $$combined.assemble(index(db))
-                $combined.$($$session).unpack()
-            }).toThrow()
+            // @ts-expect-error - cache is missing
+            const combinedProduct = $combined.assemble(index(db))
 
-            const $result = $$combined.assemble(index(db, cache))
+            const resultProduct = $combined.assemble(index(db, cache))
 
-            expect($result.unpack()).toEqual(
+            expect(resultProduct.unpack()).toEqual(
                 "user-postgresql://localhost:5432/db"
             )
 
-            const sessionResult = $result.$($$session).unpack()
+            const sessionResult = resultProduct.deps[$session.name]
             expect(sessionResult).toEqual("session-redis://localhost:6379")
         })
 
         it("should handle errors in hire() method gracefully", () => {
             const market = createMarket()
 
-            const $$working = market.offer("working").asProduct({
+            const $working = market.offer("working").asProduct({
                 factory: () => "working-value"
             })
 
-            const $$failing = market.offer("failing").asProduct({
+            const $failing = market.offer("failing").asProduct({
                 factory: () => {
                     throw new Error("Supplier failed")
                     return
                 }
             })
 
-            const $result = $$working.hire($$failing).assemble({})
-            expect($result.unpack()).toBe("working-value")
+            const resultProduct = $working.hire($failing).assemble({})
+            expect(resultProduct.unpack()).toBe("working-value")
             expect(() => {
-                $result.$($$failing).unpack()
+                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+                resultProduct.deps[$failing.name]
             }).toThrow("Supplier failed")
         })
     })
@@ -382,29 +363,30 @@ describe("Mocks Feature", () => {
         it("$ supplies of product built with reassemble with Hire parameters should contain only the hired suppliers products properly typed", () => {
             const market = createMarket()
 
-            const $$supplier = market.offer("supplier").asProduct({
+            const $supplier = market.offer("supplier").asProduct({
                 factory: () => "supplier-value"
             })
 
-            const $$assembler = market.offer("assembler").asProduct({
+            const $assembler = market.offer("assembler").asProduct({
                 factory: () => "assembler-value"
             })
 
-            const $$main = market.offer("main").asProduct({
-                suppliers: [$$supplier],
-                assemblers: [$$assembler],
-                factory: ($, $$) => {
-                    const $product = $$($$supplier)
-                        .hire($$assembler)
+            const $main = market.offer("main").asProduct({
+                suppliers: [$supplier],
+                assemblers: [$assembler],
+                factory: ({ supplier }) => {
+                    const supplierProduct = $supplier
+                        .hire($assembler)
                         .assemble({})
 
-                    const $assembler = $product.$($$assembler)
-                    expectTypeOf($assembler).toExtend<Product>()
-                    expect($assembler.unpack()).toBe("assembler-value")
+                    const assemblerProduct =
+                        supplierProduct.deps[$assembler.name]
+                    expectTypeOf(assemblerProduct).toExtend<Product>()
+                    expect(assemblerProduct.unpack()).toBe("assembler-value")
                 }
             })
 
-            $$main.assemble({})
+            $main.assemble({})
         })
     })
 })

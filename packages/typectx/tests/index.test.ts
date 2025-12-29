@@ -10,14 +10,14 @@ describe("typectx", () => {
     describe("Resource Offer", () => {
         it("should offer a resource and return it packed", () => {
             const market = createMarket()
-            const $$resource = market.offer("resource").asResource<string>()
+            const $resource = market.offer("resource").asResource<string>()
 
-            const $resource = $$resource.pack("test-value")
+            const pack = $resource.pack("test-value")
 
-            expect($resource.unpack()).toBe("test-value")
+            expect(pack.unpack()).toBe("test-value")
+            expect(pack.supplier.name).toBe("resource")
             expect($resource.name).toBe("resource")
-            expect($$resource.name).toBe("resource")
-            expect($$resource._.resource).toBe(true)
+            expect($resource._.resource).toBe(true)
         })
 
         it("should throw error if two supplies with the same name are offered", () => {
@@ -31,59 +31,53 @@ describe("typectx", () => {
 
         it("should handle different resource types correctly", () => {
             const market = createMarket()
-            const $$string = market.offer("string").asResource<string>()
-            const $$number = market.offer("number").asResource<number>()
-            const $$object = market.offer("object").asResource<{
+            const $string = market.offer("string").asResource<string>()
+            const $number = market.offer("number").asResource<number>()
+            const $object = market.offer("object").asResource<{
                 name: string
             }>()
 
-            const $string = $$string.pack("hello")
-            const $number = $$number.pack(42)
-            const $object = $$object.pack({ name: "test" })
-
-            expect($string.unpack()).toBe("hello")
-            expect($number.unpack()).toBe(42)
-            expect($object.unpack()).toEqual({ name: "test" })
+            expect($string.pack("hello").unpack()).toBe("hello")
+            expect($number.pack(42).unpack()).toBe(42)
+            expect($object.pack({ name: "test" }).unpack()).toEqual({
+                name: "test"
+            })
         })
     })
 
     describe("Product Offer", () => {
         it("should offer a product with no suppliers", () => {
             const market = createMarket()
-            const $$product = market.offer("product").asProduct({
+            const $product = market.offer("product").asProduct({
                 factory: () => "product"
             })
 
-            const $product = $$product.assemble({})
-
-            expect($product.unpack()).toBe("product")
-            expect($$product.name).toBe("product")
-            expect($$product._.product).toBe(true)
+            expect($product.assemble({}).unpack()).toBe("product")
+            expect($product.name).toBe("product")
+            expect($product._.product).toBe(true)
         })
 
         it("should offer a product with suppliers", () => {
             const market = createMarket()
-            const $$A = market.offer("A").asProduct({
+            const $A = market.offer("A").asProduct({
                 factory: () => "A"
             })
 
-            const $$B = market.offer("B").asProduct({
+            const $B = market.offer("B").asProduct({
                 factory: () => "B"
             })
 
-            const $$test = market.offer("test").asProduct({
-                suppliers: [$$A, $$B],
-                factory: ($) => {
+            const $test = market.offer("test").asProduct({
+                suppliers: [$A, $B],
+                factory: ({ A, B }) => {
                     return {
-                        A: $($$A).unpack(),
-                        B: $($$B).unpack()
+                        A,
+                        B
                     }
                 }
             })
 
-            const $test = $$test.assemble({})
-
-            expect($test.unpack()).toEqual({
+            expect($test.assemble({}).unpack()).toEqual({
                 A: "A",
                 B: "B"
             })
@@ -93,27 +87,25 @@ describe("typectx", () => {
     describe("Supply Chain", () => {
         it("should assemble products from suppliers", () => {
             const market = createMarket()
-            const $$A = market.offer("A").asProduct({
+            const $A = market.offer("A").asProduct({
                 factory: () => "A"
             })
 
-            const $$B = market.offer("B").asProduct({
+            const $B = market.offer("B").asProduct({
                 factory: () => "B"
             })
 
             const $$main = market.offer("main").asProduct({
-                suppliers: [$$A, $$B],
-                factory: ($) => {
+                suppliers: [$A, $B],
+                factory: ({ A, B }) => {
                     return {
-                        A: $($$A).unpack(),
-                        B: $($$B).unpack()
+                        A,
+                        B
                     }
                 }
             })
 
-            const $main = $$main.assemble({})
-
-            expect($main.unpack()).toEqual({
+            expect($$main.assemble({}).unpack()).toEqual({
                 A: "A",
                 B: "B"
             })
@@ -121,139 +113,89 @@ describe("typectx", () => {
 
         it("should respect initial supplies and not override them during assembly", () => {
             const market = createMarket()
-            const $$product = market.offer("product").asProduct({
+            const $product = market.offer("product").asProduct({
                 factory: () => "product"
             })
 
-            const $$main = market.offer("main").asProduct({
-                suppliers: [$$product],
-                factory: ($) => {
-                    const product = $($$product).unpack()
+            const $main = market.offer("main").asProduct({
+                suppliers: [$product],
+                factory: ({ product }) => {
                     return {
                         product
                     }
                 }
             })
 
-            const $main = $$main.assemble(
-                index($$product.pack("initial-product"))
-            )
-
-            expect($main.unpack()).toEqual({
+            expect(
+                $main.assemble(index($product.pack("initial-product"))).unpack()
+            ).toEqual({
                 product: "initial-product"
             })
         })
 
-        it("should support Product.pack(value) and $[Product.id].pack(value) for creating product instances", () => {
+        it("should enable context switching by calling ctx()", () => {
             const market = createMarket()
-            const $$config = market.offer("config").asProduct({
-                factory: () => ({ env: "development", debug: true })
-            })
+            const $config = market.offer("config").asResource<string>()
+            const $name = market.offer("name").asResource<string>()
+            const $count = market.offer("count").asResource<number>()
 
-            const $$logger = market.offer("logger").asProduct({
-                factory: () => ({ level: "info", prefix: "APP" })
-            })
-
-            const $$main = market.offer("main").asProduct({
-                suppliers: [$$config, $$logger],
-                factory: ($) => {
-                    const $config = $$config.pack({
-                        env: "production",
-                        debug: false
-                    })
-
-                    const $logger = $($$logger).supplier.pack({
-                        level: "debug",
-                        prefix: "TEST"
-                    })
-
+            const $test = market.offer("test").asProduct({
+                suppliers: [$config, $name, $count],
+                factory: ({ config, name, count }) => {
                     return {
-                        config: $config.unpack(),
-                        logger: $logger.unpack(),
-                        suppliedConfig: $($$config).unpack(),
-                        suppliedLogger: $($$logger).unpack()
+                        config,
+                        name,
+                        count
                     }
                 }
             })
 
-            const $main = $$main.assemble({})
-
-            expect($main.unpack().config).toEqual({
-                env: "production",
-                debug: false
-            })
-            expect($main.unpack().logger).toEqual({
-                level: "debug",
-                prefix: "TEST"
-            })
-            expect($main.unpack().suppliedConfig).toEqual({
-                env: "development",
-                debug: true
-            })
-            expect($main.unpack().suppliedLogger).toEqual({
-                level: "info",
-                prefix: "APP"
-            })
-        })
-        it("should enable context switching by calling $$", () => {
-            const market = createMarket()
-            const $$config = market.offer("config").asResource<string>()
-            const $$name = market.offer("name").asResource<string>()
-            const $$count = market.offer("count").asResource<number>()
-
-            const $$test = market.offer("test").asProduct({
-                suppliers: [$$config, $$name, $$count],
-                factory: ($) => {
-                    return {
-                        config: $($$config).unpack(),
-                        name: $($$name).unpack(),
-                        count: $($$count).unpack()
-                    }
-                }
-            })
-
-            const $$main = market.offer("main").asProduct({
-                suppliers: [$$test],
-                factory: ($, $$) => {
-                    const $newTestA = $$($$test).assemble(
-                        index(
-                            $$config.pack("new-config"),
-                            $$name.pack("new-name"),
-                            $$count.pack(42)
+            const $main = market.offer("main").asProduct({
+                suppliers: [$test],
+                factory: (deps, ctx) => {
+                    const newTestA = ctx($test)
+                        .assemble(
+                            index(
+                                $config.pack("new-config"),
+                                $name.pack("new-name"),
+                                $count.pack(42)
+                            )
                         )
-                    )
+                        .unpack()
 
-                    const $newTestB = $$($$test).assemble(
-                        index($$config.pack("new-config"))
-                    )
+                    const newTestB = ctx($test)
+                        .assemble(index($config.pack("new-config")))
+                        .unpack()
 
-                    const $newTestC = $$($$test).assemble(
-                        index($$name.pack("new-name"))
-                    )
+                    const newTestC = ctx($test)
+                        .assemble(index($name.pack("new-name")))
+                        .unpack()
 
-                    const $newTestD = $$($$test).assemble(
-                        index($$config.pack("new-config"), $$count.pack(42))
-                    )
+                    const newTestD = ctx($test)
+                        .assemble(
+                            index($config.pack("new-config"), $count.pack(42))
+                        )
+                        .unpack()
 
-                    expect($newTestA.unpack()).toEqual({
+                    expect(newTestA).toEqual({
                         config: "new-config",
                         name: "new-name",
                         count: 42
                     })
 
-                    expect($newTestB.unpack()).toEqual({
+                    expect(newTestB).toEqual({
                         config: "new-config",
                         name: "initial-name",
                         count: 1
                     })
 
-                    expect($newTestC.unpack()).toEqual({
+                    expect(newTestC).toEqual({
                         config: "initial-config",
                         name: "new-name",
                         count: 1
                     })
 
-                    expect($newTestD.unpack()).toEqual({
+                    expect(newTestD).toEqual({
                         config: "new-config",
                         name: "initial-name",
                         count: 42
@@ -261,12 +203,12 @@ describe("typectx", () => {
                 }
             })
 
-            $$main
+            $main
                 .assemble(
                     index(
-                        $$config.pack("initial-config"),
-                        $$name.pack("initial-name"),
-                        $$count.pack(1)
+                        $config.pack("initial-config"),
+                        $name.pack("initial-name"),
+                        $count.pack(1)
                     )
                 )
                 .unpack()
@@ -278,19 +220,16 @@ describe("typectx", () => {
             const factorySpy = vi.fn().mockReturnValue("product")
 
             const market = createMarket()
-            const $$product = market.offer("product").asProduct({
+            const $product = market.offer("product").asProduct({
                 factory: factorySpy
             })
 
-            const $product = $$product.assemble({})
-
-            expect($product.unpack()).toBe("product")
+            expect($product.assemble({}).unpack()).toBe("product")
             expect(factorySpy).toHaveBeenCalledTimes(1)
 
             // The memoization works within the same assembly context
             // Each call to assemble() creates a new context, so the factory is called again
-            const secondAccess = $$product.assemble({})
-            expect(secondAccess.unpack()).toBe("product")
+            expect($product.assemble({}).unpack()).toBe("product")
             // Factory is called again for the new assembly context
             expect(factorySpy).toHaveBeenCalledTimes(2)
         })
@@ -299,21 +238,21 @@ describe("typectx", () => {
             const factorySpy = vi.fn().mockReturnValue("memoized")
 
             const market = createMarket()
-            const $$spy = market.offer("spy").asProduct({
+            const $spy = market.offer("spy").asProduct({
                 factory: factorySpy
             })
 
-            const $$test = market.offer("test").asProduct({
-                suppliers: [$$spy],
-                factory: ($) => {
-                    $($$spy).unpack()
-                    $($$spy).unpack()
+            const $test = market.offer("test").asProduct({
+                suppliers: [$spy],
+                factory: (deps) => {
+                    const spyAccess = deps.spy
+                    const spyAccess2 = deps.spy
 
                     return "test"
                 }
             })
 
-            $$test.assemble({}).unpack()
+            $test.assemble({}).unpack()
             // Factory should only be called once due to memoization within the same assembly context
             expect(factorySpy).toHaveBeenCalledTimes(1)
         })
@@ -322,31 +261,28 @@ describe("typectx", () => {
             const factory1Spy = vi.fn().mockReturnValue("A")
 
             const market = createMarket()
-            const $$A = market.offer("A").asProduct({
+            const $A = market.offer("A").asProduct({
                 factory: factory1Spy
             })
 
-            const $$B = market.offer("B").asProduct({
-                suppliers: [$$A],
-                factory: ($) => {
-                    $($$A).unpack()
+            const $B = market.offer("B").asProduct({
+                suppliers: [$A],
+                factory: ({ A }) => {
                     return "B"
                 }
             })
 
-            const $$test = market.offer("test").asProduct({
-                suppliers: [$$A, $$B],
-                factory: ($) => {
+            const $test = market.offer("test").asProduct({
+                suppliers: [$A, $B],
+                factory: ({ A, B }) => {
                     return {
-                        A: $($$A).unpack(),
-                        B: $($$B).unpack()
+                        A,
+                        B
                     }
                 }
             })
 
-            const $test = $$test.assemble({})
-
-            expect($test.unpack()).toEqual({
+            expect($test.assemble({}).unpack()).toEqual({
                 A: "A",
                 B: "B"
             })
@@ -358,60 +294,54 @@ describe("typectx", () => {
         it("should reassemble product if dependent suppliers reassembles", async () => {
             const market = createMarket()
             // productA will be reassembled
-            const $$A = market.offer("A").asProduct({
+            const $A = market.offer("A").asProduct({
                 factory: () => Date.now()
             })
 
             // productB will be reassembled when productA reassembles
-            const $$B = market.offer("B").asProduct({
-                suppliers: [$$A],
+            const $B = market.offer("B").asProduct({
+                suppliers: [$A],
                 factory: () => Date.now()
             })
 
             // productC - doesn't depend on anything, so it will not be reassembled
-            const $$C = market.offer("C").asProduct({
+            const $C = market.offer("C").asProduct({
                 factory: () => Date.now()
             })
 
             // productD will be reassembled when productB reassembles
-            const $$D = market.offer("D").asProduct({
-                suppliers: [$$B],
+            const $D = market.offer("D").asProduct({
+                suppliers: [$B],
                 factory: () => Date.now()
             })
 
-            const $$E = market.offer("E").asProduct({
-                suppliers: [$$A, $$B, $$C, $$D],
-                factory: ($) => {
+            const $E = market.offer("E").asProduct({
+                suppliers: [$A, $B, $C, $D],
+                factory: ({ A, B, C, D }) => {
                     return {
-                        A: $($$A).unpack(),
-                        B: $($$B).unpack(),
-                        C: $($$C).unpack(),
-                        D: $($$D).unpack()
+                        A,
+                        B,
+                        C,
+                        D
                     }
                 }
             })
 
             const $$main = market.offer("main").asProduct({
-                suppliers: [$$E],
-                factory: async ($, $$) => {
-                    const E = $($$E).unpack()
-                    const initialA = E.A
-                    const initialB = E.B
-                    const initialC = E.C
-                    const initialD = E.D
-
+                suppliers: [$E],
+                factory: async ({ E }, ctx) => {
                     await sleep(100)
 
                     // Override productA - this should trigger resupply of productB and productD
                     // but productC should remain cached
-                    const newE = $$($$E)
-                        .assemble(index($$A.pack(Date.now())))
+                    const newE = ctx($E)
+                        .assemble(index($A.pack(Date.now())))
                         .unpack()
 
-                    expect(newE.A).not.toBe(initialA)
-                    expect(newE.B).not.toBe(initialB)
-                    expect(newE.C).toBe(initialC)
-                    expect(newE.D).not.toBe(initialD)
+                    expect(newE.A).not.toBe(E.A)
+                    expect(newE.B).not.toBe(E.B)
+                    expect(newE.C).toBe(E.C)
+                    expect(newE.D).not.toBe(E.D)
                 }
             })
 
@@ -427,37 +357,37 @@ describe("typectx", () => {
             const normalValueSpy = vi.fn().mockReturnValue("normal")
             const lazyValueSpy = vi.fn().mockReturnValue("lazy")
 
-            const $$inited = market.offer("inited").asProduct({
+            const $inited = market.offer("inited").asProduct({
                 factory: () => initedValueSpy,
                 init: (value) => value()
             })
 
-            const $$normal = market.offer("normal").asProduct({
+            const $normal = market.offer("normal").asProduct({
                 factory: () => normalValueSpy
             })
 
-            const $$lazy = market.offer("lazy").asProduct({
+            const $lazy = market.offer("lazy").asProduct({
                 factory: () => lazyValueSpy,
                 init: (value) => value(),
                 lazy: true
             })
 
-            const $$main = market.offer("main").asProduct({
-                suppliers: [$$inited, $$normal, $$lazy],
+            const $main = market.offer("main").asProduct({
+                suppliers: [$inited, $normal, $lazy],
                 factory: () => {
                     // Don't access any dependencies yet
                     return "main"
                 }
             })
 
-            const $main = $$main.assemble({})
+            const main = $main.assemble({}).unpack()
 
             await sleep(10)
 
             expect(initedValueSpy).toHaveBeenCalledTimes(1)
             expect(normalValueSpy).toHaveBeenCalledTimes(0)
             expect(lazyValueSpy).toHaveBeenCalledTimes(0)
-            expect($main.unpack()).toBe("main")
+            expect(main).toBe("main")
         })
 
         it("should handle init errors gracefully without breaking the supply chain", async () => {
@@ -466,25 +396,25 @@ describe("typectx", () => {
                 throw new Error()
             })
 
-            const $$error = market.offer("error").asProduct({
+            const $error = market.offer("error").asProduct({
                 factory: () => once(errorValueSpy),
                 init: (value) => value()
             })
 
-            const $$main = market.offer("main").asProduct({
-                suppliers: [$$error],
-                factory: ($) => {
+            const $main = market.offer("main").asProduct({
+                suppliers: [$error],
+                factory: () => {
                     // Don't access ErrorProduct yet
                     return "main"
                 }
             })
 
             // This should not throw even though ErrorProduct will fail during init
-            const $main = $$main.assemble({})
+            const main = $main.assemble({}).unpack()
 
             await sleep(10)
 
-            expect($main.unpack()).toBe("main")
+            expect(main).toBe("main")
             expect(errorValueSpy).toHaveBeenCalledTimes(1)
         })
 
@@ -494,22 +424,22 @@ describe("typectx", () => {
                 throw new Error()
             })
 
-            const $$error = market.offer("error").asProduct({
+            const $error = market.offer("error").asProduct({
                 factory: () => once(errorValueSpy),
                 init: (value) => value()
             })
 
-            const $$main = market.offer("main").asProduct({
-                suppliers: [$$error],
-                factory: ($) => {
-                    return $($$error).unpack()
+            const $main = market.offer("main").asProduct({
+                suppliers: [$error],
+                factory: ({ error }) => {
+                    return "main"
                 }
             })
 
             await sleep(10)
 
             // Accessing the product should still throw the error
-            expect(() => $$main.assemble({}).unpack()).toThrow()
+            expect(() => $main.assemble({}).unpack()).toThrow()
         })
 
         it("should work with complex dependency chains and selective initing", async () => {
@@ -517,50 +447,50 @@ describe("typectx", () => {
             const ASpy = vi.fn().mockReturnValue("A")
             const BSpy = vi.fn().mockReturnValue("B")
 
-            const $$A = market.offer("A").asProduct({
+            const $A = market.offer("A").asProduct({
                 factory: () => once(ASpy),
                 init: (value) => value()
             })
 
-            const $$B = market.offer("B").asProduct({
+            const $B = market.offer("B").asProduct({
                 factory: () => once(BSpy)
             })
 
-            const $$main = market.offer("main").asProduct({
-                suppliers: [$$A, $$B],
+            const $main = market.offer("main").asProduct({
+                suppliers: [$A, $B],
                 factory: () => {
                     return "main"
                 }
             })
 
-            const $main = $$main.assemble({})
+            const main = $main.assemble({}).unpack()
 
             await sleep(10)
 
             expect(ASpy).toHaveBeenCalledTimes(1)
             expect(BSpy).toHaveBeenCalledTimes(0)
-            expect($main.unpack()).toBe("main")
+            expect(main).toBe("main")
         })
     })
 
     describe("Lazy Feature", () => {
-        it("should run factory for non-lazy suppliers during assemble", () => {
+        it("should run factory for non-lazy suppliers during assemble", async () => {
             const eagerSpy = vi.fn().mockReturnValue("eager")
 
             const market = createMarket()
-            const $$eager = market.offer("eager").asProduct({
+            const $eager = market.offer("eager").asProduct({
                 factory: eagerSpy,
                 lazy: false // explicitly non-lazy
             })
 
-            const $$main = market.offer("main").asProduct({
-                suppliers: [$$eager],
+            const $main = market.offer("main").asProduct({
+                suppliers: [$eager],
                 factory: () => "main"
             })
 
             // Factory should be called during assemble, even though we don't access it
-            $$main.assemble({})
-
+            $main.assemble({})
+            await sleep(10)
             expect(eagerSpy).toHaveBeenCalledTimes(1)
         })
 
@@ -568,18 +498,18 @@ describe("typectx", () => {
             const lazySpy = vi.fn().mockReturnValue("lazy")
 
             const market = createMarket()
-            const $$lazy = market.offer("lazy").asProduct({
+            const $lazy = market.offer("lazy").asProduct({
                 factory: lazySpy,
                 lazy: true
             })
 
-            const $$main = market.offer("main").asProduct({
-                suppliers: [$$lazy],
+            const $main = market.offer("main").asProduct({
+                suppliers: [$lazy],
                 factory: () => "main"
             })
 
             // Factory should NOT be called during assemble
-            $$main.assemble({})
+            $main.assemble({})
 
             expect(lazySpy).toHaveBeenCalledTimes(0)
         })
@@ -588,26 +518,19 @@ describe("typectx", () => {
             const lazySpy = vi.fn().mockReturnValue("lazy")
 
             const market = createMarket()
-            const $$lazy = market.offer("lazy").asProduct({
+            const $lazy = market.offer("lazy").asProduct({
                 factory: lazySpy,
                 lazy: true
             })
 
-            const $$main = market.offer("main").asProduct({
-                suppliers: [$$lazy],
-                factory: ($) => {
-                    const lazyValue = $($$lazy).unpack()
-                    return { lazyValue }
+            const $main = market.offer("main").asProduct({
+                suppliers: [$lazy],
+                factory: ({ lazy }) => {
+                    return lazy
                 }
             })
-
-            const $main = $$main.assemble({})
-
-            // Factory should not be called during assemble
-            expect(lazySpy).toHaveBeenCalledTimes(0)
-
-            // Factory should be called when we access the lazy supplier
-            expect($main.unpack().lazyValue).toBe("lazy")
+            const main = $main.assemble({}).unpack()
+            expect(main).toBe("lazy")
             expect(lazySpy).toHaveBeenCalledTimes(1)
         })
 
@@ -615,25 +538,28 @@ describe("typectx", () => {
             const lazySpy = vi.fn().mockReturnValue("lazy")
 
             const market = createMarket()
-            const $$lazy = market.offer("lazy").asProduct({
+            const $lazy = market.offer("lazy").asProduct({
                 factory: lazySpy,
                 lazy: true
             })
 
-            const $$main = market.offer("main").asProduct({
-                suppliers: [$$lazy],
-                factory: ($, $$) => {
-                    expect(lazySpy).toHaveBeenCalledTimes(0)
-                    const lazyValue = $($$lazy).unpack()
+            const $main = market.offer("main").asProduct({
+                suppliers: [$lazy],
+                factory: ({ lazy }, ctx) => {
                     expect(lazySpy).toHaveBeenCalledTimes(1)
 
-                    const $newLazy = $$($$lazy).assemble({})
+                    const newLazyProduct = ctx($lazy).assemble({})
                     expect(lazySpy).toHaveBeenCalledTimes(1)
-                    expect($newLazy.unpack()).toBe("lazy")
+                    const newLazy = newLazyProduct.unpack()
+                    expect(newLazy).toBe("lazy")
                     expect(lazySpy).toHaveBeenCalledTimes(2)
-                    return { lazyValue }
+                    return newLazy
                 }
             })
+            const mainProduct = $main.assemble({})
+            expect(lazySpy).toHaveBeenCalledTimes(0)
+            expect(mainProduct.unpack()).toBe("lazy")
+            expect(lazySpy).toHaveBeenCalledTimes(2)
         })
 
         it("should handle lazy suppliers with mocks", () => {
@@ -641,52 +567,52 @@ describe("typectx", () => {
             const mockSpy = vi.fn().mockReturnValue("mock")
 
             const market = createMarket()
-            const $$original = market.offer("original").asProduct({
+            const $original = market.offer("original").asProduct({
                 factory: originalSpy,
                 lazy: true
             })
 
-            const $$mock = $$original.mock({
+            const $mock = $original.mock({
                 factory: mockSpy,
                 lazy: true
             })
 
-            const $$main = market.offer("main").asProduct({
-                suppliers: [$$original],
-                factory: ($) => {
-                    const value = $($$original).unpack()
-                    return { value }
+            const $main = market.offer("main").asProduct({
+                suppliers: [$original],
+                factory: ({ original }) => {
+                    return original
                 }
             })
 
-            const $main = $$main.hire($$mock).assemble({})
+            const mainProduct = $main.hire($mock).assemble({})
 
             // Neither factory should be called during assemble
             expect(originalSpy).toHaveBeenCalledTimes(0)
             expect(mockSpy).toHaveBeenCalledTimes(0)
 
             // Only mock factory should be called when accessed
-            expect($main.unpack().value).toBe("mock")
+            expect(mainProduct.unpack()).toBe("mock")
             expect(originalSpy).toHaveBeenCalledTimes(0)
             expect(mockSpy).toHaveBeenCalledTimes(1)
         })
 
-        it("should default to non-lazy behavior when lazy is not specified", () => {
+        it("should default to non-lazy behavior when lazy is not specified", async () => {
             const eagerSpy = vi.fn().mockReturnValue("default-eager")
 
             const market = createMarket()
-            const $$default = market.offer("default").asProduct({
+            const $default = market.offer("default").asProduct({
                 factory: eagerSpy
                 // lazy not specified, should default to false
             })
 
-            const $$main = market.offer("main").asProduct({
-                suppliers: [$$default],
+            const $main = market.offer("main").asProduct({
+                suppliers: [$default],
                 factory: () => "main"
             })
 
             // Factory should be called during assemble (default behavior)
-            $$main.assemble({})
+            $main.assemble({})
+            await sleep(10)
             expect(eagerSpy).toHaveBeenCalledTimes(1)
         })
 
@@ -695,18 +621,18 @@ describe("typectx", () => {
             const factorySpy = vi.fn().mockReturnValue("lazy-with-init")
 
             const market = createMarket()
-            const $$lazy = market.offer("lazy").asProduct({
+            const $lazy = market.offer("lazy").asProduct({
                 factory: factorySpy,
                 init: initSpy,
                 lazy: true
             })
 
-            const $$main = market.offer("main").asProduct({
-                suppliers: [$$lazy],
+            const $main = market.offer("main").asProduct({
+                suppliers: [$lazy],
                 factory: () => "main"
             })
 
-            const $main = $$main.assemble({})
+            const mainProduct = $main.assemble({})
 
             // Wait a bit for any initing to complete
             await sleep(10)
@@ -716,7 +642,7 @@ describe("typectx", () => {
             expect(initSpy).toHaveBeenCalledTimes(0)
 
             // Only when accessed should the factory run
-            expect($main.unpack()).toBe("main")
+            expect(mainProduct.unpack()).toBe("main")
             expect(factorySpy).toHaveBeenCalledTimes(0) // Still not called since we don't access the lazy supplier
         })
 
@@ -725,37 +651,37 @@ describe("typectx", () => {
             const factorySpy = vi.fn().mockReturnValue(() => "eager-with-init")
 
             const market = createMarket()
-            const $$eager = market.offer("eager").asProduct({
+            const $eager = market.offer("eager").asProduct({
                 factory: factorySpy,
                 init: initSpy,
                 lazy: false
             })
 
-            const $$main = market.offer("main").asProduct({
-                suppliers: [$$eager],
+            const $main = market.offer("main").asProduct({
+                suppliers: [$eager],
                 factory: () => "main"
             })
 
-            const $main = $$main.assemble({})
+            const mainProduct = $main.assemble({})
 
             await sleep(10)
 
             // Eager supplier should be inited
             expect(factorySpy).toHaveBeenCalledTimes(1)
             expect(initSpy).toHaveBeenCalledTimes(1)
-            expect($main.unpack()).toBe("main")
+            expect(mainProduct.unpack()).toBe("main")
         })
     })
 
     describe("Type Safety and Edge Cases", () => {
         it("should handle empty suppliers correctly", () => {
             const market = createMarket()
-            const $$empty = market.offer("empty").asProduct({
+            const $empty = market.offer("empty").asProduct({
                 factory: () => "empty"
             })
 
-            const $empty = $$empty.assemble({})
-            expect($empty.unpack()).toBe("empty")
+            const emptyProduct = $empty.assemble({})
+            expect(emptyProduct.unpack()).toBe("empty")
         })
     })
 })

@@ -26,33 +26,34 @@ typectx's "Dependency Injection Supply Chain" (DISC) model can do everything con
 
 typectx uses an intuitive supply chain metaphor to make dependency injection easier to understand. You create fully-decoupled, hyper-specialized **suppliers** that exchange **resources** and **products** in a free-market fashion to assemble new, more complex products.
 
-| Term                   | Classical DI Equivalent | Description                                                                                              |
-| ---------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------- |
-| **`createMarket()`**   | `createContainer()`     | A namespace/scope for all your suppliers.                                                                |
-| **Resource**           | Value Service           | A simple container for data or configuration.                                                            |
-| **Product**            | Factory Service         | A container for a value created via a factory function with dependencies.                                |
-| **Supplier**           | Resolver                | Provides access to a resource or product to an application or another supplier.                          |
-| **`assemble()`**       | `resolve()`             | Gather all requires supplies and inject in factories. Builds the product if supplier is eager. supplies. |
-| **Supplies (or `$` )** | Container / Context     | The collection of resolved dependencies available at any point.                                          |
+| Term                 | Classical DI Equivalent | Description                                                                                                |
+| -------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------- |
+| **`createMarket()`** | `createContainer()`     | A namespace/scope for all your suppliers.                                                                  |
+| **Resource**         | Value Service result    | A simple container for data or configuration.                                                              |
+| **Product**          | Factory Service result  | A container for a value created via a factory function with dependencies.                                  |
+| **Supplier**         | Resolver                | Provides access to a resource or product to an application or another supplier.                            |
+| **`assemble()`**     | `resolve()`             | Gather all requires supplies and inject in factories. Builds the product if supplier is eager.             |
+| **Supplies**         | Container / Context     | The collection of resolved dependencies, but still within their product or resource "container" or "pack". |
+| **Deps**             | Values                  | The collection of resolved unpacked dependencies a factory receives                                        |
 
 ## How it Works Under the Hood
 
 Injection happens statelessly via a memoized, recursive, self-referential, lazy object. Here is a simplified example:
 
 ```typescript
-const $obj = {
+const supplies = {
     // Resources are provided directly
     resourceA,
     resourceB,
 
     // Products are wrapped in a function to be lazily evaluated and memoized.
-    // The `$obj` object is passed to assemble, creating a recursive structure.
-    productA: once(() => productA.supplier.assemble($obj)),
-    productB: once(() => productB.supplier.assemble($obj))
+    // The supplies object is passed to assemble, creating a recursive structure.
+    productA: once(() => productA.supplier.assemble(supplies)),
+    productB: once(() => productB.supplier.assemble(supplies))
     // ...
 }
 ```
 
-The `assemble()` call builds the above $obj object, each product now ready to be injected and built right away if eager, or on-demand if lazy. The `$($$supplier)` function you use in your factories simply uses the supplier's name to find the product or resource you want in the above object.
+The `assemble()` call builds the above supplies object, each product now ready to be injected and built right away if eager, or on-demand if lazy.
 
-This functional approach avoids the complexity of traditional DI containers while providing the same power in a more elegant and understandable way.
+This functional approach allows typescript to follow the types across the entirety of the dependency chain, which it cannot do for traditional stateful containers.

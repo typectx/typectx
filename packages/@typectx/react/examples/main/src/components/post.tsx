@@ -1,36 +1,37 @@
-import { $$commentsQuery, $$userQuery, $$usersQuery } from "@/api"
+import { $commentsQuery, $userQuery, $usersQuery } from "@/api"
 import { market } from "@/market"
 import type { Comment, Post } from "@/api"
 import { useState } from "react"
-import { $$Comment } from "@/components/comment"
+import { $Comment } from "@/components/comment"
 import { index } from "typectx"
-import { ctx } from "@/context"
+import { resources } from "@/resources"
 import { useQuery } from "@tanstack/react-query"
-import { $$SelectSession } from "./session"
-import { useAssembleComponent, useInit$ } from "@typectx/react"
+import { $SelectSession } from "./session"
+import { useAssembleComponent, useDeps } from "@typectx/react"
 import { useAssertStable } from "@/hooks"
 
-export const $$Post = market.offer("Post").asProduct({
+export const $Post = market.offer("Post").asProduct({
     suppliers: [
-        ctx.$$session,
-        $$usersQuery,
-        $$commentsQuery,
-        $$userQuery,
-        ctx.$$defaultUser
+        resources.$session,
+        $usersQuery,
+        $commentsQuery,
+        $userQuery,
+        resources.$defaultUser
     ],
-    optionals: [ctx.$$post],
-    assemblers: [$$Comment, $$SelectSession],
-    factory: (init$, $$) =>
+    optionals: [resources.$post],
+    assemblers: [$Comment, $SelectSession],
+    factory: (initDeps, ctx) =>
         function Post({ post }: { post: Post }) {
-            const $ = useInit$(init$)
-            const { data: defaultSession } = useQuery(
-                $($$userQuery).unpack()($(ctx.$$defaultUser).unpack())
-            )
-            const [session] = $(ctx.$$session).unpack()
-            const { data: users } = useQuery($($$usersQuery).unpack())
-            const { data: comments } = useQuery(
-                $($$commentsQuery).unpack()(post.id)
-            )
+            const {
+                userQuery,
+                defaultUser,
+                session: [session],
+                usersQuery,
+                commentsQuery
+            } = useDeps(initDeps)
+            const { data: defaultSession } = useQuery(userQuery(defaultUser))
+            const { data: users } = useQuery(usersQuery)
+            const { data: comments } = useQuery(commentsQuery(post.id))
             // Local session override - falls back to parent session until user changes it
             const [postSession, setPostSession] =
                 useState<typeof session>(undefined)
@@ -39,15 +40,15 @@ export const $$Post = market.offer("Post").asProduct({
             const assertStableComment = useAssertStable()
 
             const newCtx = index(
-                $$(ctx.$$session).pack([
+                resources.$session.pack([
                     postSession ?? session ?? defaultSession,
                     setPostSession
                 ]),
-                $$(ctx.$$post).pack(post)
+                resources.$post.pack(post)
             )
 
-            const $Comment = useAssembleComponent(
-                $$($$Comment).hire($$SelectSession),
+            const CommentProduct = useAssembleComponent(
+                ctx($Comment).hire($SelectSession),
                 newCtx
             )
 
@@ -56,9 +57,9 @@ export const $$Post = market.offer("Post").asProduct({
             }
 
             const SelectSession = assertStableSelectSession(
-                $Comment.$($$SelectSession).unpack()
+                CommentProduct.deps[$SelectSession.name]
             )
-            const Comment = assertStableComment($Comment.unpack())
+            const Comment = assertStableComment(CommentProduct.unpack())
 
             return (
                 <div className="border-2 border-purple-500 rounded-lg p-4 bg-gray-800">

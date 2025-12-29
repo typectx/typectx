@@ -74,7 +74,7 @@ const populatedPosts = mockPosts.map((post) => {
 
 // React Query hooks
 
-export const $$userQuery = market.offer("userQuery").asProduct({
+export const $userQuery = market.offer("userQuery").asProduct({
     factory: () => (id: string) => {
         return {
             queryKey: ["user", id],
@@ -90,8 +90,8 @@ export const $$userQuery = market.offer("userQuery").asProduct({
     }
 })
 
-export const $$usersQuery = market.offer("usersQuery").asProduct({
-    suppliers: [$$userQuery],
+export const $usersQuery = market.offer("usersQuery").asProduct({
+    suppliers: [$userQuery],
     factory: () => {
         return {
             queryKey: ["users"],
@@ -101,18 +101,15 @@ export const $$usersQuery = market.offer("usersQuery").asProduct({
             }
         }
     },
-    init: async (query, $) => {
+    init: async (query, { userQuery }) => {
         const users = await queryClient.fetchQuery(query)
         for (const user of users) {
-            queryClient.setQueryData(
-                $($$userQuery).unpack()(user.id).queryKey,
-                user
-            )
+            queryClient.setQueryData(userQuery(user.id).queryKey, user)
         }
     }
 })
 
-export const $$repliesQuery = market.offer("repliesQuery").asProduct({
+export const $repliesQuery = market.offer("repliesQuery").asProduct({
     factory: () => (commentId: string) => {
         return {
             queryKey: ["replies", commentId],
@@ -126,7 +123,7 @@ export const $$repliesQuery = market.offer("repliesQuery").asProduct({
     }
 })
 
-export const $$commentsQuery = market.offer("commentsQuery").asProduct({
+export const $commentsQuery = market.offer("commentsQuery").asProduct({
     factory: () => (postId: string) => {
         return {
             queryKey: ["comments", postId],
@@ -140,8 +137,8 @@ export const $$commentsQuery = market.offer("commentsQuery").asProduct({
     }
 })
 
-export const $$postsQuery = market.offer("postsQuery").asProduct({
-    suppliers: [$$commentsQuery, $$repliesQuery],
+export const $postsQuery = market.offer("postsQuery").asProduct({
+    suppliers: [$commentsQuery, $repliesQuery],
     factory: () => {
         return {
             queryKey: ["posts"],
@@ -151,17 +148,17 @@ export const $$postsQuery = market.offer("postsQuery").asProduct({
             }
         }
     },
-    init: async (query, $) => {
+    init: async (query, { commentsQuery, repliesQuery }) => {
         const posts = await queryClient.fetchQuery(query)
         for (const post of posts) {
             queryClient.setQueryData(
-                $($$commentsQuery).unpack()(post.id).queryKey,
+                commentsQuery(post.id).queryKey,
                 post.comments
             )
 
             for (const comment of post.comments) {
                 queryClient.setQueryData(
-                    $($$repliesQuery).unpack()(comment.id).queryKey,
+                    repliesQuery(comment.id).queryKey,
                     comment.replies
                 )
             }

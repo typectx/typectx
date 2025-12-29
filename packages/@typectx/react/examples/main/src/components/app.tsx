@@ -1,38 +1,39 @@
-import { $$Feed } from "@/components/feed"
+import { $Feed } from "@/components/feed"
 import { market } from "@/market"
-import { $$SelectSession } from "@/components/session"
-import { ctx } from "@/context"
-import { $$userQuery, type User } from "@/api"
+import { $SelectSession } from "@/components/session"
+import { resources } from "@/resources"
+import { $userQuery, type User } from "@/api"
 import { useState } from "react"
 import { index } from "typectx"
-import { useAssembleComponent, useInit$ } from "@typectx/react"
+import { useAssembleComponent, useDeps } from "@typectx/react"
 import { useAssertStable } from "@/hooks"
 import { useQuery } from "@tanstack/react-query"
 
-export const $$App = market.offer("App").asProduct({
-    suppliers: [$$userQuery, ctx.$$defaultUser],
-    assemblers: [$$SelectSession, $$Feed],
-    factory: (init$, $$) =>
+export const $App = market.offer("App").asProduct({
+    suppliers: [$userQuery, resources.$defaultUser],
+    assemblers: [$SelectSession, $Feed],
+    factory: (initDeps, ctx) =>
         function App() {
-            const $ = useInit$(init$)
-            const { data: defaultSession } = useQuery(
-                $($$userQuery).unpack()($(ctx.$$defaultUser).unpack())
-            )
+            const { userQuery, defaultUser } = useDeps(initDeps)
+            const { data: defaultSession } = useQuery(userQuery(defaultUser))
             const [session, setSession] = useState<User | undefined>(undefined)
             const assertStableFeed = useAssertStable()
             const assertStableSelectSession = useAssertStable()
 
-            const $Feed = useAssembleComponent(
-                $$($$Feed).hire($$SelectSession),
+            const FeedProduct = useAssembleComponent(
+                ctx($Feed).hire($SelectSession),
                 index(
-                    ctx.$$session.pack([session ?? defaultSession, setSession])
+                    resources.$session.pack([
+                        session ?? defaultSession,
+                        setSession
+                    ])
                 )
             )
 
-            const Feed = assertStableFeed($Feed.unpack())
+            const Feed = assertStableFeed(FeedProduct.unpack())
 
             const SelectSession = assertStableSelectSession(
-                $Feed.$($$SelectSession).unpack()
+                FeedProduct.deps[$SelectSession.name]
             )
 
             return (

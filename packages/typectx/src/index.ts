@@ -1,18 +1,19 @@
 import {
     Product,
     ProductSupplier,
-    SupplyRecord,
+    SuppliesRecord,
     type ResourceSupplier,
     type ToSupply,
     type CircularDependencyGuard,
-    type $,
-    type $$,
+    type Ctx,
     Supplier,
     AsProductParameters,
     Resource,
     MainSupplier,
     MergeSuppliers,
-    TransitiveSuppliers
+    TransitiveSuppliers,
+    type Deps,
+    type Resolved
 } from "#types"
 
 import { once, team as buildTeam, isProductSupplier, isPacked } from "#utils"
@@ -68,7 +69,6 @@ export const createMarket = () => {
                             value: VALUE
                         ) {
                             return {
-                                name,
                                 unpack: () => value,
                                 supplier: this
                             }
@@ -159,7 +159,6 @@ export const createMarket = () => {
 
                         const assemblersTeam = buildTeam(name, [
                             ...suppliers,
-                            ...optionals,
                             ...assemblers,
                             ...hired
                         ])
@@ -222,15 +221,13 @@ export const createMarket = () => {
                                 this: THIS,
                                 value: VALUE
                             ) {
-                                const $ = () => undefined as any
-                                $.allKeys = [] as any[]
-                                $.keys = [] as any[]
                                 return {
                                     unpack: () => value,
-                                    $,
+                                    deps: {},
+                                    supplies: {},
                                     supplier: this,
                                     _: {
-                                        $$: () => null as any,
+                                        ctx: () => null as any,
                                         packed: true as const
                                     }
                                 }
@@ -311,7 +308,7 @@ export const createMarket = () => {
                                     HIRE,
                                     ASSEMBLE,
                                     SUPPLIES extends
-                                        SupplyRecord<ProductSupplier>
+                                        SuppliesRecord<ProductSupplier>
                                 >(
                                     thisSupplier: THIS & {
                                         team: TEAM
@@ -324,60 +321,67 @@ export const createMarket = () => {
                                     },
                                     supplies: SUPPLIES
                                 ) => {
-                                    const $ = ((supplier: { name: string }) => {
-                                        const supply = supplies[supplier.name]
+                                    const resolve = once(() =>
+                                        Object.entries(supplies).reduce(
+                                            (acc, [name, supply]) => {
+                                                if (supply === undefined) {
+                                                    acc[name] = undefined
+                                                    return acc
+                                                }
 
-                                        // If there is a once() wrapper, call it to get the actual supply
-                                        // Otherwise, the supply will either be a product or resource
-                                        // which both aren't functions, so this check is sufficient
-                                        if (typeof supply === "function") {
-                                            return supply()
-                                        }
-                                        return supply
-                                    }) as $<TEAM, OPTIONALS>
+                                                if (
+                                                    typeof supply === "function"
+                                                ) {
+                                                    acc[name] = supply()
+                                                    return acc
+                                                }
 
-                                    $.allKeys = Object.keys(supplies)
-                                    $.keys = $.allKeys.filter(
-                                        (key) =>
-                                            !![
-                                                ...thisSupplier.team,
-                                                ...thisSupplier.optionals
-                                            ].find((s) => s.name === key)
+                                                acc[name] = supply
+                                                return acc
+                                            },
+                                            {} as Record<string, any>
+                                        )
                                     )
 
-                                    // Prerun supplier factories
+                                    const deps = Object.keys(supplies).reduce(
+                                        (acc, name) => {
+                                            acc[name] = () => {
+                                                return resolve()[name]?.unpack()
+                                            }
+                                            return acc
+                                        },
+                                        {} as Record<string, () => any>
+                                    )
+
+                                    // Prerun supplier factories in the background (non-blocking)
                                     for (const supplier of Object.values(
                                         thisSupplier.team
                                     )) {
                                         if ("lazy" in supplier && supplier.lazy)
                                             continue
 
-                                        try {
-                                            ;($(supplier) as any).unpack()
-                                        } catch (e) {
-                                            // console.error(e)
-                                            // If prerun fails, we don't want to break the entire supply chain
-                                            // The error will be thrown again when the dependency is actually needed
-                                        }
+                                        // If prerun fails, we don't want to break the entire supply chain
+                                        // The error will be thrown again when the dependency is actually needed
+                                        Promise.resolve()
+                                            .then(() => deps[supplier.name]?.())
+                                            .catch(() => {
+                                                // Silently catch errors during prerun
+                                                // The error will be thrown again when the dependency is actually accessed
+                                            })
                                     }
-                                    const $$ = ((assembler: any) => {
-                                        const actual =
-                                            assembler.name === name ?
-                                                supplier
-                                            :   assemblersTeam.find(
-                                                    (member) =>
-                                                        member.name ===
-                                                        assembler.name
-                                                )
 
+                                    const ctx = ((assembler: any) => {
+                                        if (!isProductSupplier(assembler)) {
+                                            return assembler
+                                        }
+                                        const actual = assemblersTeam.find(
+                                            (member) =>
+                                                member.name === assembler.name
+                                        )
                                         if (!actual) {
                                             throw new Error(
                                                 `Assembler ${assembler.name} not found`
                                             )
-                                        }
-
-                                        if (!isProductSupplier(actual)) {
-                                            return actual
                                         }
 
                                         return {
@@ -387,27 +391,29 @@ export const createMarket = () => {
                                             >(...hired: [...HIRED]) {
                                                 const actualHired = hired.map(
                                                     (hired) => {
-                                                        const actual =
-                                                            assemblersTeam.find(
-                                                                (assembler) =>
-                                                                    assembler.name ===
-                                                                    hired.name
-                                                            )
-                                                        if (!actual) {
-                                                            throw new Error(
-                                                                `Hired assembler ${hired.name} not found`
-                                                            )
-                                                        }
-
                                                         if (
                                                             !isProductSupplier(
-                                                                actual
+                                                                hired
                                                             )
                                                         ) {
                                                             throw new Error(
                                                                 `Hired assembler ${hired.name} is not a product supplier`
                                                             )
                                                         }
+                                                        const actual =
+                                                            assemblersTeam.find(
+                                                                (assembler) =>
+                                                                    assembler.name ===
+                                                                    hired.name
+                                                            ) as
+                                                                | ProductSupplier
+                                                                | undefined
+                                                        if (!actual) {
+                                                            throw new Error(
+                                                                `Hired assembler ${hired.name} not found`
+                                                            )
+                                                        }
+
                                                         return actual
                                                     }
                                                 )
@@ -424,33 +430,27 @@ export const createMarket = () => {
                                             assemble: (supplied: any) =>
                                                 reassemble(actual, supplied)
                                         }
-                                    }) as $$<TEAM, OPTIONALS, ASSEMBLERS>
+                                    }) as Ctx<TEAM, OPTIONALS, ASSEMBLERS>
 
                                     function reassemble(
                                         assembler: any,
-                                        supplied: SupplyRecord<ProductSupplier>,
+                                        supplied: SuppliesRecord<ProductSupplier>,
                                         ...hired: ProductSupplier[]
                                     ) {
-                                        const prev = Object.fromEntries(
-                                            $.allKeys.map((name) => [
-                                                name,
-                                                $({
-                                                    name
-                                                })
-                                            ])
-                                        )
-
+                                        const resolved = resolve()
                                         // Stores the supplies that can be preserved to optimize reassemble
-                                        const preserved: SupplyRecord<ProductSupplier> =
+                                        const preserved: SuppliesRecord<ProductSupplier> =
                                             {}
 
-                                        for (const name of $.allKeys as (keyof typeof prev)[]) {
-                                            const prevSupply = prev[name] as
+                                        for (const name of Object.keys(
+                                            resolved
+                                        )) {
+                                            const supply = resolved[name] as
                                                 | Product<any, ProductSupplier>
                                                 | Resource
                                                 | undefined
 
-                                            if (prevSupply === undefined) {
+                                            if (supply === undefined) {
                                                 continue
                                             }
 
@@ -468,20 +468,19 @@ export const createMarket = () => {
 
                                             if (
                                                 !isProductSupplier(
-                                                    prevSupply.supplier
+                                                    supply.supplier
                                                 ) ||
-                                                isPacked(prevSupply)
+                                                isPacked(supply)
                                             ) {
                                                 // Preserve if it's a resource or a packed product
-                                                preserved[name as any] =
-                                                    prevSupply
+                                                preserved[name as any] = supply
                                                 continue
                                             }
 
                                             // Do not preserve if some of the products's team members
                                             // depend on newly hired or supplied
                                             if (
-                                                prevSupply.supplier.team.some(
+                                                supply.supplier.team.some(
                                                     (t) =>
                                                         t.name in supplied ||
                                                         hired.some(
@@ -494,7 +493,7 @@ export const createMarket = () => {
                                                 continue
                                             }
 
-                                            preserved[name as any] = prevSupply
+                                            preserved[name as any] = supply
                                         }
 
                                         const hiredAssembler = assembler.hire(
@@ -515,18 +514,76 @@ export const createMarket = () => {
                                         )
                                     }
 
+                                    const { filteredDeps, filteredResolved } =
+                                        Object.entries(deps).reduce(
+                                            (acc, [key, dep]) => {
+                                                if (
+                                                    !thisSupplier.team.some(
+                                                        (member) =>
+                                                            member.name === key
+                                                    )
+                                                ) {
+                                                    return acc
+                                                }
+
+                                                // Transform method to getter for better api design
+                                                Object.defineProperty(
+                                                    acc.filteredDeps,
+                                                    key,
+                                                    {
+                                                        get() {
+                                                            return dep()
+                                                        },
+                                                        enumerable: true,
+                                                        configurable: true
+                                                    }
+                                                )
+
+                                                Object.defineProperty(
+                                                    acc.filteredResolved,
+                                                    key,
+                                                    {
+                                                        get() {
+                                                            return resolve()[
+                                                                key
+                                                            ]
+                                                        },
+                                                        enumerable: true,
+                                                        configurable: true
+                                                    }
+                                                )
+
+                                                return acc
+                                            },
+                                            {
+                                                filteredDeps: {} as Deps<
+                                                    Supplier[],
+                                                    ResourceSupplier[]
+                                                >,
+                                                filteredResolved:
+                                                    {} as Resolved<
+                                                        Supplier[],
+                                                        ResourceSupplier[]
+                                                    >
+                                            }
+                                        )
+
                                     const product = {
                                         unpack: once(() => {
-                                            const value = factory($ as any, $$)
+                                            const value = factory(
+                                                filteredDeps as any,
+                                                ctx
+                                            )
                                             if (init) {
-                                                init(value, $ as any)
+                                                init(value, filteredDeps as any)
                                             }
                                             return value
                                         }),
-                                        $,
+                                        deps: filteredDeps,
+                                        supplies: filteredResolved,
                                         supplier: thisSupplier,
                                         _: {
-                                            $$,
+                                            ctx,
                                             packed: false as const
                                         }
                                     }

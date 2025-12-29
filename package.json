@@ -8,11 +8,12 @@
         "test": "turbo test:run",
         "vitest": "vitest",
         "lint": "turbo lint",
-        "clean": "turbo clean"
+        "clean": "turbo clean",
+        "devtools": "turbo devtools"
     },
     "devDependencies": {
         "prettier": "3.6.2",
-        "turbo": "^2.5.8"
+        "turbo": "^2.7.2"
     },
     "packageManager": "pnpm@10.26.1",
     "engines": {

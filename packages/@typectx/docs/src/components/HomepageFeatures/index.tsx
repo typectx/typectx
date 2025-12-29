@@ -66,9 +66,9 @@ const FeatureList: FeatureItem[] = [
         icon: "🔄",
         description: (
             <>
-                Dependencies resolved via closures, not global state. Context
-                switching with <code>reassemble()</code> for clean, predictable
-                behavior.
+                Dependencies resolved via closures, not global state. Enables
+                full type-inference and context switching with{" "}
+                <code>ctx(...)</code>.
             </>
         )
     }

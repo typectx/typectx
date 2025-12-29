@@ -1,23 +1,23 @@
-import { $$postsQuery } from "@/api"
+import { $postsQuery } from "@/api"
 import { market } from "@/market"
-import { $$Post } from "@/components/post"
+import { $Post } from "@/components/post"
 import { useQuery } from "@tanstack/react-query"
-import { useInit$ } from "@typectx/react"
+import { useDeps } from "@typectx/react"
 import { useAssertStable } from "@/hooks"
 
-export const $$Feed = market.offer("Feed").asProduct({
-    suppliers: [$$postsQuery, $$Post],
-    factory: (init$, $$) =>
+export const $Feed = market.offer("Feed").asProduct({
+    suppliers: [$postsQuery, $Post],
+    factory: (initDeps) =>
         function Feed() {
-            const $ = useInit$(init$)
-            const { data: posts } = useQuery($($$postsQuery).unpack())
+            const { postsQuery, Post } = useDeps(initDeps)
+            const { data: posts } = useQuery(postsQuery)
 
             const assertStablePost = useAssertStable()
             if (!posts) {
                 return <div>Loading posts...</div>
             }
 
-            const Post = assertStablePost($($$Post).unpack())
+            assertStablePost(Post)
 
             return (
                 <div className="space-y-6">

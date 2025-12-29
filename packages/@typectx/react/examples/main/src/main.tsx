@@ -1,18 +1,18 @@
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 import "./index.css"
-import { $$App } from "@/components/app"
+import { $App } from "@/components/app"
 import { QueryClientProvider } from "@tanstack/react-query"
 import { queryClient } from "@/query"
-import { $$postsQuery, $$usersQuery } from "@/api"
+import { $postsQuery, $usersQuery } from "@/api"
 import { index } from "typectx"
-import { ctx } from "./context"
+import { resources } from "./resources"
 
-queryClient.prefetchQuery($$usersQuery.assemble({}).unpack())
-queryClient.prefetchQuery($$postsQuery.assemble({}).unpack())
+queryClient.prefetchQuery($usersQuery.assemble({}).unpack())
+queryClient.prefetchQuery($postsQuery.assemble({}).unpack())
 
 const root = createRoot(document.getElementById("root") as HTMLElement)
-const App = $$App.assemble(index(ctx.$$defaultUser.pack("userA"))).unpack()
+const App = $App.assemble(index(resources.$defaultUser.pack("userA"))).unpack()
 root.render(
     <StrictMode>
         <QueryClientProvider client={queryClient}>
