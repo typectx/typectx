@@ -1,7 +1,7 @@
 {
     "name": "@typectx/react",
     "type": "module",
-    "version": "0.6.0",
+    "version": "0.0.0",
     "description": "Hooks to synchronize React client components with typectx",
     "main": "dist/index.cjs",
     "module": "dist/index.js",

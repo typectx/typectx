@@ -100,7 +100,7 @@ importers:
         specifier: ^5.90.14
         version: 5.90.14(react@19.2.3)
       '@typectx/react':
-        specifier: ^0.6.0
+        specifier: '*'
         version: link:../../main
       clsx:
         specifier: ^2.1.1
@@ -115,7 +115,7 @@ importers:
         specifier: ^19.2.3
         version: 19.2.3(react@19.2.3)
       typectx:
-        specifier: ^0.6.0
+        specifier: '*'
         version: link:../../../../typectx
     devDependencies:
       '@eslint/js':
