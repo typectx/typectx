@@ -582,5 +582,5 @@ Now that you understand the basics, explore these advanced features:
 
 For more advanced context propagation patterns:
 
-- **[Optionals](context-propagation/optionals)** - Handle dependencies that may or may not be present
-- **[Assemblers](context-propagation/assemblers)** - For Just-in-time product assembly.
+- **[Optionals](optionals)** - Handle dependencies that may or may not be present
+- **[Assemblers](assemblers)** - For Just-in-time product assembly.
