@@ -87,70 +87,70 @@ jobs:
               if: contains(github.event.release.tag_name, 'dry')
               working-directory: ./packages/typectx
               run: |
-                  pnpm publish --tag dry --dry-run
+                  pnpm publish --tag dry --dry-run --no-git-checks
 
             - name: Dry publish @typectx/react
               if: contains(github.event.release.tag_name, 'dry')
               working-directory: ./packages/@typectx/react/main
               run: |
-                  pnpm publish --tag dry --dry-run
+                  pnpm publish --tag dry --dry-run --no-git-checks
 
             - name: Publish typectx to Canary
               if: contains(github.event.release.tag_name, 'canary')
               working-directory: ./packages/typectx
               run: |
-                  pnpm publish --tag canary
+                  pnpm publish --tag canary --no-git-checks
 
             - name: Publish @typectx/react to Canary
               if: contains(github.event.release.tag_name, 'canary')
               working-directory: ./packages/@typectx/react/main
               run: |
-                  pnpm publish --tag canary
+                  pnpm publish --tag canary --no-git-checks
 
             - name: Publish typectx to Alpha
               if: contains(github.event.release.tag_name, 'alpha')
               working-directory: ./packages/typectx
               run: |
-                  pnpm publish --tag alpha
+                  pnpm publish --tag alpha --no-git-checks
 
             - name: Publish @typectx/react to Alpha
               if: contains(github.event.release.tag_name, 'alpha')
               working-directory: ./packages/@typectx/react/main
               run: |
-                  pnpm publish --tag alpha
+                  pnpm publish --tag alpha --no-git-checks
 
             - name: Publish typectx to Beta
               if: contains(github.event.release.tag_name, 'beta')
               working-directory: ./packages/typectx
               run: |
-                  pnpm publish --tag beta
+                  pnpm publish --tag beta --no-git-checks
 
             - name: Publish @typectx/react to Beta
               if: contains(github.event.release.tag_name, 'beta')
               working-directory: ./packages/@typectx/react/main
               run: |
-                  pnpm publish --tag beta
+                  pnpm publish --tag beta --no-git-checks
 
             - name: Publish typectx to RC
               if: contains(github.event.release.tag_name, 'rc')
               working-directory: ./packages/typectx
               run: |
-                  pnpm publish --tag rc
+                  pnpm publish --tag rc --no-git-checks
 
             - name: Publish @typectx/react to RC
               if: contains(github.event.release.tag_name, 'rc')
               working-directory: ./packages/@typectx/react/main
               run: |
-                  pnpm publish --tag rc
+                  pnpm publish --tag rc --no-git-checks
 
             - name: Publish typectx to Latest
               if: contains(github.event.release.tag_name, '-') == false
               working-directory: ./packages/typectx
               run: |
-                  pnpm publish --tag latest
+                  pnpm publish --tag latest --no-git-checks
 
             - name: Publish @typectx/react to Latest
               if: contains(github.event.release.tag_name, '-') == false
               working-directory: ./packages/@typectx/react/main
               run: |
-                  pnpm publish --tag latest
+                  pnpm publish --tag latest --no-git-checks
