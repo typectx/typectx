@@ -309,7 +309,7 @@ export type Ctx<
     OPTIONALS extends ResourceSupplier[],
     ASSEMBLERS extends ProductSupplier[]
 > = <
-    ASSEMBLER extends SUPPLIERS[number] | OPTIONALS[number] | ASSEMBLERS[number]
+    ASSEMBLER extends SUPPLIERS[number] | ASSEMBLERS[number] | ResourceSupplier
 >(
     assembler?: ASSEMBLER
 ) => ASSEMBLER extends ProductSupplier ?
@@ -354,7 +354,7 @@ export type Ctx<
             ProductSupplier<ASSEMBLER["name"], ASSEMBLER["_"]["constraint"]>
         >
     }
-:   ASSEMBLER //Matched by optionals, simply returns the optional itself.
+:   ASSEMBLER // simply returns the assembler itself if it's a resource supplier (noop)
 /**
  * Recursively filters out suppliers of a specific type from a supplier array.
  * This is used internally to separate product suppliers from resource suppliers
@@ -401,13 +401,13 @@ export type TransitiveSuppliers<
     ) ?
         // Tail-recursive: queue up FIRST's suppliers + REST (both filtered), accumulate FIRST
         TransitiveSuppliers<
-            MergeSuppliers<
-                FilterSuppliers<
+            [
+                ...FilterSuppliers<
                     MergeSuppliers<FIRST["suppliers"], FIRST["hired"]>,
-                    ACC
+                    [...ACC, ...REST]
                 >,
-                REST
-            >,
+                ...REST
+            ],
             [...ACC, FIRST]
         >
     : SUPPLIERS extends (
@@ -432,17 +432,17 @@ export type AllTransitiveSuppliers<
         [infer FIRST extends ProductSupplier, ...infer REST extends Supplier[]]
     ) ?
         AllTransitiveSuppliers<
-            MergeSuppliers<
-                FilterSuppliers<
+            [
+                ...FilterSuppliers<
                     [
                         ...MergeSuppliers<FIRST["suppliers"], FIRST["hired"]>,
                         ...FIRST["optionals"],
                         ...MergeSuppliers<FIRST["assemblers"], FIRST["hired"]>
                     ],
-                    ACC
+                    [...ACC, ...REST]
                 >,
-                REST
-            >,
+                ...REST
+            ],
             [...ACC, FIRST]
         >
     : // Flat conditional 2: ResourceSupplier

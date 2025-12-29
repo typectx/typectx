@@ -21,11 +21,11 @@ src/
 │   ├── reply.tsx     # Reply component
 │   └── session.tsx   # Session management component
 ├── api.ts            # API service definitions and data fetching
-├── context.ts        # React context for dependency injection
+├── resources.ts      # Data and configuration used globally
 ├── index.css         # Global styles
 ├── main.tsx          # Application entry point
 ├── market.ts         # Main market with resources and products
-└── query.ts          # React Query integration and hooks
+└── query.ts          # React Query initialization
 ```
 
 ## 📚 Learning Path

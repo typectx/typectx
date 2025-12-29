@@ -135,20 +135,19 @@ describe("Optionals Feature", () => {
         })
     })
 
-    describe("Optionals in ctx Parameter (Assemblers)", () => {
-        it("should pass optionals to $$ parameter alongside assemblers", () => {
+    describe("Resource suppliers in ctx Parameter (Assemblers)", () => {
+        it("should just return resource suppliers (noop)", () => {
             const market = createMarket()
-            const $optional = market.offer("optional").asResource<string>()
+            const $resource = market.offer("resource").asResource<string>()
             const $assembler = market.offer("assembler").asProduct({
                 factory: () => "assembled"
             })
 
             const $product = market.offer("product").asProduct({
-                optionals: [$optional],
                 assemblers: [$assembler],
                 factory: (deps, ctx) => {
                     // Both should be in ctx
-                    expect(ctx($optional)).toBe($optional)
+                    expect(ctx($resource)).toBe($resource)
                     expect(ctx($assembler).name).toBe($assembler.name)
                 }
             })

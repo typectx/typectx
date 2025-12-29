@@ -159,7 +159,6 @@ export const createMarket = () => {
 
                         const assemblersTeam = buildTeam(name, [
                             ...suppliers,
-                            ...optionals,
                             ...assemblers,
                             ...hired
                         ])
@@ -373,23 +372,17 @@ export const createMarket = () => {
                                     }
 
                                     const ctx = ((assembler: any) => {
-                                        const actual =
-                                            assembler.name === name ?
-                                                supplier
-                                            :   assemblersTeam.find(
-                                                    (member) =>
-                                                        member.name ===
-                                                        assembler.name
-                                                )
-
+                                        if (!isProductSupplier(assembler)) {
+                                            return assembler
+                                        }
+                                        const actual = assemblersTeam.find(
+                                            (member) =>
+                                                member.name === assembler.name
+                                        )
                                         if (!actual) {
                                             throw new Error(
                                                 `Assembler ${assembler.name} not found`
                                             )
-                                        }
-
-                                        if (!isProductSupplier(actual)) {
-                                            return actual
                                         }
 
                                         return {
@@ -399,27 +392,29 @@ export const createMarket = () => {
                                             >(...hired: [...HIRED]) {
                                                 const actualHired = hired.map(
                                                     (hired) => {
-                                                        const actual =
-                                                            assemblersTeam.find(
-                                                                (assembler) =>
-                                                                    assembler.name ===
-                                                                    hired.name
-                                                            )
-                                                        if (!actual) {
-                                                            throw new Error(
-                                                                `Hired assembler ${hired.name} not found`
-                                                            )
-                                                        }
-
                                                         if (
                                                             !isProductSupplier(
-                                                                actual
+                                                                hired
                                                             )
                                                         ) {
                                                             throw new Error(
                                                                 `Hired assembler ${hired.name} is not a product supplier`
                                                             )
                                                         }
+                                                        const actual =
+                                                            assemblersTeam.find(
+                                                                (assembler) =>
+                                                                    assembler.name ===
+                                                                    hired.name
+                                                            ) as
+                                                                | ProductSupplier
+                                                                | undefined
+                                                        if (!actual) {
+                                                            throw new Error(
+                                                                `Hired assembler ${hired.name} not found`
+                                                            )
+                                                        }
+
                                                         return actual
                                                     }
                                                 )
