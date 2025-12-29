@@ -360,15 +360,14 @@ export const createMarket = () => {
                                         if ("lazy" in supplier && supplier.lazy)
                                             continue
 
-                                        try {
-                                            Promise.resolve().then(() =>
-                                                deps[supplier.name]?.()
-                                            )
-                                        } catch (e) {
-                                            // console.error(e)
-                                            // If prerun fails, we don't want to break the entire supply chain
-                                            // The error will be thrown again when the dependency is actually needed
-                                        }
+                                        // If prerun fails, we don't want to break the entire supply chain
+                                        // The error will be thrown again when the dependency is actually needed
+                                        Promise.resolve()
+                                            .then(() => deps[supplier.name]?.())
+                                            .catch(() => {
+                                                // Silently catch errors during prerun
+                                                // The error will be thrown again when the dependency is actually accessed
+                                            })
                                     }
 
                                     const ctx = ((assembler: any) => {
