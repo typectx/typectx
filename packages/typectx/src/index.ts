@@ -181,7 +181,7 @@ export const createMarket = () => {
                              * Only resource dependencies need to be supplied; product dependencies are autowired.
                              *
                              * @param supplied - Map of resource supplies to use for dependency resolution
-                             * @returns A product instance with unpack(), $, reassemble() methods and the supplier reference
+                             * @returns A product instance with unpack(), deps, supplies and the supplier reference
                              * @public
                              */
                             assemble<
@@ -240,7 +240,7 @@ export const createMarket = () => {
                                  * Only resource dependencies need to be supplied; product dependencies are autowired.
                                  *
                                  * @param supplied - Map of resource supplies to use for dependency resolution
-                                 * @returns A product instance with unpack(), $, reassemble() methods and the supplier reference
+                                 * @returns A product instance with unpack(), deps, supplies methods and the supplier reference
                                  * @public
                                  */
                                 assemble<
@@ -293,11 +293,11 @@ export const createMarket = () => {
                                  * Internal build method that creates the actual product instance.
                                  * This is separated from assemble() to allow for internal reuse during
                                  * reassembly and recursive dependency resolution. It creates the factory
-                                 * closure with the $ and $$ accessors and handles initialization.
+                                 * closure with the deps and ctx accessors and handles initialization.
                                  *
                                  * @param supplier - The supplier being built
-                                 * @param $ - The supply accessor function providing resolved dependencies
-                                 * @returns A product instance with unpack(), reassemble(), and $ methods
+                                 * @param supplies - The supply map providing resolved dependencies
+                                 * @returns A product instance with unpack(), deps, supplies, and ctx methods
                                  * @internal
                                  */
                                 build: <

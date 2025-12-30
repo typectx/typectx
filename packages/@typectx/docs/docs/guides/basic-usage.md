@@ -160,7 +160,7 @@ const $authService = market.offer("authService").asProduct({
 
 // Depends on a resource and a product
 const $userProfile = market.offer("userProfile").asProduct({
-    suppliers: [$$authService, $$database],
+    suppliers: [$authService, $database],
     factory: ({ authService, database }) => {
         return {
             getProfile: (token: string) => {
@@ -295,7 +295,7 @@ The `index()` function simplifies assembly by converting an array of packed reso
 import { index } from "typectx"
 
 const app = $app
-    .assemble(index($$database.pack(db), $$session.pack(session)))
+    .assemble(index($database.pack(db), $session.pack(session)))
     .unpack()
 ```
 
@@ -316,11 +316,11 @@ const $service = market.offer("service").asProduct({
 // ❌ Type error: Missing required resources
 $service.assemble({})
 
-// ❌ Type error: Missing $$database
-$service.assemble(index($$config.pack(config)))
+// ❌ Type error: Missing $database
+$service.assemble(index($config.pack(config)))
 
 // ✅ All required resources provided
-$service.assemble(index($$config.pack(config), $$database.pack(db)))
+$service.assemble(index($config.pack(config), $database.pack(db)))
 ```
 
 ### You Only Supply Resources
@@ -350,7 +350,7 @@ const $app = market.offer("app").asProduct({
 // You only provide the resources ($db and $session)
 // $userService is assembled automatically
 const app = $app
-    .assemble(index($$db.pack(database), $$session.pack(session)))
+    .assemble(index($db.pack(database), $session.pack(session)))
     .unpack()
 ```
 
@@ -370,7 +370,7 @@ const $eagerService = market.offer("eagerService").asProduct({
     // lazy: false is the default
 })
 
-const appProduct = $app.assemble(index($$database.pack(db)))
+const appProduct = $app.assemble(index($database.pack(db)))
 // "Eager service factory called" - happens immediately
 ```
 
@@ -551,13 +551,7 @@ export async function handleRequest(request: Request) {
     }
 
     const handler = $apiHandler
-        .assemble(
-            index(
-                $database.pack(db),
-                $currentUser.pack(user),
-                $config.pack(config)
-            )
-        )
+        .assemble(index($db.pack(db), $user.pack(user), $config.pack(config)))
         .unpack()
 
     return handler(request)

@@ -38,8 +38,6 @@ const $apiClient = market.offer("apiClient").asProduct({
     optionals: [$apiKey],
     // apiKey will be typed string | undefined
     factory: ({ apiKey }) => {
-        const apiKey = $($$apiKey)?.unpack()
-
         return {
             makeRequest: async (endpoint: string) => {
                 const headers: Record<string, string> = {
@@ -62,7 +60,7 @@ const client = $apiClient.assemble({}).unpack()
 
 // Or provide it when available
 const authenticatedClient = $apiClient
-    .assemble(index($$apiKey.pack("secret-api-key-123")))
+    .assemble(index($apiKey.pack("secret-api-key-123")))
     .unpack()
 ```
 

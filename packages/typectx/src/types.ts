@@ -87,12 +87,14 @@ export type BaseProductSupplier<
  * They support various features like lazy loading, prototypes, and assemblers.
  *
  * @typeParam NAME - The unique identifier name for this product supplier
- * @typeParam VALUE - The type of value this supplier produces
+ * @typeParam CONSTRAINT - The type constraint for values this supplier produces
  * @typeParam SUPPLIERS - Array of suppliers this product depends on
  * @typeParam OPTIONALS - Array of optional suppliers this product may depend on
  * @typeParam ASSEMBLERS - Array of assemblers (lazy unassembled suppliers)
- * @typeParam SUPPLIES - The resolved supply map for dependencies
- * @typeParam ASSEMBLERS_MAP - Same as ASSEMBLERS, but formatted as a map with supplier names as keys.
+ * @typeParam HIRED - Array of hired suppliers that override or extend the team
+ * @typeParam TEAM - The complete transitive team of all suppliers needed
+ * @typeParam DEPS - The dependencies type providing access to resolved dependency values
+ * @typeParam CTX - The context type providing access to assemblers for lazy assembly
  * @public
  */
 export type ProductSupplier<
@@ -181,7 +183,7 @@ export type SuppliesRecord<SUPPLIER extends ProductSupplier = ProductSupplier> =
     Record<string, MaybeFn<[], Product<any, SUPPLIER>> | Resource | undefined>
 
 /**
- * Converts an array of suppliers and optionals into a corresponding $ supply map.
+ * Converts an array of suppliers and optionals into a corresponding supply map.
  *
  * @typeParam SUPPLIERS - Array of supplier types to convert into a supply map
  * @typeParam OPTIONALS - Array of optional supplier types to convert into a supply map
@@ -295,12 +297,11 @@ export type Deps<
 
 /**
  * Assembler accessor type used in factory functions for lazy dependency assembly.
- * Unlike $, which provides fully assembled products, $$ provides unassembled suppliers
- * that can be assembled on-demand with custom supplies. This enables lazy evaluation
- * and dynamic dependency injection within a product's factory.
- *
- * @typeParam ASSEMBLERS - Array of product suppliers available as assemblers
+ * ctx provides unassembled contextualized suppliers that can be assembled on-demand with custom supplies.
+ * This enables lazy evaluation and dynamic dependency injection within a product's factory.
+ * @typeParam SUPPLIERS - Array of suppliers available in the context
  * @typeParam OPTIONALS - Array of optional resource suppliers
+ * @typeParam ASSEMBLERS - Array of product suppliers available as assemblers
  * @returns A function that takes an assembler and returns it with an assemble method
  * @public
  */

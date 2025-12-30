@@ -217,7 +217,7 @@ const $eagerService = market.offer("eagerService").asProduct({
 const $lazyService = market.offer("lazyService").asProduct({
     suppliers: [$db],
     factory: ({db}) => buildExpensiveService(db),
-    lazy: true // Loaded when first accessed via $()
+    lazy: true // Loaded when first accessed via deps
 })
 ```
 
