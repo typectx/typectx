@@ -583,8 +583,8 @@ describe("Assemblers Feature", () => {
         })
     })
 
-    describe("Type-safety of nested $$().assemble() calls", () => {
-        it("should properly type the result of nested $$().assemble() calls", () => {
+    describe("Type-safety of nested ctx().assemble() calls", () => {
+        it("should properly type the result of nested ctx().assemble() calls", () => {
             const market = createMarket()
 
             const $resourceA = market.offer("resourceA").asResource<string>()
@@ -612,7 +612,7 @@ describe("Assemblers Feature", () => {
                 factory: (deps, ctx) => {
                     // @ts-expect-error - resourceB is not supplied
                     ctx($productB).assemble({})
-                    // Works, resource A doesn't need to be supplied, reused from $
+                    // Works, resource A doesn't need to be supplied, reused from deps
                     ctx($productB)
                         .assemble(index($resourceB.pack("resourceB-value")))
                         .unpack()
@@ -623,7 +623,7 @@ describe("Assemblers Feature", () => {
             $main.assemble(index($resourceA.pack("resourceA-value"))).unpack()
         })
 
-        it("Calling $$($$supplier).assemble() (reassemble) should never require any supplies to be supplied", () => {
+        it("Calling ctx($supplier).assemble() (reassemble) should never require any supplies to be supplied", () => {
             const market = createMarket()
 
             const $resource = market.offer("resource").asResource<string>()
@@ -646,7 +646,7 @@ describe("Assemblers Feature", () => {
             $main.assemble(index($resource.pack("resource-value"))).unpack()
         })
 
-        it("Calling $$().hire(mock).assemble() should be properly typed", () => {
+        it("Calling ctx().hire(mock).assemble() should be properly typed", () => {
             const market = createMarket()
 
             const $resource = market.offer("resource").asResource<string>()

@@ -81,7 +81,7 @@ const $profile = market.offer("profile").asProduct({
 })
 
 const profile = $profile
-    .hire($userMock) // Swaps the original $$user with the mock
+    .hire($userMock) // Swaps the original $user with the mock
     .assemble() // No resources needed, as the mock has no dependencies
     .unpack()
 

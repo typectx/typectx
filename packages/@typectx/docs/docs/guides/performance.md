@@ -48,7 +48,7 @@ const $createUser = market.offer("createUser").asProduct({
 })
 
 // Usage: createUserService() can be called multiple times
-const createUser = $createUser.assemble(index($$db.pack(db))).unpack()
+const createUser = $createUser.assemble(index($db.pack(db))).unpack()
 const user1 = createUser("123") // Fresh call
 const user2 = createUser("123") // Cached result
 ```
@@ -73,7 +73,7 @@ const $app = market.offer("app").asProduct({
     factory: () => "Hello World!"
 })
 
-const appProduct = $app.assemble({}) // Starts constructing both $$db and $$cache at once in parallel
+const appProduct = $app.assemble({}) // Starts constructing both $db and $cache at once in parallel
 ```
 
 ### Lazy Loading with `lazy: true`
