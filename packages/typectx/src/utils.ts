@@ -1,4 +1,4 @@
-import { Product, ProductSupplier, Supplier } from "#types"
+import { BuildtimeSupplier, RuntimeSupplier, Supplier } from "#types"
 
 /**
  * Minimal once implementation for memoizing function results.
@@ -91,10 +91,7 @@ export function sleep(ms: number) {
  */
 export function team(name: string, suppliers: Supplier[]) {
     const team = suppliers
-        .flatMap((supplier): Supplier[] => {
-            if (!("team" in supplier)) return [supplier]
-            return [supplier, ...supplier.team]
-        })
+        .flatMap((supplier): Supplier[] =>  [supplier, ...supplier.team])
         .filter((supplier) => supplier !== undefined)
         .map((supplier) => {
             if (supplier.name === name)
@@ -114,30 +111,16 @@ export function dedupe(suppliers: Supplier[]) {
 }
 
 /**
- * Type guard to check if a supply is a Product.
- * @param supply - The supply to check
- * @returns True if the supply is a Product, false otherwise
- * @internal
- */
-export function isProduct(supply: any): supply is Product {
-    return (
-        "_" in supply.supplier &&
-        "product" in supply.supplier._ &&
-        supply.supplier._.product === true
-    )
-}
-
-/**
  * Type guard to check if a supplier is a ProductSupplier.
  * @param supplier - The supplier to check
  * @returns True if the supplier is a ProductSupplier, false if it's a ResourceSupplier
  * @internal
  */
-export function isProductSupplier(supplier: any): supplier is ProductSupplier {
+export function isBuildtimeSupplier(supplier: any): supplier is BuildtimeSupplier {
     return (
         "_" in supplier &&
-        "product" in supplier._ &&
-        supplier._.product === true
+        "buildtime" in supplier._ &&
+        supplier._.buildtime === true
     )
 }
 

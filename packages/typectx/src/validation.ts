@@ -4,7 +4,7 @@
  * @internal
  */
 
-import { ProductSupplier, ResourceSupplier, Supplier } from "#types"
+import { Supplier, type BuildtimeSupplier, type RuntimeSupplier } from "#types"
 
 /**
  * Validates that a value is a non-empty string.
@@ -77,7 +77,7 @@ export function assertFunction(
  * @internal
  * @throws TypeError if the configuration is invalid
  */
-export function assertProductConfig(
+export function assertMakeConfig(
     name: string,
     config: {
         suppliers?: unknown
@@ -100,10 +100,10 @@ export function assertProductConfig(
     const hiredAssemblers = config.hiredAssemblers ?? []
 
     assertSuppliers(name, suppliers)
-    assertResourceSuppliers(name, optionals)
-    assertProductSuppliers(name, assemblers, true)
+    assertRuntimeSuppliers(name, optionals)
+    assertBuildtimeSuppliers(name, assemblers, true)
     assertSuppliers(name, hiredSuppliers, true)
-    assertProductSuppliers(name, hiredAssemblers, true)
+    assertBuildtimeSuppliers(name, hiredAssemblers, true)
 
     if (config.init !== undefined) {
         assertFunction(name, config.init)
@@ -116,23 +116,23 @@ export function assertProductConfig(
     }
 }
 
-export function assertResourceSupplier(
+export function assertRuntimeSupplier(
     supplier: unknown
-): asserts supplier is ResourceSupplier {
+): asserts supplier is RuntimeSupplier {
     assertHasProperty("noname", supplier, "name")
     assertString("noname", supplier.name)
     assertHasProperty(supplier.name, supplier, "_")
-    assertHasProperty(supplier.name, supplier._, "resource")
+    assertHasProperty(supplier.name, supplier._, "runtime")
 }
 
-export function assertProductSupplier(
+export function assertBuildtimeSupplier(
     supplier: unknown,
     allowMocks: boolean = false
-): asserts supplier is ProductSupplier {
+): asserts supplier is BuildtimeSupplier {
     assertHasProperty("noname", supplier, "name")
     assertString("noname", supplier.name)
     assertHasProperty(supplier.name, supplier, "_")
-    assertHasProperty(supplier.name, supplier._, "product")
+    assertHasProperty(supplier.name, supplier._, "buildtime")
     assertHasProperty(supplier.name, supplier._, "isMock")
 
     if (
@@ -181,35 +181,35 @@ export function assertSuppliers(
 
     suppliers.forEach((supplier) => {
         try {
-            assertResourceSupplier(supplier)
+            assertRuntimeSupplier(supplier)
             return
         } catch (e) {
-            assertProductSupplier(supplier, allowMocks)
+            assertBuildtimeSupplier(supplier, allowMocks)
         }
     })
 }
 
-export function assertResourceSuppliers(
+export function assertRuntimeSuppliers(
     name: string,
     suppliers: unknown
-): asserts suppliers is ResourceSupplier[] {
+): asserts suppliers is RuntimeSupplier[] {
     if (!Array.isArray(suppliers)) {
         throw new TypeError(`${name} must be an array`)
     }
     suppliers.forEach((supplier) => {
-        assertResourceSupplier(supplier)
+        assertRuntimeSupplier(supplier)
     })
 }
 
-export function assertProductSuppliers(
+export function assertBuildtimeSuppliers(
     name: string,
     suppliers: unknown,
     allowMocks: boolean = false
-): asserts suppliers is ProductSupplier[] {
+): asserts suppliers is BuildtimeSupplier[] {
     if (!Array.isArray(suppliers)) {
         throw new TypeError(`${name} must be an array`)
     }
     suppliers.forEach((supplier) => {
-        assertProductSupplier(supplier, allowMocks)
+        assertBuildtimeSupplier(supplier, allowMocks)
     })
 }

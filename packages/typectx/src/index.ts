@@ -1,27 +1,28 @@
 import {
-    Product,
-    ProductSupplier,
     SuppliesRecord,
-    type ResourceSupplier,
     type ToSupply,
     type CircularDependencyGuard,
     type Ctx,
     Supplier,
-    AsProductParameters,
-    Resource,
     MainSupplier,
     MergeSuppliers,
     TransitiveSuppliers,
     type Deps,
-    type Resolved
+    type Resolved,
+    type MakeParameters,
+    type MainBuildtimeSupplier,
+    type MainRuntimeSupplier,
+    type BuildtimeSupplier,
+    type RuntimeSupplier,
+    type Supply
 } from "#types"
 
-import { once, team as buildTeam, isProductSupplier, isPacked } from "#utils"
+import { once, team as buildTeam, isBuildtimeSupplier, isPacked } from "#utils"
 import {
     assertString,
     assertPlainObject,
-    assertProductConfig,
-    assertProductSuppliers
+    assertMakeConfig,
+    assertBuildtimeSuppliers
 } from "#validation"
 
 /**
@@ -36,49 +37,46 @@ export const createMarket = () => {
     const names = new Set<string>()
     const market = {
         /**
-         * Offers a new supplier or product with the given name.
+         * Declares a new supplier or product with the given name.
          * The name must be unique within this market.
          *
-         * @param name - The unique name for this supplier/product
+         * @param name - The unique name for this supplier
          * @returns An offer object with methods to define the supplier type (asResource or asProduct)
          * @throws Error if the name already exists in this market
          * @public
          */
-        offer<NAME extends string>(name: NAME) {
+        declare<NAME extends string, CONSTRAINT = any>(name: NAME) {
             assertString("name", name)
             if (names.has(name)) {
                 throw new Error(`Name ${name} already exists`)
             }
             names.add(name)
-            return {
-                /**
-                 * Creates a resource supplier that can provide values of a specific constraint type.
-                 * Resources are simple value containers that can be packed and unpacked.
-                 * They're ideal for configuration values, constants, or any simple data that doesn't
-                 * have dependencies on other suppliers.
-                 *
-                 * @typeParam CONSTRAINT - The type constraint for values this resource can hold
-                 * @returns A resource supplier configuration object with a `pack` method
-                 * @public
-                 */
-                asResource<CONSTRAINT>() {
+
+            const supplier = {
+                name,
+                pack<THIS, VALUE extends CONSTRAINT>(
+                    this: THIS,
+                    value: VALUE
+                ) {
                     return {
-                        name,
-                        pack<THIS, VALUE extends CONSTRAINT>(
-                            this: THIS,
-                            value: VALUE
-                        ) {
-                            return {
-                                unpack: () => value,
-                                supplier: this
-                            }
-                        },
+                        unpack: () => value,
+                        deps: {},
+                        supplies: {},
+                        supplier: this,
                         _: {
-                            constraint: null as unknown as CONSTRAINT,
-                            resource: true as const
+                            ctx: () => null as any,
+                            packed: true as const
                         }
                     }
+                }
+            }
+            return {
+                ...supplier,
+                _: {
+                    constraint: null as unknown as CONSTRAINT,       
+                    runtime: true as const
                 },
+
                 /**
                  * Creates a product supplier that can assemble complex objects from dependencies.
                  * Products can depend on other suppliers and have factory functions for creation.
@@ -100,15 +98,15 @@ export const createMarket = () => {
                  * @returns A product supplier with methods like assemble, pack, mock, and hire
                  * @public
                  */
-                asProduct<
-                    CONSTRAINT,
+                make<
+                    CONSTRAINT2 extends CONSTRAINT,
                     LAZY extends boolean = false,
                     SUPPLIERS extends MainSupplier[] = [],
-                    OPTIONALS extends ResourceSupplier[] = [],
-                    ASSEMBLERS extends ProductSupplier[] = []
+                    OPTIONALS extends MainRuntimeSupplier[] = [],
+                    ASSEMBLERS extends MainBuildtimeSupplier[] = []
                 >(
-                    config: AsProductParameters<
-                        CONSTRAINT,
+                    config: MakeParameters<
+                        CONSTRAINT2,
                         LAZY,
                         SUPPLIERS,
                         OPTIONALS,
@@ -116,15 +114,15 @@ export const createMarket = () => {
                     >
                 ) {
                     function _base<
-                        CONSTRAINT,
+                        CONSTRAINT2 extends CONSTRAINT,
                         LAZY extends boolean = false,
                         SUPPLIERS extends MainSupplier[] = [],
-                        OPTIONALS extends ResourceSupplier[] = [],
-                        ASSEMBLERS extends ProductSupplier[] = [],
-                        HIRED extends ProductSupplier[] = []
+                        OPTIONALS extends MainRuntimeSupplier[] = [],
+                        ASSEMBLERS extends MainBuildtimeSupplier[] = [],
+                        HIRED extends BuildtimeSupplier[] = []
                     >(
-                        config: AsProductParameters<
-                            CONSTRAINT,
+                        config: MakeParameters<
+                            CONSTRAINT2,
                             LAZY,
                             SUPPLIERS,
                             OPTIONALS,
@@ -132,8 +130,8 @@ export const createMarket = () => {
                         >,
                         ...hired: [...HIRED]
                     ) {
-                        assertProductConfig(name, config)
-                        assertProductSuppliers(name, hired, true)
+                        assertMakeConfig(name, config)
+                        assertBuildtimeSuppliers(name, hired, true)
 
                         const {
                             suppliers = [] as unknown as SUPPLIERS,
@@ -190,13 +188,13 @@ export const createMarket = () => {
                                 ASSEMBLE,
                                 TEAM extends Supplier[],
                                 SUPPLIERS extends Supplier[],
-                                OPTIONALS extends ResourceSupplier[],
-                                HIRED extends ProductSupplier[]
+                                OPTIONALS extends RuntimeSupplier[],
+                                HIRED extends BuildtimeSupplier[]
                             >(
                                 this: THIS & {
                                     team: TEAM
                                     hire: HIRE &
-                                        ((...hired: ProductSupplier[]) => {
+                                        ((...hired: BuildtimeSupplier[]) => {
                                             assemble: ASSEMBLE &
                                                 ((...args: any[]) => any)
                                         })
@@ -208,29 +206,6 @@ export const createMarket = () => {
                             ) {
                                 const supplies = base._.assemble(this, supplied)
                                 return base._.build(this, supplies)
-                            },
-                            /**
-                             * Packs a pre-constructed value into a product without dependency resolution.
-                             * This is useful for providing mock values or pre-configured instances.
-                             *
-                             * @param value - The value to pack (must satisfy the constraint type)
-                             * @returns A product instance with the packed value and no-op reassemble method
-                             * @public
-                             */
-                            pack<THIS, VALUE extends CONSTRAINT>(
-                                this: THIS,
-                                value: VALUE
-                            ) {
-                                return {
-                                    unpack: () => value,
-                                    deps: {},
-                                    supplies: {},
-                                    supplier: this,
-                                    _: {
-                                        ctx: () => null as any,
-                                        packed: true as const
-                                    }
-                                }
                             },
                             _: {
                                 /**
@@ -249,13 +224,13 @@ export const createMarket = () => {
                                     ASSEMBLE,
                                     TEAM extends Supplier[],
                                     SUPPLIERS extends Supplier[],
-                                    OPTIONALS extends ResourceSupplier[],
-                                    HIRED extends ProductSupplier[]
+                                    OPTIONALS extends RuntimeSupplier[],
+                                    HIRED extends BuildtimeSupplier[]
                                 >(
                                     thisSupplier: THIS & {
                                         team: TEAM
                                         hire: HIRE &
-                                            ((...hired: ProductSupplier[]) => {
+                                            ((...hired: BuildtimeSupplier[]) => {
                                                 assemble: ASSEMBLE &
                                                     ((...args: any[]) => any)
                                             })
@@ -277,7 +252,7 @@ export const createMarket = () => {
                                         thisSupplier.team
                                     )) {
                                         if (
-                                            !isProductSupplier(supplier) ||
+                                            !isBuildtimeSupplier(supplier) ||
                                             supplier.name in supplied
                                         )
                                             continue
@@ -290,31 +265,31 @@ export const createMarket = () => {
                                     return supplies
                                 },
                                 /**
-                                 * Internal build method that creates the actual product instance.
+                                 * Internal build method that creates the actual supply.
                                  * This is separated from assemble() to allow for internal reuse during
                                  * reassembly and recursive dependency resolution. It creates the factory
                                  * closure with the deps and ctx accessors and handles initialization.
                                  *
-                                 * @param supplier - The supplier being built
+                                 * @param supplier - The supplier building the supply
                                  * @param supplies - The supply map providing resolved dependencies
-                                 * @returns A product instance with unpack(), deps, supplies, and ctx methods
+                                 * @returns A supply instance with unpack(), deps, supplies, and ctx methods
                                  * @internal
                                  */
                                 build: <
                                     THIS,
                                     TEAM extends Supplier[],
-                                    OPTIONALS extends ResourceSupplier[],
-                                    ASSEMBLERS extends ProductSupplier[],
+                                    OPTIONALS extends RuntimeSupplier[],
+                                    ASSEMBLERS extends BuildtimeSupplier[],
                                     HIRE,
                                     ASSEMBLE,
                                     SUPPLIES extends
-                                        SuppliesRecord<ProductSupplier>
+                                        SuppliesRecord<BuildtimeSupplier>
                                 >(
                                     thisSupplier: THIS & {
                                         team: TEAM
                                         optionals: OPTIONALS
                                         hire: HIRE &
-                                            ((...hired: ProductSupplier[]) => {
+                                            ((...hired: BuildtimeSupplier[]) => {
                                                 assemble: ASSEMBLE &
                                                     ((...args: any[]) => any)
                                             })
@@ -371,7 +346,7 @@ export const createMarket = () => {
                                     }
 
                                     const ctx = ((assembler: any) => {
-                                        if (!isProductSupplier(assembler)) {
+                                        if (!isBuildtimeSupplier(assembler)) {
                                             return assembler
                                         }
                                         const actual = assemblersTeam.find(
@@ -392,12 +367,12 @@ export const createMarket = () => {
                                                 const actualHired = hired.map(
                                                     (hired) => {
                                                         if (
-                                                            !isProductSupplier(
+                                                            !isBuildtimeSupplier(
                                                                 hired
                                                             )
                                                         ) {
                                                             throw new Error(
-                                                                `Hired assembler ${hired.name} is not a product supplier`
+                                                                `Hired assembler ${hired.name} is not a buildtime supplier`
                                                             )
                                                         }
                                                         const actual =
@@ -406,7 +381,7 @@ export const createMarket = () => {
                                                                     assembler.name ===
                                                                     hired.name
                                                             ) as
-                                                                | ProductSupplier
+                                                                | BuildtimeSupplier
                                                                 | undefined
                                                         if (!actual) {
                                                             throw new Error(
@@ -434,20 +409,19 @@ export const createMarket = () => {
 
                                     function reassemble(
                                         assembler: any,
-                                        supplied: SuppliesRecord<ProductSupplier>,
-                                        ...hired: ProductSupplier[]
+                                        supplied: SuppliesRecord<BuildtimeSupplier>,
+                                        ...hired: BuildtimeSupplier[]
                                     ) {
                                         const resolved = resolve()
                                         // Stores the supplies that can be preserved to optimize reassemble
-                                        const preserved: SuppliesRecord<ProductSupplier> =
+                                        const preserved: SuppliesRecord<BuildtimeSupplier> =
                                             {}
 
                                         for (const name of Object.keys(
                                             resolved
                                         )) {
                                             const supply = resolved[name] as
-                                                | Product<any, ProductSupplier>
-                                                | Resource
+                                                | Supply<any, BuildtimeSupplier>
                                                 | undefined
 
                                             if (supply === undefined) {
@@ -467,7 +441,7 @@ export const createMarket = () => {
                                             }
 
                                             if (
-                                                !isProductSupplier(
+                                                !isBuildtimeSupplier(
                                                     supply.supplier
                                                 ) ||
                                                 isPacked(supply)
@@ -558,12 +532,12 @@ export const createMarket = () => {
                                             {
                                                 filteredDeps: {} as Deps<
                                                     Supplier[],
-                                                    ResourceSupplier[]
+                                                    RuntimeSupplier[]
                                                 >,
                                                 filteredResolved:
                                                     {} as Resolved<
                                                         Supplier[],
-                                                        ResourceSupplier[]
+                                                        RuntimeSupplier[]
                                                     >
                                             }
                                         )
@@ -590,9 +564,9 @@ export const createMarket = () => {
 
                                     return product
                                 },
-                                product: true as const,
+                                buildtime: true as const,
                                 isMock: false as const,
-                                constraint: null as unknown as CONSTRAINT
+                                constraint: null as unknown as CONSTRAINT2
                             }
                         }
 
@@ -625,18 +599,18 @@ export const createMarket = () => {
                             THIS,
                             MOCK,
                             HIRE,
-                            CONSTRAINT,
+                            CONSTRAINT2 extends CONSTRAINT,
                             LAZY extends boolean = false,
                             SUPPLIERS extends MainSupplier[] = [],
-                            OPTIONALS extends ResourceSupplier[] = [],
-                            ASSEMBLERS extends ProductSupplier[] = []
+                            OPTIONALS extends MainRuntimeSupplier[] = [],
+                            ASSEMBLERS extends MainBuildtimeSupplier[] = []
                         >(
                             this: THIS & {
                                 mock: MOCK
                                 hire: HIRE
                             },
-                            config: AsProductParameters<
-                                CONSTRAINT,
+                            config: MakeParameters<
+                                CONSTRAINT2,
                                 LAZY,
                                 SUPPLIERS,
                                 OPTIONALS,
@@ -673,17 +647,17 @@ export const createMarket = () => {
                             THIS,
                             MOCK,
                             HIRE,
-                            CONSTRAINT,
+                            CONSTRAINT2 extends CONSTRAINT,
                             LAZY extends boolean,
                             SUPPLIERS extends MainSupplier[],
-                            OPTIONALS extends ResourceSupplier[],
-                            ASSEMBLERS extends ProductSupplier[],
-                            HIRED extends ProductSupplier[],
-                            HIRED_2 extends ProductSupplier[]
+                            OPTIONALS extends MainRuntimeSupplier[],
+                            ASSEMBLERS extends MainBuildtimeSupplier[],
+                            HIRED extends BuildtimeSupplier[],
+                            HIRED_2 extends BuildtimeSupplier[]
                         >(
                             this: THIS &
-                                AsProductParameters<
-                                    CONSTRAINT,
+                                MakeParameters<
+                                    CONSTRAINT2,
                                     LAZY,
                                     SUPPLIERS,
                                     OPTIONALS,
@@ -724,5 +698,5 @@ export const createMarket = () => {
     return market
 }
 
-export { index, sleep, isProduct } from "#utils"
+export { index, sleep } from "#utils"
 export * from "#types"
