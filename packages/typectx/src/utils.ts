@@ -1,4 +1,4 @@
-import { BuildtimeSupplier, RuntimeSupplier, Supplier } from "#types"
+import { ProductSupplier, TypeSupplier, Supplier } from "#types"
 
 /**
  * Minimal once implementation for memoizing function results.
@@ -116,11 +116,11 @@ export function dedupe(suppliers: Supplier[]) {
  * @returns True if the supplier is a ProductSupplier, false if it's a ResourceSupplier
  * @internal
  */
-export function isBuildtimeSupplier(supplier: any): supplier is BuildtimeSupplier {
+export function isProductSupplier(supplier: any): supplier is ProductSupplier {
     return (
         "_" in supplier &&
-        "buildtime" in supplier._ &&
-        supplier._.buildtime === true
+        "product" in supplier._ &&
+        supplier._.product === true
     )
 }
 

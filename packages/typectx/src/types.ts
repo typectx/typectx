@@ -7,27 +7,31 @@ export interface Supplier<NAME extends string = string, CONSTRAINT = any> {
     team: any[],
     pack: <VALUE extends CONSTRAINT>(
         value: VALUE
-    ) => Supply<VALUE, RuntimeSupplier<NAME, CONSTRAINT>>
+    ) => Supply<VALUE, TypeSupplier<NAME, CONSTRAINT>>
     _: {
         constraint: CONSTRAINT
     }
 }
 
-export interface RuntimeSupplier<NAME extends string = string, CONSTRAINT = any> extends Supplier<NAME, CONSTRAINT> {
+export interface TypeSupplier<NAME extends string = string, CONSTRAINT = any> extends Supplier<NAME, CONSTRAINT> {
     suppliers: [],
     optionals: [],
     assemblers: [],
     hired: [],
     team: [],
+    _: {
+        constraint: CONSTRAINT
+        type: true
+    }
 }
 
-export interface BuildtimeSupplier <
+export interface ProductSupplier <
     NAME extends string = string,
     CONSTRAINT = any,
-    SUPPLIERS extends MainRuntimeSupplier[] = any[],
-    OPTIONALS extends RuntimeSupplier[] = RuntimeSupplier[],
-    ASSEMBLERS extends MainBuildtimeSupplier[] = any[],
-    HIRED extends BuildtimeSupplier[] = any[],
+    SUPPLIERS extends MainTypeSupplier[] = any[],
+    OPTIONALS extends TypeSupplier[] = TypeSupplier[],
+    ASSEMBLERS extends MainProductSupplier[] = any[],
+    HIRED extends ProductSupplier[] = any[],
     TEAM extends Supplier[] = any[],
     DEPS extends Deps<MergeSuppliers<SUPPLIERS, HIRED>, OPTIONALS> = any,
     CTX extends Ctx<
@@ -54,9 +58,10 @@ export interface BuildtimeSupplier <
     init?: (value: CONSTRAINT, deps: DEPS) => void
     /** Whether this supplier should be lazily evaluated */
     lazy?: boolean
-    hire: (...hired: Supplier[]) => any
+    hire: (...hired: ProductSupplier[]) => any
     _: {
         constraint: CONSTRAINT
+        product: true
         build: (...args: any[]) => Supply<CONSTRAINT, Supplier>
     }
 }
@@ -73,9 +78,9 @@ export interface BuildtimeSupplier <
 export type Supply<
     VALUE = any,
     SUPPLIER extends Supplier = Supplier,
-    DEPS extends Deps<Supplier[], RuntimeSupplier[]> = any,
-    RESOLVED extends Resolved<Supplier[], RuntimeSupplier[]> = any,
-    CTX = Ctx<Supplier[], RuntimeSupplier[], BuildtimeSupplier[]>
+    DEPS extends Deps<Supplier[], TypeSupplier[]> = any,
+    RESOLVED extends Resolved<Supplier[], TypeSupplier[]> = any,
+    CTX = Ctx<Supplier[], TypeSupplier[], ProductSupplier[]>
 > = {
     /** Unpacks and returns the current value of this product */
     unpack: () => VALUE
@@ -94,16 +99,16 @@ export type MainSupplier = Supplier & {
     }
 }
 
-export type MainRuntimeSupplier = RuntimeSupplier & MainSupplier
-export type MainBuildtimeSupplier = BuildtimeSupplier & MainSupplier
+export type MainTypeSupplier = TypeSupplier & MainSupplier
+export type MainProductSupplier = ProductSupplier & MainSupplier
 
 
-export type MakeParameters<
+export type ProductConfig<
     CONSTRAINT = any,
     LAZY extends boolean = false,
     SUPPLIERS extends MainSupplier[] = MainSupplier[],
-    OPTIONALS extends MainRuntimeSupplier[] = MainRuntimeSupplier[],
-    ASSEMBLERS extends MainBuildtimeSupplier[] = MainBuildtimeSupplier[]
+    OPTIONALS extends MainTypeSupplier[] = MainTypeSupplier[],
+    ASSEMBLERS extends MainProductSupplier[] = MainProductSupplier[]
 > = {
     suppliers?: [...SUPPLIERS]
     optionals?: [...OPTIONALS]
@@ -147,12 +152,12 @@ export type Supplies<
                     Supply<
                         SUPPLIER["_"]["constraint"],
                         WIDE extends true ?
-                            RuntimeSupplier<
+                            Supplier<
                                 SUPPLIER["name"],
                                 SUPPLIER["_"]["constraint"]
                             >
                         :   SUPPLIER,
-                        DEPS
+                        SUPPLIER extends ProductSupplier ? DEPS : Record<never, never>
                     >
                 >
         } & {
@@ -162,12 +167,12 @@ export type Supplies<
                     Supply<
                         OPTIONAL["_"]["constraint"],
                         WIDE extends true ?
-                            RuntimeSupplier<
+                            Supplier<
                                 OPTIONAL["name"],
                                 OPTIONAL["_"]["constraint"]
                             >
                         :   OPTIONAL,
-                        DEPS
+                        OPTIONAL extends ProductSupplier ? DEPS : Record<never, never>
                     >
                 >
            
@@ -187,7 +192,7 @@ export type Resolved<
                 Supply<
                     SUPPLIER["_"]["constraint"],
                     WIDE extends true ?
-                        RuntimeSupplier<
+                        TypeSupplier<
                             SUPPLIER["name"],
                             SUPPLIER["_"]["constraint"]
                         >
@@ -200,7 +205,7 @@ export type Resolved<
                 Supply<
                     OPTIONAL["_"]["constraint"],
                     WIDE extends true ?
-                        RuntimeSupplier<
+                        TypeSupplier<
                             OPTIONAL["name"],
                             OPTIONAL["_"]["constraint"]
                         >
@@ -234,15 +239,15 @@ export type Deps<
  */
 export type Ctx<
     SUPPLIERS extends Supplier[],
-    OPTIONALS extends RuntimeSupplier[],
-    ASSEMBLERS extends BuildtimeSupplier[]
+    OPTIONALS extends TypeSupplier[],
+    ASSEMBLERS extends ProductSupplier[]
 > = <
     ASSEMBLER extends SUPPLIERS[number] | OPTIONALS[number] | ASSEMBLERS[number]
 >(
     assembler?: ASSEMBLER
-) => ASSEMBLER extends BuildtimeSupplier ?
+) => ASSEMBLER extends ProductSupplier ?
     Supplier<ASSEMBLER["name"], ASSEMBLER["_"]["constraint"]> & {
-        hire: <HIRED extends BuildtimeSupplier[]>(
+        hire: <HIRED extends ProductSupplier[]>(
             ...hired: [...HIRED]
         ) => CircularDependencyGuard<{
             name: ASSEMBLER["name"]
@@ -405,24 +410,24 @@ export type Optionals<
  */
 export type ToSupply<
     SUPPLIERS extends Supplier[],
-    OPTIONALS extends RuntimeSupplier[],
-    HIRED extends BuildtimeSupplier[]
+    OPTIONALS extends TypeSupplier[],
+    HIRED extends ProductSupplier[]
 > = Supplies<
     ExcludeSuppliersType<
         TransitiveSuppliers<MergeSuppliers<SUPPLIERS, HIRED>>,
-        BuildtimeSupplier
+        ProductSupplier
     >,
     [
         ...OPTIONALS,
         ...Optionals<
             ExcludeSuppliersType<
                 TransitiveSuppliers<MergeSuppliers<SUPPLIERS, HIRED>>,
-                RuntimeSupplier
+                TypeSupplier
             >
         >,
         ...ExcludeSuppliersType<
             TransitiveSuppliers<MergeSuppliers<SUPPLIERS, HIRED>>,
-            BuildtimeSupplier
+            ProductSupplier
         >
     ]
 >
@@ -476,7 +481,7 @@ export type MergeSuppliers<OLD extends Supplier[], WITH extends Supplier[]> = [
 
 export type CircularDependencyGuard<
     SUPPLIER extends Pick<
-        BuildtimeSupplier,
+        ProductSupplier,
         "name" | "suppliers" | "optionals" | "assemblers" | "hired"
     >
 > =
