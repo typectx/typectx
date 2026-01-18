@@ -7,7 +7,7 @@ export interface Supplier<NAME extends string = string, CONSTRAINT = any> {
     team: any[],
     pack: <VALUE extends CONSTRAINT>(
         value: VALUE
-    ) => Supply<VALUE, TypeSupplier<NAME, CONSTRAINT>>
+    ) => Supply<VALUE, TypeSupplier<NAME, CONSTRAINT>, Record<never, never>, Record<never, never>>
     _: {
         constraint: CONSTRAINT
     }
@@ -28,12 +28,13 @@ export interface TypeSupplier<NAME extends string = string, CONSTRAINT = any> ex
 export interface ProductSupplier <
     NAME extends string = string,
     CONSTRAINT = any,
-    SUPPLIERS extends MainTypeSupplier[] = any[],
+    SUPPLIERS extends MainSupplier[] = any[],
     OPTIONALS extends TypeSupplier[] = TypeSupplier[],
-    ASSEMBLERS extends MainProductSupplier[] = any[],
+    ASSEMBLERS extends ProductSupplier[] = any[],
     HIRED extends ProductSupplier[] = any[],
     TEAM extends Supplier[] = any[],
     DEPS extends Deps<MergeSuppliers<SUPPLIERS, HIRED>, OPTIONALS> = any,
+    RESOLVED extends Resolved<MergeSuppliers<SUPPLIERS, HIRED>, OPTIONALS> = any,
     CTX extends Ctx<
         MergeSuppliers<SUPPLIERS, HIRED>,
         OPTIONALS,
@@ -53,7 +54,7 @@ export interface ProductSupplier <
     /** Assembles the product by resolving dependencies */
     assemble: (
         supplied: ToSupply<SUPPLIERS, OPTIONALS, HIRED>
-    ) => Supply<CONSTRAINT, Supplier>
+    ) => Supply<CONSTRAINT, Supplier, DEPS, RESOLVED>
     /** Optional initialization function called after factory */
     init?: (value: CONSTRAINT, deps: DEPS) => void
     /** Whether this supplier should be lazily evaluated */
@@ -62,7 +63,7 @@ export interface ProductSupplier <
     _: {
         constraint: CONSTRAINT
         product: true
-        build: (...args: any[]) => Supply<CONSTRAINT, Supplier>
+        build: (...args: any[]) => Supply<CONSTRAINT, Supplier, DEPS, RESOLVED>
     }
 }
 
@@ -100,7 +101,6 @@ export type MainSupplier = Supplier & {
 }
 
 export type MainTypeSupplier = TypeSupplier & MainSupplier
-export type MainProductSupplier = ProductSupplier & MainSupplier
 
 
 export type ProductConfig<
@@ -108,7 +108,7 @@ export type ProductConfig<
     LAZY extends boolean = false,
     SUPPLIERS extends MainSupplier[] = MainSupplier[],
     OPTIONALS extends MainTypeSupplier[] = MainTypeSupplier[],
-    ASSEMBLERS extends MainProductSupplier[] = MainProductSupplier[]
+    ASSEMBLERS extends ProductSupplier[] = ProductSupplier[]
 > = {
     suppliers?: [...SUPPLIERS]
     optionals?: [...OPTIONALS]
@@ -124,11 +124,17 @@ export type ProductConfig<
 type MaybeFn<A extends any[], R> = R | ((...args: A) => R)
 
 /**
- * A generic map of supplies where keys are supplier names and values are products or resources.
+ * A generic map of supplies
  * @public
  */
 export type SuppliesRecord<SUPPLIER extends Supplier = Supplier> =
-    Record<string, MaybeFn<[], Supply<any, SUPPLIER>> | undefined>
+    Record<string, MaybeFn<[], Supply<any, SUPPLIER>>>
+
+/**
+ * A generic map of supplies or undefined. Undefined used to force a supply not to be preserved across rerenders.
+ * @public
+ */
+export type SuppliesOrUndefinedRecord<SUPPLIER extends Supplier = Supplier> = Record<string, MaybeFn<[], Supply<any, SUPPLIER>> | undefined>
 
 /**
  * Converts an array of suppliers and optionals into a corresponding supply map.
@@ -145,7 +151,7 @@ export type Supplies<
     DEPS extends Deps<SUPPLIERS, OPTIONALS> = Deps<SUPPLIERS, OPTIONALS>
 > =
     Supplier[] extends SUPPLIERS | OPTIONALS ?
-        Record<string, MaybeFn<[], Supply> | undefined>
+        Record<string, MaybeFn<[], Supply>>
     :   {
             [SUPPLIER in SUPPLIERS[number] as SUPPLIER["name"]]: MaybeFn<
                     [],
@@ -186,7 +192,7 @@ export type Resolved<
     DEPS extends Deps<SUPPLIERS, OPTIONALS> = Deps<SUPPLIERS, OPTIONALS>
 > =
     Supplier[] extends SUPPLIERS | OPTIONALS ?
-        Record<string, MaybeFn<[], Supply> | undefined>
+        Record<string, Supply>
     :   {
             [SUPPLIER in SUPPLIERS[number] as SUPPLIER["name"]]:
                 Supply<
@@ -222,9 +228,7 @@ export type Deps<
 > = {
     [SUPPLIER in SUPPLIERS[number] as SUPPLIER["name"]]: SUPPLIER["_"]["constraint"]
 } & {
-    [OPTIONAL in OPTIONALS[number] as OPTIONAL["name"]]?:
-        | OPTIONAL["_"]["constraint"]
-        | undefined
+    [OPTIONAL in OPTIONALS[number] as OPTIONAL["name"]]?: OPTIONAL["_"]["constraint"]
 }
 
 /**
@@ -246,7 +250,7 @@ export type Ctx<
 >(
     assembler?: ASSEMBLER
 ) => ASSEMBLER extends ProductSupplier ?
-    Supplier<ASSEMBLER["name"], ASSEMBLER["_"]["constraint"]> & {
+    Omit<ProductSupplier<ASSEMBLER["name"], ASSEMBLER["_"]["constraint"]>, "assemble" | "hire"> & {
         hire: <HIRED extends ProductSupplier[]>(
             ...hired: [...HIRED]
         ) => CircularDependencyGuard<{
@@ -266,11 +270,12 @@ export type Ctx<
                 >
             ) => Supply<
                 ASSEMBLER["_"]["constraint"],
-                Supplier<
+                ProductSupplier<
                     ASSEMBLER["name"],
                     ASSEMBLER["_"]["constraint"]
                 >,
-                Deps<HIRED, []>
+                Deps<MergeSuppliers<SUPPLIERS,HIRED>, OPTIONALS>,
+                Resolved<MergeSuppliers<SUPPLIERS,HIRED>, OPTIONALS>
             >
         }>
         assemble: (
@@ -284,7 +289,9 @@ export type Ctx<
             >
         ) => Supply<
             ASSEMBLER["_"]["constraint"],
-            Supplier<ASSEMBLER["name"], ASSEMBLER["_"]["constraint"]>
+            ProductSupplier<ASSEMBLER["name"], ASSEMBLER["_"]["constraint"]>,
+            Deps<SUPPLIERS, OPTIONALS>,
+            Resolved<SUPPLIERS, OPTIONALS>
         >
     }
 :   ASSEMBLER // simply returns the assembler itself if it's a runtime supplier (noop)

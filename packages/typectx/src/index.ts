@@ -10,11 +10,11 @@ import {
     type Deps,
     type Resolved,
     type ProductConfig,
-    type MainProductSupplier,
     type MainTypeSupplier,
     type ProductSupplier,
     type TypeSupplier,
-    type Supply
+    type Supply,
+    type SuppliesOrUndefinedRecord
 } from "#types"
 
 import { once, team as buildTeam, isProductSupplier, isPacked } from "#utils"
@@ -111,7 +111,7 @@ export const createMarket = () => {
                     LAZY extends boolean = false,
                     SUPPLIERS extends MainSupplier[] = [],
                     OPTIONALS extends MainTypeSupplier[] = [],
-                    ASSEMBLERS extends MainProductSupplier[] = []
+                    ASSEMBLERS extends ProductSupplier[] = []
                 >(
                     config: ProductConfig<
                         CONSTRAINT,
@@ -126,7 +126,7 @@ export const createMarket = () => {
                         LAZY extends boolean = false,
                         SUPPLIERS extends MainSupplier[] = [],
                         OPTIONALS extends MainTypeSupplier[] = [],
-                        ASSEMBLERS extends MainProductSupplier[] = [],
+                        ASSEMBLERS extends ProductSupplier[] = [],
                         HIRED extends ProductSupplier[] = []
                     >(
                         config: ProductConfig<
@@ -310,11 +310,6 @@ export const createMarket = () => {
                                     const resolve = once(() =>
                                         Object.entries(supplies).reduce(
                                             (acc, [name, supply]) => {
-                                                if (supply === undefined) {
-                                                    acc[name] = undefined
-                                                    return acc
-                                                }
-
                                                 if (
                                                     typeof supply === "function"
                                                 ) {
@@ -420,45 +415,26 @@ export const createMarket = () => {
 
                                     function reassemble(
                                         assembler: any,
-                                        supplied: SuppliesRecord<ProductSupplier>,
+                                        supplied: SuppliesOrUndefinedRecord,
                                         ...hired: ProductSupplier[]
                                     ) {
                                         const resolved = resolve()
                                         // Stores the supplies that can be preserved to optimize reassemble
-                                        const preserved: SuppliesRecord<ProductSupplier> =
-                                            {}
+                                        const preserved: SuppliesRecord = {}
 
                                         for (const name of Object.keys(
                                             resolved
                                         )) {
-                                            const supply = resolved[name] as
-                                                | Supply<any, ProductSupplier>
-                                                | undefined
-
-                                            if (supply === undefined) {
-                                                continue
-                                            }
+                                            const supply = resolved[name] as Supply
 
                                             if (
                                                 hired.some(
                                                     (h) => h.name === name
                                                 ) ||
-                                                supplied[name as any] !==
-                                                    undefined
+                                                name in supplied
                                             ) {
                                                 // Do not preserve products or resources from newly hired
                                                 // or newly supplied resources or products
-                                                continue
-                                            }
-
-                                            if (
-                                                !isProductSupplier(
-                                                    supply.supplier
-                                                ) ||
-                                                isPacked(supply)
-                                            ) {
-                                                // Preserve if it's a resource or a packed product
-                                                preserved[name as any] = supply
                                                 continue
                                             }
 
@@ -481,6 +457,8 @@ export const createMarket = () => {
                                             preserved[name as any] = supply
                                         }
 
+                                        const definedSupplied = Object.fromEntries(Object.entries(supplied).filter(([_, value]) => value !== undefined))
+
                                         const hiredAssembler = assembler.hire(
                                             ...hired
                                         )
@@ -489,7 +467,7 @@ export const createMarket = () => {
                                                 hiredAssembler,
                                                 {
                                                     ...preserved,
-                                                    ...supplied
+                                                    ...definedSupplied
                                                 }
                                             )
 
@@ -542,13 +520,13 @@ export const createMarket = () => {
                                             },
                                             {
                                                 filteredDeps: {} as Deps<
-                                                    Supplier[],
-                                                    TypeSupplier[]
+                                                    MergeSuppliers<SUPPLIERS, HIRED>,
+                                                    OPTIONALS
                                                 >,
                                                 filteredResolved:
                                                     {} as Resolved<
-                                                        Supplier[],
-                                                        TypeSupplier[]
+                                                        MergeSuppliers<SUPPLIERS, HIRED>,
+                                                        OPTIONALS
                                                     >
                                             }
                                         )
@@ -611,7 +589,7 @@ export const createMarket = () => {
                             LAZY extends boolean = false,
                             SUPPLIERS extends MainSupplier[] = [],
                             OPTIONALS extends MainTypeSupplier[] = [],
-                            ASSEMBLERS extends MainProductSupplier[] = []
+                            ASSEMBLERS extends ProductSupplier[] = []
                         >(
                             this: THIS & {
                                 mock: MOCK
@@ -659,7 +637,7 @@ export const createMarket = () => {
                             LAZY extends boolean,
                             SUPPLIERS extends MainSupplier[],
                             OPTIONALS extends MainTypeSupplier[],
-                            ASSEMBLERS extends MainProductSupplier[],
+                            ASSEMBLERS extends ProductSupplier[],
                             HIRED extends ProductSupplier[],
                             HIRED_2 extends ProductSupplier[]
                         >(

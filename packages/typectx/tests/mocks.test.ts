@@ -374,14 +374,16 @@ describe("Mocks Feature", () => {
             const $main = market.add("main").product({
                 suppliers: [$supplier],
                 assemblers: [$assembler],
-                factory: ({ supplier }) => {
-                    const supplierProduct = $supplier
+                factory: ({ supplier },ctx) => {
+
+                    const supplierProduct = ctx($supplier)
                         .hire($assembler)
                         .assemble({})
 
                     const assemblerProduct =
-                        supplierProduct.deps[$assembler.name]
-                    expectTypeOf(assemblerProduct).toExtend<Supply>()
+                        supplierProduct.supplies[$assembler.name]
+                    expectTypeOf(assemblerProduct).not.toEqualTypeOf<any>()
+                    expectTypeOf(assemblerProduct).toExtend<Supply|undefined>()
                     expect(assemblerProduct.unpack()).toBe("assembler-value")
                 }
             })

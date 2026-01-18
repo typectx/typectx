@@ -29,7 +29,7 @@ describe("typectx", () => {
             }).toThrow("Name duplicate already exists")
         })
 
-        it("should handle different resource types correctly", () => {
+        it("should handle different types correctly", () => {
             const market = createMarket()
             const $string = market.add("string").type<string>()
             const $number = market.add("number").type<number>()
@@ -45,8 +45,8 @@ describe("typectx", () => {
         })
     })
 
-    describe("Product Offer", () => {
-        it("should offer a product with no suppliers", () => {
+    describe("Product Suppliers", () => {
+        it("should add a product with no suppliers", () => {
             const market = createMarket()
             const $product = market.add("product").product({
                 factory: () => "product"
@@ -57,7 +57,7 @@ describe("typectx", () => {
             expect($product._.product).toBe(true)
         })
 
-        it("should offer a product with suppliers", () => {
+        it("should add a product with suppliers", () => {
             const market = createMarket()
             const $A = market.add("A").product({
                 factory: () => "A"

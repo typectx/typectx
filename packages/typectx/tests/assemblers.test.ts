@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, expectTypeOf } from "vitest"
-import { createMarket, Product } from "#index"
+import { createMarket, type Supply } from "#index"
 import { index, sleep } from "#utils"
 
 describe("Assemblers Feature", () => {
@@ -7,11 +7,11 @@ describe("Assemblers Feature", () => {
         const market = createMarket()
         const factoryMock = vi.fn().mockReturnValue("value")
 
-        const $assembler = market.offer("assembler").asProduct({
+        const $assembler = market.add("assembler").product({
             factory: factoryMock
         })
 
-        const $main = market.offer("main").asProduct({
+        const $main = market.add("main").product({
             assemblers: [$assembler],
             factory: (deps, ctx) => {
                 // Assemblers are passed but not auto-assembled
@@ -29,19 +29,19 @@ describe("Assemblers Feature", () => {
 
     it("should force hired assemblers to be pre-supplied", () => {
         const market = createMarket()
-        const $resource = market.offer("resource").asResource<string>()
+        const $resource = market.add("resource").type<string>()
 
-        const $assembler1 = market.offer("assembler1").asProduct({
+        const $assembler1 = market.add("assembler1").product({
             suppliers: [$resource],
             factory: ({ resource }) => `A1: ${resource}`
         })
 
-        const $assembler2 = market.offer("assembler2").asProduct({
+        const $assembler2 = market.add("assembler2").product({
             suppliers: [$resource],
             factory: ({ resource }) => `A2: ${resource}`
         })
 
-        const $base = market.offer("base").asProduct({
+        const $base = market.add("base").product({
             assemblers: [$assembler1],
             factory: (deps, ctx) => {
                 return ctx($assembler1)
@@ -64,11 +64,11 @@ describe("Assemblers Feature", () => {
         const market = createMarket()
         const factoryMock = vi.fn().mockReturnValue("value")
 
-        const $assembler = market.offer("assembler").asProduct({
+        const $assembler = market.add("assembler").product({
             factory: factoryMock
         })
 
-        const $main = market.offer("main").asProduct({
+        const $main = market.add("main").product({
             assemblers: [$assembler],
             factory: (deps, ctx) => {
                 const assemblerProduct = ctx($assembler).assemble({})
@@ -94,27 +94,27 @@ describe("Assemblers Feature", () => {
     it("should support conditional assembly based on context (session admin example)", () => {
         const market = createMarket()
 
-        const $session = market.offer("session").asResource<{
+        const $session = market.add("session").type<{
             userId: string
             role: string
         }>()
 
-        const $adminSession = market.offer("admin-session").asResource<{
+        const $adminSession = market.add("admin-session").type<{
             userId: string
             role: "admin"
         }>()
 
-        const $adminFeature = market.offer("adminFeature").asProduct({
+        const $adminFeature = market.add("adminFeature").product({
             //Even if unused, protects this function from being called by non-admins via Typescript
             suppliers: [$adminSession],
             factory: () => "sensitive-admin-data"
         })
 
-        const $userFeature = market.offer("userFeature").asProduct({
+        const $userFeature = market.add("userFeature").product({
             factory: () => "regular-user-data"
         })
 
-        const $main = market.offer("main").asProduct({
+        const $main = market.add("main").product({
             suppliers: [$session, $userFeature],
             assemblers: [$adminFeature],
             factory: ({ session, userFeature }, ctx) => {
@@ -164,14 +164,14 @@ describe("Assemblers Feature", () => {
     it("should handle assembler errors gracefully", () => {
         const market = createMarket()
 
-        const $failing = market.offer("failing").asProduct({
+        const $failing = market.add("failing").product({
             factory: () => {
                 throw new Error("Assembler failed")
                 return
             }
         })
 
-        const $main = market.offer("main").asProduct({
+        const $main = market.add("main").product({
             assemblers: [$failing],
             factory: (deps, ctx) => {
                 ctx($failing).assemble({}).unpack()
@@ -187,11 +187,11 @@ describe("Assemblers Feature", () => {
     it("should support assembler in mock() method", () => {
         const market = createMarket()
 
-        const $assembler = market.offer("assembler").asProduct({
+        const $assembler = market.add("assembler").product({
             factory: () => "assembler-value"
         })
 
-        const $main = market.offer("main").asProduct({
+        const $main = market.add("main").product({
             factory: () => "main-value"
         })
 
@@ -208,23 +208,23 @@ describe("Assemblers Feature", () => {
     it("should support complex assembler dependency chains", () => {
         const market = createMarket()
 
-        const $db = market.offer("db").asResource<string>()
+        const $db = market.add("db").type<string>()
 
-        const $repository = market.offer("repo").asProduct({
+        const $repository = market.add("repo").product({
             suppliers: [$db],
             factory: ({ db }) => {
                 return "repo-" + db
             }
         })
 
-        const $feature = market.offer("feature").asProduct({
+        const $feature = market.add("feature").product({
             suppliers: [$repository],
             factory: ({ repo }) => {
                 return "feature-" + repo
             }
         })
 
-        const $main = market.offer("main").asProduct({
+        const $main = market.add("main").product({
             assemblers: [$feature],
             factory: (deps, ctx) => {
                 const feature = ctx($feature)
@@ -245,22 +245,22 @@ describe("Assemblers Feature", () => {
 
     it("should properly overwrite resource in assembler's assemble() method", () => {
         const market = createMarket()
-        const $number = market.offer("number").asResource<number>()
-        const $doubler = market.offer("doubler").asProduct({
+        const $number = market.add("number").type<number>()
+        const $doubler = market.add("doubler").product({
             suppliers: [$number],
             factory: ({ number }) => {
                 return number * 2
             }
         })
 
-        const $quadrupler = market.offer("quadrupler").asProduct({
+        const $quadrupler = market.add("quadrupler").product({
             suppliers: [$doubler],
             factory: ({ doubler }) => {
                 return doubler * 2
             }
         })
 
-        const $main = market.offer("main").asProduct({
+        const $main = market.add("main").product({
             suppliers: [$doubler],
             assemblers: [$quadrupler],
             factory: (deps, ctx) => {
@@ -277,27 +277,27 @@ describe("Assemblers Feature", () => {
 
     it("should preserve products from previous assemble calls that don't depend on the new supplies", async () => {
         const market = createMarket()
-        const $number = market.offer("number").asResource<number>()
-        const $dummy = market.offer("dummy").asProduct({
+        const $number = market.add("number").type<number>()
+        const $dummy = market.add("dummy").product({
             factory: () => "dummy"
         })
 
         let timesCalled = 0
-        const $counter = market.offer("counter").asProduct({
+        const $counter = market.add("counter").product({
             suppliers: [$dummy],
             factory: ({ dummy }) => {
                 return timesCalled++
             }
         })
 
-        const $reassembled = market.offer("reassembled").asProduct({
+        const $reassembled = market.add("reassembled").product({
             suppliers: [$number, $counter],
             factory: ({ number }) => {
                 return number
             }
         })
 
-        const $main = market.offer("main").asProduct({
+        const $main = market.add("main").product({
             suppliers: [$dummy, $counter, $reassembled],
             assemblers: [$reassembled],
             factory: (deps, ctx) => {
@@ -317,11 +317,11 @@ describe("Assemblers Feature", () => {
         const market = createMarket()
         const factoryMock = vi.fn().mockReturnValue("value")
 
-        const $assembler = market.offer("assembler").asProduct({
+        const $assembler = market.add("assembler").product({
             factory: factoryMock
         })
 
-        const $base = market.offer("base").asProduct({
+        const $base = market.add("base").product({
             factory: () => "base-value"
         })
 
@@ -347,15 +347,15 @@ describe("Assemblers Feature", () => {
         const ASpy = vi.fn().mockReturnValue("A")
         const BSpy = vi.fn().mockReturnValue("B")
 
-        const $A = market.offer("A").asProduct({
+        const $A = market.add("A").product({
             factory: ASpy
         })
 
-        const $B = market.offer("B").asProduct({
+        const $B = market.add("B").product({
             factory: BSpy
         })
 
-        const $base = market.offer("base").asProduct({
+        const $base = market.add("base").product({
             factory: () => "base-value"
         })
 
@@ -380,14 +380,14 @@ describe("Assemblers Feature", () => {
         const originalSpy = vi.fn().mockReturnValue("original")
         const hiredSpy = vi.fn().mockReturnValue("hired")
 
-        const $originalAssembler = market.offer("original").asProduct({
+        const $originalAssembler = market.add("original").product({
             factory: originalSpy
         })
 
         const $originalAssemblerMock = $originalAssembler.mock({
             factory: hiredSpy
         })
-        const $base = market.offer("base").asProduct({
+        const $base = market.add("base").product({
             assemblers: [$originalAssembler],
             factory: (deps, ctx) => {
                 return ctx($originalAssembler).assemble({}).unpack()
@@ -411,7 +411,7 @@ describe("Assemblers Feature", () => {
 
     it("should support empty assembler in mocks", () => {
         const market = createMarket()
-        const $base = market.offer("base").asProduct({
+        const $base = market.add("base").product({
             factory: () => "base-value"
         })
 
@@ -431,11 +431,11 @@ describe("Assemblers Feature", () => {
             throw new Error("Assembler error")
         })
 
-        const $error = market.offer("error").asProduct({
+        const $error = market.add("error").product({
             factory: errorSpy
         })
 
-        const $base = market.offer("base").asProduct({
+        const $base = market.add("base").product({
             factory: () => "base-value"
         })
 
@@ -460,7 +460,7 @@ describe("Assemblers Feature", () => {
             throw new Error("Assembler error")
         })
 
-        const $base = market.offer("base").asProduct({
+        const $base = market.add("base").product({
             factory: baseSpy
         })
 
@@ -468,7 +468,7 @@ describe("Assemblers Feature", () => {
             factory: errorSpy
         })
 
-        const $main = market.offer("main").asProduct({
+        const $main = market.add("main").product({
             assemblers: [$base],
             factory: (deps, ctx) => {
                 expect(() => {
@@ -489,17 +489,17 @@ describe("Assemblers Feature", () => {
         const dbSpy = vi.fn().mockReturnValue("db")
         const testSpy = vi.fn().mockReturnValue("test")
 
-        const $config = market.offer("config").asResource<{ env: string }>()
-        const $db = market.offer("db").asProduct({
+        const $config = market.add("config").type<{ env: string }>()
+        const $db = market.add("db").product({
             suppliers: [$config],
             factory: dbSpy
         })
-        const $test = market.offer("test").asProduct({
+        const $test = market.add("test").product({
             suppliers: [$db],
             factory: testSpy
         })
 
-        const $base = market.offer("base").asProduct({
+        const $base = market.add("base").product({
             factory: () => "base"
         })
 
@@ -524,7 +524,7 @@ describe("Assemblers Feature", () => {
         const overrideSpy = vi.fn().mockReturnValue("override")
         const overrideSpy2 = vi.fn().mockReturnValue("override2")
 
-        const $original = market.offer("duplicate").asProduct({
+        const $original = market.add("duplicate").product({
             factory: originalSpy
         })
 
@@ -536,7 +536,7 @@ describe("Assemblers Feature", () => {
             factory: overrideSpy2
         })
 
-        const $base = market.offer("base").asProduct({
+        const $base = market.add("base").product({
             assemblers: [$original],
             factory: (deps, ctx) => {
                 return ctx($original).assemble({}).unpack()
@@ -557,15 +557,15 @@ describe("Assemblers Feature", () => {
         it("$ supplies of product built with hire() should contain only the hired suppliers products properly typed", () => {
             const market = createMarket()
 
-            const $assembler1 = market.offer("assembler1").asProduct({
+            const $assembler1 = market.add("assembler1").product({
                 factory: () => "assembler1-value"
             })
 
-            const $assembler2 = market.offer("assembler2").asProduct({
+            const $assembler2 = market.add("assembler2").product({
                 factory: () => "assembler2-value"
             })
 
-            const $main = market.offer("main").asProduct({
+            const $main = market.add("main").product({
                 assemblers: [$assembler1, $assembler2],
                 factory: (deps, ctx) => {
                     const product = ctx($assembler1)
@@ -574,7 +574,8 @@ describe("Assemblers Feature", () => {
                         .unpack()
 
                     const assembler2Product = ctx($assembler2).assemble({})
-                    expectTypeOf(assembler2Product).toExtend<Product>()
+                    expectTypeOf(assembler2Product).not.toEqualTypeOf<any>()
+                    expectTypeOf(assembler2Product).toExtend<Supply>()
                     expect(assembler2Product.unpack()).toBe("assembler2-value")
                 }
             })
@@ -587,17 +588,17 @@ describe("Assemblers Feature", () => {
         it("should properly type the result of nested ctx().assemble() calls", () => {
             const market = createMarket()
 
-            const $resourceA = market.offer("resourceA").asResource<string>()
-            const $resourceB = market.offer("resourceB").asResource<string>()
+            const $resourceA = market.add("resourceA").type<string>()
+            const $resourceB = market.add("resourceB").type<string>()
 
-            const $productA = market.offer("productA").asProduct({
+            const $productA = market.add("productA").product({
                 suppliers: [$resourceA],
                 factory: () => {
                     return "productA-value"
                 }
             })
 
-            const $productB = market.offer("productB").asProduct({
+            const $productB = market.add("productB").product({
                 suppliers: [$resourceA, $resourceB],
                 factory: ({ resourceA, resourceB }) => {
                     expect(resourceA).toBe("resourceA-value")
@@ -606,7 +607,7 @@ describe("Assemblers Feature", () => {
                 }
             })
 
-            const $main = market.offer("main").asProduct({
+            const $main = market.add("main").product({
                 suppliers: [$productA],
                 assemblers: [$productB],
                 factory: (deps, ctx) => {
@@ -626,15 +627,15 @@ describe("Assemblers Feature", () => {
         it("Calling ctx($supplier).assemble() (reassemble) should never require any supplies to be supplied", () => {
             const market = createMarket()
 
-            const $resource = market.offer("resource").asResource<string>()
-            const $product = market.offer("product").asProduct({
+            const $resource = market.add("resource").type<string>()
+            const $product = market.add("product").product({
                 suppliers: [$resource],
                 factory: ({ resource }) => {
                     return resource
                 }
             })
 
-            const $main = market.offer("main").asProduct({
+            const $main = market.add("main").product({
                 suppliers: [$product],
                 factory: (deps, ctx) => {
                     expect(ctx($product).assemble({}).unpack()).toBe(
@@ -649,12 +650,12 @@ describe("Assemblers Feature", () => {
         it("Calling ctx().hire(mock).assemble() should be properly typed", () => {
             const market = createMarket()
 
-            const $resource = market.offer("resource").asResource<string>()
-            const $productA = market.offer("productA").asProduct({
+            const $resource = market.add("resource").type<string>()
+            const $productA = market.add("productA").product({
                 factory: () => "productA-value"
             })
 
-            const $productC = market.offer("productC").asProduct({
+            const $productC = market.add("productC").product({
                 suppliers: [$productA],
                 factory: ({ productA }) => productA
             })
@@ -665,7 +666,7 @@ describe("Assemblers Feature", () => {
                 lazy: true
             })
 
-            const $main = market.offer("main").asProduct({
+            const $main = market.add("main").product({
                 assemblers: [$productC, $productAMock],
                 factory: (deps, ctx) => {
                     const hired = ctx($productC).hire($productAMock)
