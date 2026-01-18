@@ -324,14 +324,55 @@ export const createMarket = () => {
                                         )
                                     )
 
-                                    const deps = Object.keys(supplies).reduce(
+                                    const {deps, resolved} = Object.keys(supplies).reduce(
                                         (acc, name) => {
-                                            acc[name] = () => {
-                                                return resolve()[name]?.unpack()
+                                            if (
+                                                !thisSupplier.team.some(
+                                                    (member) =>
+                                                        member.name === name
+                                                )
+                                            ) {
+                                                return acc
                                             }
+
+                                            Object.defineProperty(
+                                                acc.resolved,
+                                                name,
+                                                {
+                                                    get() {
+                                                        return resolve()[
+                                                            name
+                                                        ]
+                                                    },
+                                                    enumerable: true,
+                                                    configurable: true
+                                                }
+                                            )
+
+                                            Object.defineProperty(
+                                                acc.deps,
+                                                name,
+                                                {
+                                                    get() {
+                                                        return resolve()[name]?.unpack()
+                                                    },
+                                                    enumerable: true,
+                                                    configurable: true
+                                                }
+                                            )
                                             return acc
                                         },
-                                        {} as Record<string, () => any>
+                                        {
+                                            deps: {} as Deps<
+                                                MergeSuppliers<SUPPLIERS, HIRED>,
+                                                OPTIONALS
+                                            >,
+                                            resolved:
+                                                {} as Resolved<
+                                                    MergeSuppliers<SUPPLIERS, HIRED>,
+                                                    OPTIONALS
+                                                >
+                                        }
                                     )
 
                                     // Prerun supplier factories in the background (non-blocking)
@@ -344,7 +385,7 @@ export const createMarket = () => {
                                         // If prerun fails, we don't want to break the entire supply chain
                                         // The error will be thrown again when the dependency is actually needed
                                         Promise.resolve()
-                                            .then(() => deps[supplier.name]?.())
+                                            .then(() => deps[supplier.name as keyof Deps<MergeSuppliers<SUPPLIERS, HIRED>, OPTIONALS>])
                                             .catch(() => {
                                                 // Silently catch errors during prerun
                                                 // The error will be thrown again when the dependency is actually accessed
@@ -477,73 +518,19 @@ export const createMarket = () => {
                                         )
                                     }
 
-                                    const { filteredDeps, filteredResolved } =
-                                        Object.entries(deps).reduce(
-                                            (acc, [key, dep]) => {
-                                                if (
-                                                    !thisSupplier.team.some(
-                                                        (member) =>
-                                                            member.name === key
-                                                    )
-                                                ) {
-                                                    return acc
-                                                }
-
-                                                // Transform method to getter for better api design
-                                                Object.defineProperty(
-                                                    acc.filteredDeps,
-                                                    key,
-                                                    {
-                                                        get() {
-                                                            return dep()
-                                                        },
-                                                        enumerable: true,
-                                                        configurable: true
-                                                    }
-                                                )
-
-                                                Object.defineProperty(
-                                                    acc.filteredResolved,
-                                                    key,
-                                                    {
-                                                        get() {
-                                                            return resolve()[
-                                                                key
-                                                            ]
-                                                        },
-                                                        enumerable: true,
-                                                        configurable: true
-                                                    }
-                                                )
-
-                                                return acc
-                                            },
-                                            {
-                                                filteredDeps: {} as Deps<
-                                                    MergeSuppliers<SUPPLIERS, HIRED>,
-                                                    OPTIONALS
-                                                >,
-                                                filteredResolved:
-                                                    {} as Resolved<
-                                                        MergeSuppliers<SUPPLIERS, HIRED>,
-                                                        OPTIONALS
-                                                    >
-                                            }
-                                        )
-
                                     const product = {
                                         unpack: once(() => {
                                             const value = factory(
-                                                filteredDeps as any,
+                                                deps,
                                                 ctx
                                             )
                                             if (init) {
-                                                init(value, filteredDeps as any)
+                                                init(value, deps)
                                             }
                                             return value
                                         }),
-                                        deps: filteredDeps,
-                                        supplies: filteredResolved,
+                                        deps,
+                                        supplies: resolved,
                                         supplier: thisSupplier,
                                         _: {
                                             ctx,
