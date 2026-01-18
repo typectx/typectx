@@ -10,9 +10,9 @@ import { ProductSupplier, TypeSupplier, Supplier } from "#types"
  * @returns A memoized version of the function that caches both results and errors
  * @internal
  */
-export function once<T extends (...args: any[]) => any>(func: T) {
+export function once<F extends (...args: any[]) => any>(func: F): F {
     let called = false
-    let result: ReturnType<T>
+    let result: ReturnType<F>
     let error: Error | undefined
 
     return function () {
@@ -29,7 +29,7 @@ export function once<T extends (...args: any[]) => any>(func: T) {
             throw error
         }
         return result
-    }
+    } as F
 }
 
 /**

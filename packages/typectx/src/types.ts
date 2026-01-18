@@ -14,11 +14,11 @@ export interface Supplier<NAME extends string = string, CONSTRAINT = any> {
 }
 
 export interface TypeSupplier<NAME extends string = string, CONSTRAINT = any> extends Supplier<NAME, CONSTRAINT> {
-    suppliers: [],
-    optionals: [],
-    assemblers: [],
-    hired: [],
-    team: [],
+    suppliers: never[],
+    optionals: never[],
+    assemblers: never[],
+    hired: never[],
+    team: never[],
     _: {
         constraint: CONSTRAINT
         type: true
@@ -222,7 +222,7 @@ export type Deps<
 > = {
     [SUPPLIER in SUPPLIERS[number] as SUPPLIER["name"]]: SUPPLIER["_"]["constraint"]
 } & {
-    [OPTIONAL in OPTIONALS[number] as OPTIONAL["name"]]:
+    [OPTIONAL in OPTIONALS[number] as OPTIONAL["name"]]?:
         | OPTIONAL["_"]["constraint"]
         | undefined
 }
@@ -242,7 +242,7 @@ export type Ctx<
     OPTIONALS extends TypeSupplier[],
     ASSEMBLERS extends ProductSupplier[]
 > = <
-    ASSEMBLER extends SUPPLIERS[number] | OPTIONALS[number] | ASSEMBLERS[number]
+    ASSEMBLER extends {name: SUPPLIERS[number]["name"] | OPTIONALS[number]["name"] | ASSEMBLERS[number]["name"]}
 >(
     assembler?: ASSEMBLER
 ) => ASSEMBLER extends ProductSupplier ?

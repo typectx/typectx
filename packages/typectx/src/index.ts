@@ -55,11 +55,11 @@ export const createMarket = () => {
             function type<CONSTRAINT = any>() {
                 return {
                     name,
-                    suppliers: [],
+                    suppliers: [] ,
                     optionals: [],
-                    assemblers: [],
-                    hired: [],
-                    team: [],
+                    assemblers: [] ,
+                    hired: [] ,
+                    team: [] ,
                     pack<THIS, VALUE extends CONSTRAINT>(
                         this: THIS,
                         value: VALUE
@@ -212,8 +212,8 @@ export const createMarket = () => {
                                 },
                                 supplied: ToSupply<SUPPLIERS, OPTIONALS, HIRED>
                             ) {
-                                const supplies = supplier._.assemble(this, supplied)
-                                return supplier._.build(this, supplies)
+                                const supplies = _main._.assemble(this, supplied)
+                                return _main._.build(this, supplies)
                             },
                             _: {
                                 product: true as const,

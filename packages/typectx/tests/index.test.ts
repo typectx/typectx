@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { createMarket, type ExcludeSuppliersType, type ProductSupplier } from "#index"
+import { createMarket } from "#index"
 import { index, once, sleep } from "#utils"
 
 describe("typectx", () => {
