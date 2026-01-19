@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query"
 import { useDeps } from "@typectx/react"
 import { useAssertStable } from "@/hooks"
 
-export const $Comment = market.offer("Comment").asProduct({
+export const $Comment = market.add("Comment").static({
     suppliers: [$repliesQuery, $Reply],
     factory: (initDeps) =>
         function Comment({ comment }: { comment: Comment }) {

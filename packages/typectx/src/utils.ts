@@ -1,4 +1,4 @@
-import { ProductSupplier, TypeSupplier, Supplier } from "#types"
+import { StaticSupplier, Supplier } from "#types"
 
 /**
  * Minimal once implementation for memoizing function results.
@@ -33,12 +33,12 @@ export function once<F extends (...args: any[]) => any>(func: F): F {
 }
 
 /**
- * Transforms an array of products/resources into a map keyed by supplier names.
- * This provides type-safe access to assembled products by their supplier names.
+ * Transforms an array of supplies into a map keyed by supplier names.
+ * This provides type-safe access to assembled supplies by their supplier names.
  *
  * @typeParam LIST - An array type where each element has a `supplier` property with a `name`
- * @param list - Array of products/resources to index
- * @returns A map where keys are supplier names and values are the products/resources
+ * @param list - Array of supplies to index
+ * @returns A map where keys are supplier names and values are the supplies
  * @public
  */
 export function index<LIST extends { supplier: { name: string } }[]>(
@@ -111,16 +111,16 @@ export function dedupe(suppliers: Supplier[]) {
 }
 
 /**
- * Type guard to check if a supplier is a ProductSupplier.
+ * Type guard to check if a supplier is a StaticSupplier.
  * @param supplier - The supplier to check
- * @returns True if the supplier is a ProductSupplier, false if it's a ResourceSupplier
+ * @returns True if the supplier is a StaticSupplier, false if it's a DynamicSupplier
  * @internal
  */
-export function isProductSupplier(supplier: any): supplier is ProductSupplier {
+export function isStaticSupplier(supplier: any): supplier is StaticSupplier {
     return (
         "_" in supplier &&
-        "product" in supplier._ &&
-        supplier._.product === true
+        "static" in supplier._ &&
+        supplier._.static === true
     )
 }
 

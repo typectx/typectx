@@ -1,12 +1,12 @@
 import { market } from "@/market"
 import { $usersQuery } from "@/api"
-import { resources } from "@/resources"
+import { dynamics } from "@/dynamics"
 import { useQuery } from "@tanstack/react-query"
 import { useDeps } from "@typectx/react"
 
-export const $SelectSession = market.offer("SelectSession").asProduct({
-    suppliers: [$usersQuery, resources.$session],
-    optionals: [resources.$post],
+export const $SelectSession = market.add("SelectSession").static({
+    suppliers: [$usersQuery, dynamics.$session],
+    optionals: [dynamics.$post],
     factory: (initDeps) =>
         function SelectSession() {
             const {

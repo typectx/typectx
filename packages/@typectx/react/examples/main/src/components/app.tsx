@@ -1,7 +1,7 @@
 import { $Feed } from "@/components/feed"
 import { market } from "@/market"
 import { $SelectSession } from "@/components/session"
-import { resources } from "@/resources"
+import { dynamics } from "@/dynamics"
 import { $userQuery, type User } from "@/api"
 import { useState } from "react"
 import { index } from "typectx"
@@ -9,8 +9,8 @@ import { useAssembleComponent, useDeps } from "@typectx/react"
 import { useAssertStable } from "@/hooks"
 import { useQuery } from "@tanstack/react-query"
 
-export const $App = market.offer("App").asProduct({
-    suppliers: [$userQuery, resources.$defaultUser],
+export const $App = market.add("App").static({
+    suppliers: [$userQuery, dynamics.$defaultUser],
     assemblers: [$SelectSession, $Feed],
     factory: (initDeps, ctx) =>
         function App() {
@@ -23,7 +23,7 @@ export const $App = market.offer("App").asProduct({
             const FeedProduct = useAssembleComponent(
                 ctx($Feed).hire($SelectSession),
                 index(
-                    resources.$session.pack([
+                    dynamics.$session.pack([
                         session ?? defaultSession,
                         setSession
                     ])

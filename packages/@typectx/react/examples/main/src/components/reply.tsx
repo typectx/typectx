@@ -1,10 +1,10 @@
 import { market } from "@/market"
-import { resources } from "@/resources"
+import { dynamics } from "@/dynamics"
 import type { Reply } from "@/api"
 import { useDeps } from "@typectx/react"
 
-export const $Reply = market.offer("Reply").asProduct({
-    suppliers: [resources.$post, resources.$session],
+export const $Reply = market.add("Reply").static({
+    suppliers: [dynamics.$post, dynamics.$session],
     factory: (initDeps) =>
         function Reply({ reply }: { reply: Reply }) {
             const {

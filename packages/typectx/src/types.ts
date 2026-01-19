@@ -7,13 +7,13 @@ export interface Supplier<NAME extends string = string, CONSTRAINT = any> {
     team: any[],
     pack: <VALUE extends CONSTRAINT>(
         value: VALUE
-    ) => Supply<VALUE, TypeSupplier<NAME, CONSTRAINT>, Record<never, never>, Record<never, never>>
+    ) => Supply<VALUE, DynamicSupplier<NAME, CONSTRAINT>, Record<never, never>, Record<never, never>>
     _: {
         constraint: CONSTRAINT
     }
 }
 
-export interface TypeSupplier<NAME extends string = string, CONSTRAINT = any> extends Supplier<NAME, CONSTRAINT> {
+export interface DynamicSupplier<NAME extends string = string, CONSTRAINT = any> extends Supplier<NAME, CONSTRAINT> {
     suppliers: never[],
     optionals: never[],
     assemblers: never[],
@@ -21,17 +21,17 @@ export interface TypeSupplier<NAME extends string = string, CONSTRAINT = any> ex
     team: never[],
     _: {
         constraint: CONSTRAINT
-        type: true
+        dynamic: true
     }
 }
 
-export interface ProductSupplier <
+export interface StaticSupplier <
     NAME extends string = string,
     CONSTRAINT = any,
     SUPPLIERS extends MainSupplier[] = any[],
-    OPTIONALS extends TypeSupplier[] = TypeSupplier[],
-    ASSEMBLERS extends ProductSupplier[] = any[],
-    HIRED extends ProductSupplier[] = any[],
+    OPTIONALS extends DynamicSupplier[] = DynamicSupplier[],
+    ASSEMBLERS extends StaticSupplier[] = any[],
+    HIRED extends StaticSupplier[] = any[],
     TEAM extends Supplier[] = any[],
     DEPS extends Deps<MergeSuppliers<SUPPLIERS, HIRED>, OPTIONALS> = any,
     RESOLVED extends Resolved<MergeSuppliers<SUPPLIERS, HIRED>, OPTIONALS> = any,
@@ -41,17 +41,17 @@ export interface ProductSupplier <
         MergeSuppliers<ASSEMBLERS, HIRED>
     > = Ctx<[], [], []>
 > extends Supplier<NAME, CONSTRAINT> {
-    /** Array of suppliers this product depends on */
+    /** Array of suppliers this supplier depends on */
     suppliers: SUPPLIERS
-    /** Array of optional suppliers this product may depend on */
+    /** Array of optional dynamic suppliers this supplier may depend on */
     optionals: OPTIONALS
     /** Array of assemblers (lazy unassembled suppliers) */
     assemblers: ASSEMBLERS
     hired: HIRED
     team: TEAM
-    /** Factory function that creates the product value from its dependencies */
+    /** Factory function that creates the static value from its dependencies */
     factory: (deps: DEPS, ctx: CTX) => CONSTRAINT
-    /** Assembles the product by resolving dependencies */
+    /** Assembles the supplier by providing dynamic values and auto-wiring static dependencies */
     assemble: (
         supplied: ToSupply<SUPPLIERS, OPTIONALS, HIRED>
     ) => Supply<CONSTRAINT, Supplier, DEPS, RESOLVED>
@@ -59,31 +59,31 @@ export interface ProductSupplier <
     init?: (value: CONSTRAINT, deps: DEPS) => void
     /** Whether this supplier should be lazily evaluated */
     lazy?: boolean
-    hire: (...hired: ProductSupplier[]) => any
+    hire: (...hired: StaticSupplier[]) => any
     _: {
         constraint: CONSTRAINT
-        product: true
+        static: true
         build: (...args: any[]) => Supply<CONSTRAINT, Supplier, DEPS, RESOLVED>
     }
 }
 
 /**
- * Represents a product - a complex object that can be assembled from dependencies.
- * Products can depend on other suppliers and support reassembly with overrides.
- * They represent fully constructed instances with resolved dependencies.
+ * Represents a supply - The result of assembling a supplier
+ * with all its static and dynamic dependencies, which can easily be passed
+ * to other suppliers.
  *
- * @typeParam NAME - The unique identifier name for this product
- * @typeParam VALUE - The type of value this product produces
+ * @typeParam NAME - The unique identifier name for this supply
+ * @typeParam VALUE - The type of value this supply holds
  * @public
  */
 export type Supply<
     VALUE = any,
     SUPPLIER extends Supplier = Supplier,
-    DEPS extends Deps<Supplier[], TypeSupplier[]> = any,
-    RESOLVED extends Resolved<Supplier[], TypeSupplier[]> = any,
-    CTX = Ctx<Supplier[], TypeSupplier[], ProductSupplier[]>
+    DEPS extends Deps<Supplier[], DynamicSupplier[]> = any,
+    RESOLVED extends Resolved<Supplier[], DynamicSupplier[]> = any,
+    CTX = Ctx<Supplier[], DynamicSupplier[], StaticSupplier[]>
 > = {
-    /** Unpacks and returns the current value of this product */
+    /** Unpacks and returns the current value of this supply */
     unpack: () => VALUE
     deps: DEPS
     supplies: RESOLVED
@@ -100,15 +100,15 @@ export type MainSupplier = Supplier & {
     }
 }
 
-export type MainTypeSupplier = TypeSupplier & MainSupplier
+export type MainDynamicSupplier = DynamicSupplier & MainSupplier
 
 
-export type ProductConfig<
+export type StaticConfig<
     CONSTRAINT = any,
     LAZY extends boolean = false,
     SUPPLIERS extends MainSupplier[] = MainSupplier[],
-    OPTIONALS extends MainTypeSupplier[] = MainTypeSupplier[],
-    ASSEMBLERS extends ProductSupplier[] = ProductSupplier[]
+    OPTIONALS extends MainDynamicSupplier[] = MainDynamicSupplier[],
+    ASSEMBLERS extends StaticSupplier[] = StaticSupplier[]
 > = {
     suppliers?: [...SUPPLIERS]
     optionals?: [...OPTIONALS]
@@ -131,7 +131,7 @@ export type SuppliesRecord<SUPPLIER extends Supplier = Supplier> =
     Record<string, MaybeFn<[], Supply<any, SUPPLIER>>>
 
 /**
- * A generic map of supplies or undefined. Undefined used to force a supply not to be preserved across rerenders.
+ * A generic map of supplies or undefined. Undefined used to force a supply not to be preserved across reassembly.
  * @public
  */
 export type SuppliesOrUndefinedRecord<SUPPLIER extends Supplier = Supplier> = Record<string, MaybeFn<[], Supply<any, SUPPLIER>> | undefined>
@@ -139,9 +139,9 @@ export type SuppliesOrUndefinedRecord<SUPPLIER extends Supplier = Supplier> = Re
 /**
  * Converts an array of suppliers and optionals into a corresponding supply map.
  *
- * @typeParam SUPPLIERS - Array of supplier types to convert into a supply map
- * @typeParam OPTIONALS - Array of optional supplier types to convert into a supply map
- * @returns A map where keys are supplier names and values are their assembled products/resources
+ * @typeParam SUPPLIERS - Array of suppliers to convert into a supply map
+ * @typeParam OPTIONALS - Array of optional suppliers to convert into a supply map
+ * @returns A map where keys are supplier names and values are their assembled supplies
  * @public
  */
 export type Supplies<
@@ -163,7 +163,7 @@ export type Supplies<
                                 SUPPLIER["_"]["constraint"]
                             >
                         :   SUPPLIER,
-                        SUPPLIER extends ProductSupplier ? DEPS : Record<never, never>
+                        SUPPLIER extends StaticSupplier ? DEPS : Record<never, never>
                     >
                 >
         } & {
@@ -178,7 +178,7 @@ export type Supplies<
                                 OPTIONAL["_"]["constraint"]
                             >
                         :   OPTIONAL,
-                        OPTIONAL extends ProductSupplier ? DEPS : Record<never, never>
+                        OPTIONAL extends StaticSupplier ? DEPS : Record<never, never>
                     >
                 >
            
@@ -198,7 +198,7 @@ export type Resolved<
                 Supply<
                     SUPPLIER["_"]["constraint"],
                     WIDE extends true ?
-                        TypeSupplier<
+                        DynamicSupplier<
                             SUPPLIER["name"],
                             SUPPLIER["_"]["constraint"]
                         >
@@ -211,7 +211,7 @@ export type Resolved<
                 Supply<
                     OPTIONAL["_"]["constraint"],
                     WIDE extends true ?
-                        TypeSupplier<
+                        DynamicSupplier<
                             OPTIONAL["name"],
                             OPTIONAL["_"]["constraint"]
                         >
@@ -221,7 +221,7 @@ export type Resolved<
            
         }
 
-
+// Same as Resolved, but unpacked from the supply wrapper
 export type Deps<
     SUPPLIERS extends Supplier[],
     OPTIONALS extends Supplier[]
@@ -232,26 +232,25 @@ export type Deps<
 }
 
 /**
- * Assembler accessor type used in factory functions for lazy dependency assembly.
- * ctx provides unassembled contextualized suppliers that can be assembled on-demand with custom supplies.
- * This enables lazy evaluation and dynamic dependency injection within a product's factory.
+ * ctx transforms suppliers into contextualized suppliers that can be assembled again with new dynamic supplies.
+ * This enables dynamic dependency injection within a supplier's factory.
  * @typeParam SUPPLIERS - Array of suppliers available in the context
- * @typeParam OPTIONALS - Array of optional resource suppliers
- * @typeParam ASSEMBLERS - Array of product suppliers available as assemblers
+ * @typeParam OPTIONALS - Array of optional dynamic suppliers
+ * @typeParam ASSEMBLERS - Array of static suppliers available as assemblers
  * @returns A function that takes an assembler and returns it with an assemble method
  * @public
  */
 export type Ctx<
     SUPPLIERS extends Supplier[],
-    OPTIONALS extends TypeSupplier[],
-    ASSEMBLERS extends ProductSupplier[]
+    OPTIONALS extends DynamicSupplier[],
+    ASSEMBLERS extends StaticSupplier[]
 > = <
     ASSEMBLER extends {name: SUPPLIERS[number]["name"] | OPTIONALS[number]["name"] | ASSEMBLERS[number]["name"]}
 >(
     assembler?: ASSEMBLER
-) => ASSEMBLER extends ProductSupplier ?
-    Omit<ProductSupplier<ASSEMBLER["name"], ASSEMBLER["_"]["constraint"]>, "assemble" | "hire"> & {
-        hire: <HIRED extends ProductSupplier[]>(
+) => ASSEMBLER extends StaticSupplier ?
+    Omit<StaticSupplier<ASSEMBLER["name"], ASSEMBLER["_"]["constraint"]>, "assemble" | "hire"> & {
+        hire: <HIRED extends StaticSupplier[]>(
             ...hired: [...HIRED]
         ) => CircularDependencyGuard<{
             name: ASSEMBLER["name"]
@@ -270,7 +269,7 @@ export type Ctx<
                 >
             ) => Supply<
                 ASSEMBLER["_"]["constraint"],
-                ProductSupplier<
+                StaticSupplier<
                     ASSEMBLER["name"],
                     ASSEMBLER["_"]["constraint"]
                 >,
@@ -289,7 +288,7 @@ export type Ctx<
             >
         ) => Supply<
             ASSEMBLER["_"]["constraint"],
-            ProductSupplier<ASSEMBLER["name"], ASSEMBLER["_"]["constraint"]>,
+            StaticSupplier<ASSEMBLER["name"], ASSEMBLER["_"]["constraint"]>,
             Deps<SUPPLIERS, OPTIONALS>,
             Resolved<SUPPLIERS, OPTIONALS>
         >
@@ -297,11 +296,11 @@ export type Ctx<
 :   ASSEMBLER // simply returns the assembler itself if it's a runtime supplier (noop)
 /**
  * Recursively filters out suppliers of a specific type from a supplier array.
- * This is used internally to separate product suppliers from resource suppliers
+ * This is used internally to separate static suppliers from dynamic suppliers
  * during dependency resolution.
  *
  * @typeParam SUPPLIERS - The array of suppliers to filter
- * @typeParam TYPE - The supplier type to exclude (ProductSupplier or ResourceSupplier)
+ * @typeParam TYPE - The supplier type to exclude (StaticSupplier or DynamicSupplier)
  * @returns A new array with the specified supplier type removed
  * @public
  */
@@ -328,7 +327,7 @@ export type ExcludeSuppliersType<
  * of a supplier into a team.
  * This type walks through the dependency tree, collecting each supplier and all of its
  * nested dependencies into a flattened array. This forms the "team" - the complete
- * set of suppliers needed to assemble a product. The runtime equivalent is the `team()` utility.
+ * set of suppliers needed to assemble a supply. The runtime equivalent is the `team()` utility.
  *
  * @internal
  */
@@ -354,8 +353,7 @@ export type TransitiveSuppliers<
 
 /**
  * Recursively collects ALL transitive dependencies (including assemblers and optionals)
- * for strict circular dependency detection. Unlike TransitiveSuppliers, this traverses
- * "weak" links that are not part of the immediate supply chain but could form cycles.
+ * for strict circular dependency detection.
  *
  * @internal
  */
@@ -384,8 +382,8 @@ export type AllTransitiveSuppliers<
 
 /**
  * Recursively collects all optional suppliers from a supplier array.
- * This type walks through the dependency tree and accumulates all optional resource
- * suppliers declared by product suppliers in the tree.
+ * This type walks through the dependency tree and accumulates all optional dynamic
+ * supplies required by static suppliers in the tree.
  *
  * @typeParam SUPPLIERS - The array of suppliers to collect optionals from
  * @returns A flattened array of all optional resource suppliers
@@ -403,40 +401,41 @@ export type Optionals<
     :   ACC
 
 /**
- * Determines which suppliers need to be supplied externally when assembling a product.
- * This type computes the set of resource suppliers that must be provided because they
- * cannot be automatically assembled. It excludes product suppliers (which are autowired)
- * and returns only the resource suppliers from the transitive dependency tree.
- * Resources are merged from suppliers, hired suppliers, and hired assemblers.
+ * Determines which supplies need to be dynamically supplied when assembling.
+ * This type computes the set of dynamic supplies that must be provided to assemble a static supplier.
+ * It excludes static suppliers (which are autowired)
+ * and returns only dynamic suppliers from the static supplier'stransitive dependency tree.
  *
  * @typeParam SUPPLIERS - The array of suppliers to analyze
- * @typeParam OPTIONALS - The array of optional resource suppliers
+ * @typeParam OPTIONALS - The array of optional suppliers
  * @typeParam HIRED - The array of hired suppliers
- * @returns A supply map of only the resource suppliers that must be provided
+ * @returns A supply map of only the dynamic suppliers that must be provided
  * @public
  */
 export type ToSupply<
     SUPPLIERS extends Supplier[],
-    OPTIONALS extends TypeSupplier[],
-    HIRED extends ProductSupplier[]
+    OPTIONALS extends DynamicSupplier[],
+    HIRED extends StaticSupplier[]
 > = Supplies<
     ExcludeSuppliersType<
         TransitiveSuppliers<MergeSuppliers<SUPPLIERS, HIRED>>,
-        ProductSupplier
+        StaticSupplier
     >,
     [
         ...OPTIONALS,
         ...Optionals<
             ExcludeSuppliersType<
                 TransitiveSuppliers<MergeSuppliers<SUPPLIERS, HIRED>>,
-                TypeSupplier
+                DynamicSupplier
             >
         >,
         ...ExcludeSuppliersType<
             TransitiveSuppliers<MergeSuppliers<SUPPLIERS, HIRED>>,
-            ProductSupplier
+            DynamicSupplier
         >
-    ]
+    ],
+    true,
+    any
 >
 
 /**
@@ -488,7 +487,7 @@ export type MergeSuppliers<OLD extends Supplier[], WITH extends Supplier[]> = [
 
 export type CircularDependencyGuard<
     SUPPLIER extends Pick<
-        ProductSupplier,
+        StaticSupplier,
         "name" | "suppliers" | "optionals" | "assemblers" | "hired"
     >
 > =

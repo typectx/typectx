@@ -1,14 +1,14 @@
 import { useLayoutEffect, useState, useSyncExternalStore } from "react"
-import {
-    type Resolved,
-    type Supplier,
-    type Supply,
-    type TypeSupplier,
+import type {
+    Resolved,
+    Supplier,
+    Supply,
     Deps,
-    ProductSupplier
+    DynamicSupplier,
+    StaticSupplier
 } from "typectx"
 
-export function useDeps<INIT_DEPS extends Deps<Supplier[], TypeSupplier[]>>(
+export function useDeps<INIT_DEPS extends Deps<Supplier[], DynamicSupplier[]>>(
     initDeps: INIT_DEPS
 ) {
     // useSyncExternalStore subscribes to store updates.
@@ -29,13 +29,13 @@ export function useAssembleComponent<
     CONSTRAINT,
     TOSUPPLY,
     SUPPLIED extends TOSUPPLY & Record<string, Supply | undefined>,
-    DEPS extends Deps<Supplier[], TypeSupplier[]>,
-    RESOLVED extends Resolved<Supplier[], TypeSupplier[]>
+    DEPS extends Deps<Supplier[], DynamicSupplier[]>,
+    RESOLVED extends Resolved<Supplier[], DynamicSupplier[]>
 >(
     supplier: {
         assemble: (
             supplied: TOSUPPLY & Record<string, Supply | undefined>
-        ) => Supply<CONSTRAINT, ProductSupplier, DEPS, RESOLVED>
+        ) => Supply<CONSTRAINT, StaticSupplier, DEPS, RESOLVED>
     },
     supplied: SUPPLIED
 ) {
@@ -45,8 +45,8 @@ export function useAssembleComponent<
     const [first] = useState(() => supplier.assemble(supplied))
 
     const components = Object.entries(first.supplies).reduce(
-        (acc: Record<string, Supply<any, ProductSupplier>>, [key, supply]) => {
-            return store.has(supply.deps)  ? { ...acc, [key]: supply as Supply<any, ProductSupplier> } : acc
+        (acc: Record<string, Supply<any, StaticSupplier>>, [key, supply]) => {
+            return store.has(supply.deps)  ? { ...acc, [key]: supply as Supply<any, StaticSupplier> } : acc
         },
         (store.has(first.deps) ? { [first.supplier.name]: first } : {})
     )
@@ -104,22 +104,22 @@ export const useAssembleHook = useAssembleComponent
 
 const store = {
     set(
-        componentDeps: Deps<Supplier[], TypeSupplier[]>,
-        elementDeps: Deps<Supplier[], TypeSupplier[]>
+        componentDeps: Deps<Supplier[], DynamicSupplier[]>,
+        elementDeps: Deps<Supplier[], DynamicSupplier[]>
     ) {
         store._.state.set(componentDeps, elementDeps)
     },
-    get(componentDeps: Deps<Supplier[], TypeSupplier[]>) {
+    get(componentDeps: Deps<Supplier[], DynamicSupplier[]>) {
         return store._.state.get(componentDeps)
     },
-    has(componentDeps: Deps<Supplier[], TypeSupplier[]>) {
+    has(componentDeps: Deps<Supplier[], DynamicSupplier[]>) {
         return store._.state.has(componentDeps)
     },
-    trigger(componentDeps: Deps<Supplier[], TypeSupplier[]>) {
+    trigger(componentDeps: Deps<Supplier[], DynamicSupplier[]>) {
         store._.listeners.get(componentDeps)?.forEach((listener) => listener())
     },
     subscribe(
-        componentDeps: Deps<Supplier[], TypeSupplier[]>,
+        componentDeps: Deps<Supplier[], DynamicSupplier[]>,
         listener: () => unknown
     ) {
         store._.listeners.set(componentDeps, [
@@ -138,11 +138,11 @@ const store = {
     },
     _: {
         state: new WeakMap<
-            Deps<Supplier[], TypeSupplier[]>,
-            Deps<Supplier[], TypeSupplier[]>
+            Deps<Supplier[], DynamicSupplier[]>,
+            Deps<Supplier[], DynamicSupplier[]>
         >(),
         listeners: new WeakMap<
-            Deps<Supplier[], TypeSupplier[]>,
+            Deps<Supplier[], DynamicSupplier[]>,
             (() => unknown)[]
         >()
     }
