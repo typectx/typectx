@@ -7,33 +7,33 @@ describe("typectx", () => {
         vi.clearAllMocks()
     })
 
-    describe("Dynamic suppliers", () => {
-        it("should add a dynamic supplier and return it packed", () => {
+    describe("Request suppliers", () => {
+        it("should add a request supplier and pack it", () => {
             const market = createMarket()
-            const $dynamic = market.add("dynamic").dynamic<string>()
+            const $input = market.add("input").request<string>()
 
-            const pack = $dynamic.pack("test-value")
+            const pack = $input.pack("test-value")
 
             expect(pack.unpack()).toBe("test-value")
-            expect(pack.supplier.name).toBe("dynamic")
-            expect($dynamic.name).toBe("dynamic")
-            expect($dynamic._.dynamic).toBe(true)
+            expect(pack.supplier.name).toBe("input")
+            expect($input.name).toBe("input")
+            expect($input._.request).toBe(true)
         })
 
         it("should throw error if two suppliers with the same name", () => {
             const market = createMarket()
 
-            market.add("duplicate").dynamic<string>()
+            market.add("duplicate").request<string>()
             expect(() => {
-                market.add("duplicate").dynamic<string>()
+                market.add("duplicate").request<string>()
             }).toThrow("Name duplicate already exists")
         })
 
         it("should handle different types correctly", () => {
             const market = createMarket()
-            const $string = market.add("string").dynamic<string>()
-            const $number = market.add("number").dynamic<number>()
-            const $object = market.add("object").dynamic<{
+            const $string = market.add("string").request<string>()
+            const $number = market.add("number").request<number>()
+            const $object = market.add("object").request<{
                 name: string
             }>()
 
@@ -45,29 +45,29 @@ describe("typectx", () => {
         })
     })
 
-    describe("Static Suppliers", () => {
-        it("should add a static supplier with no suppliers (resource)", () => {
+    describe("Product Suppliers", () => {
+        it("should add a product supplier with no suppliers (resource)", () => {
             const market = createMarket()
-            const $resource = market.add("resource").static({
+            const $resource = market.add("resource").product({
                 factory: () => "resource"
             })
 
             expect($resource.assemble({}).unpack()).toBe("resource")
             expect($resource.name).toBe("resource")
-            expect($resource._.static).toBe(true)
+            expect($resource._.product).toBe(true)
         })
 
-        it("should add a static supplier with suppliers", () => {
+        it("should add a product supplier with suppliers", () => {
             const market = createMarket()
-            const $A = market.add("A").static({
+            const $A = market.add("A").product({
                 factory: () => "A"
             })
 
-            const $B = market.add("B").static({
+            const $B = market.add("B").product({
                 factory: () => "B"
             })
 
-            const $test = market.add("test").static({
+            const $test = market.add("test").product({
                 suppliers: [$A, $B],
                 factory: ({ A, B }) => {
                     return {
@@ -87,15 +87,15 @@ describe("typectx", () => {
     describe("Supply Chain", () => {
         it("should assemble supplies from suppliers", () => {
             const market = createMarket()
-            const $A = market.add("A").static({
+            const $A = market.add("A").product({
                 factory: () => "A"
             })
 
-            const $B = market.add("B").static({
+            const $B = market.add("B").product({
                 factory: () => "B"
             })
 
-            const $main = market.add("main").static({
+            const $main = market.add("main").product({
                 suppliers: [$A, $B],
                 factory: ({ A, B }) => {
                     return {
@@ -113,11 +113,11 @@ describe("typectx", () => {
 
         it("should respect initial supplies and not override them during assembly", () => {
             const market = createMarket()
-            const $resource = market.add("resource").static({
+            const $resource = market.add("resource").product({
                 factory: () => "resource"
             })
 
-            const $main = market.add("main").static({
+            const $main = market.add("main").product({
                 suppliers: [$resource],
                 factory: ({ resource }) => {
                     return {
@@ -133,13 +133,13 @@ describe("typectx", () => {
             })
         })
 
-        it("should enable context switching by calling ctx()", () => {
+        it("should enable context switching by calling ctx() in a factory", () => {
             const market = createMarket()
-            const $config = market.add("config").dynamic<string>()
-            const $name = market.add("name").dynamic<string>()
-            const $count = market.add("count").dynamic<number>()
+            const $config = market.add("config").request<string>()
+            const $name = market.add("name").request<string>()
+            const $count = market.add("count").request<number>()
 
-            const $test = market.add("test").static({
+            const $test = market.add("test").product({
                 suppliers: [$config, $name, $count],
                 factory: ({ config, name, count }) => {
                     return {
@@ -150,7 +150,7 @@ describe("typectx", () => {
                 }
             })
 
-            const $main = market.add("main").static({
+            const $main = market.add("main").product({
                 suppliers: [$test],
                 factory: (deps, ctx) => {
                     const newTestA = ctx($test)
@@ -220,7 +220,7 @@ describe("typectx", () => {
             const factorySpy = vi.fn().mockReturnValue("resource")
 
             const market = createMarket()
-            const $resource = market.add("resource").static({
+            const $resource = market.add("resource").product({
                 factory: factorySpy
             })
 
@@ -238,11 +238,11 @@ describe("typectx", () => {
             const factorySpy = vi.fn().mockReturnValue("memoized")
 
             const market = createMarket()
-            const $spy = market.add("spy").static({
+            const $spy = market.add("spy").product({
                 factory: factorySpy
             })
 
-            const $test = market.add("test").static({
+            const $test = market.add("test").product({
                 suppliers: [$spy],
                 factory: (deps) => {
                     const spyAccess = deps.spy
@@ -261,18 +261,18 @@ describe("typectx", () => {
             const factory1Spy = vi.fn().mockReturnValue("A")
 
             const market = createMarket()
-            const $A = market.add("A").static({
+            const $A = market.add("A").product({
                 factory: factory1Spy
             })
 
-            const $B = market.add("B").static({
+            const $B = market.add("B").product({
                 suppliers: [$A],
                 factory: ({ A }) => {
                     return "B"
                 }
             })
 
-            const $test = market.add("test").static({
+            const $test = market.add("test").product({
                 suppliers: [$A, $B],
                 factory: ({ A, B }) => {
                     return {
@@ -294,28 +294,28 @@ describe("typectx", () => {
         it("should reassemble if dependent suppliers reassembles", async () => {
             const market = createMarket()
             // A will be reassembled
-            const $A = market.add("A").static({
+            const $A = market.add("A").product({
                 factory: () => Date.now()
             })
 
             // B will be reassembled when A reassembles
-            const $B = market.add("B").static({
+            const $B = market.add("B").product({
                 suppliers: [$A],
                 factory: () => Date.now()
             })
 
             // C - doesn't depend on anything, so it will not be reassembled
-            const $C = market.add("C").static({
+            const $C = market.add("C").product({
                 factory: () => Date.now()
             })
 
             // D will be reassembled when B reassembles
-            const $D = market.add("D").static({
+            const $D = market.add("D").product({
                 suppliers: [$B],
                 factory: () => Date.now()
             })
 
-            const $E = market.add("E").static({
+            const $E = market.add("E").product({
                 suppliers: [$A, $B, $C, $D],
                 factory: ({ A, B, C, D }) => {
                     return {
@@ -327,7 +327,7 @@ describe("typectx", () => {
                 }
             })
 
-            const $main = market.add("main").static({
+            const $main = market.add("main").product({
                 suppliers: [$E],
                 factory: async ({ E }, ctx) => {
                     await sleep(100)
@@ -349,7 +349,7 @@ describe("typectx", () => {
         })
     })
     describe("Preload Feature", () => {
-        it("should init eager static suppliers, not lazy ones ", async () => {
+        it("should init eager product suppliers, not lazy ones ", async () => {
             const market = createMarket()
             const initedValueSpy = vi
                 .fn<() => "inited">()
@@ -357,22 +357,22 @@ describe("typectx", () => {
             const normalValueSpy = vi.fn().mockReturnValue("normal")
             const lazyValueSpy = vi.fn().mockReturnValue("lazy")
 
-            const $inited = market.add("inited").static({
+            const $inited = market.add("inited").product({
                 factory: () => initedValueSpy,
-                init: (value) => value()
+                init: (product) => product()
             })
 
-            const $normal = market.add("normal").static({
+            const $normal = market.add("normal").product({
                 factory: () => normalValueSpy
             })
 
-            const $lazy = market.add("lazy").static({
+            const $lazy = market.add("lazy").product({
                 factory: () => lazyValueSpy,
-                init: (value) => value(),
+                init: (product) => product(),
                 lazy: true
             })
 
-            const $main = market.add("main").static({
+            const $main = market.add("main").product({
                 suppliers: [$inited, $normal, $lazy],
                 factory: () => {
                     // Don't access any dependencies yet
@@ -396,12 +396,12 @@ describe("typectx", () => {
                 throw new Error()
             })
 
-            const $error = market.add("error").static({
+            const $error = market.add("error").product({
                 factory: () => once(errorValueSpy),
-                init: (value) => value()
+                init: (product) => product()
             })
 
-            const $main = market.add("main").static({
+            const $main = market.add("main").product({
                 suppliers: [$error],
                 factory: () => {
                     // Don't access $error factory yet
@@ -418,18 +418,18 @@ describe("typectx", () => {
             expect(errorValueSpy).toHaveBeenCalledTimes(1)
         })
 
-        it("should still throw error when accessing a failed inited supplier's value", async () => {
+        it("should still throw error when accessing a failed inited supplier's product", async () => {
             const market = createMarket()
             const errorValueSpy = vi.fn().mockImplementation(() => {
                 throw new Error()
             })
 
-            const $error = market.add("error").static({
+            const $error = market.add("error").product({
                 factory: () => once(errorValueSpy),
-                init: (value) => value()
+                init: (product) => product()
             })
 
-            const $main = market.add("main").static({
+            const $main = market.add("main").product({
                 suppliers: [$error],
                 factory: ({ error }) => {
                     return "main"
@@ -438,7 +438,7 @@ describe("typectx", () => {
 
             await sleep(10)
 
-            // Accessing the value should still throw the error
+            // Accessing the product should still throw the error
             expect(() => $main.assemble({}).unpack()).toThrow()
         })
 
@@ -447,16 +447,16 @@ describe("typectx", () => {
             const ASpy = vi.fn().mockReturnValue("A")
             const BSpy = vi.fn().mockReturnValue("B")
 
-            const $A = market.add("A").static({
+            const $A = market.add("A").product({
                 factory: () => once(ASpy),
-                init: (value) => value()
+                init: (product) => product()
             })
 
-            const $B = market.add("B").static({
+            const $B = market.add("B").product({
                 factory: () => once(BSpy)
             })
 
-            const $main = market.add("main").static({
+            const $main = market.add("main").product({
                 suppliers: [$A, $B],
                 factory: () => {
                     return "main"
@@ -478,12 +478,12 @@ describe("typectx", () => {
             const eagerSpy = vi.fn().mockReturnValue("eager")
 
             const market = createMarket()
-            const $eager = market.add("eager").static({
+            const $eager = market.add("eager").product({
                 factory: eagerSpy,
                 lazy: false // explicitly non-lazy
             })
 
-            const $main = market.add("main").static({
+            const $main = market.add("main").product({
                 suppliers: [$eager],
                 factory: () => "main"
             })
@@ -498,12 +498,12 @@ describe("typectx", () => {
             const lazySpy = vi.fn().mockReturnValue("lazy")
 
             const market = createMarket()
-            const $lazy = market.add("lazy").static({
+            const $lazy = market.add("lazy").product({
                 factory: lazySpy,
                 lazy: true
             })
 
-            const $main = market.add("main").static({
+            const $main = market.add("main").product({
                 suppliers: [$lazy],
                 factory: () => "main"
             })
@@ -518,12 +518,12 @@ describe("typectx", () => {
             const lazySpy = vi.fn().mockReturnValue("lazy")
 
             const market = createMarket()
-            const $lazy = market.add("lazy").static({
+            const $lazy = market.add("lazy").product({
                 factory: lazySpy,
                 lazy: true
             })
 
-            const $main = market.add("main").static({
+            const $main = market.add("main").product({
                 suppliers: [$lazy],
                 factory: ({ lazy }) => {
                     return lazy
@@ -538,12 +538,12 @@ describe("typectx", () => {
             const lazySpy = vi.fn().mockReturnValue("lazy")
 
             const market = createMarket()
-            const $lazy = market.add("lazy").static({
+            const $lazy = market.add("lazy").product({
                 factory: lazySpy,
                 lazy: true
             })
 
-            const $main = market.add("main").static({
+            const $main = market.add("main").product({
                 suppliers: [$lazy],
                 factory: ({ lazy }, ctx) => {
                     expect(lazySpy).toHaveBeenCalledTimes(1)
@@ -567,7 +567,7 @@ describe("typectx", () => {
             const mockSpy = vi.fn().mockReturnValue("mock")
 
             const market = createMarket()
-            const $original = market.add("original").static({
+            const $original = market.add("original").product({
                 factory: originalSpy,
                 lazy: true
             })
@@ -577,7 +577,7 @@ describe("typectx", () => {
                 lazy: true
             })
 
-            const $main = market.add("main").static({
+            const $main = market.add("main").product({
                 suppliers: [$original],
                 factory: ({ original }) => {
                     return original
@@ -600,12 +600,12 @@ describe("typectx", () => {
             const eagerSpy = vi.fn().mockReturnValue("default-eager")
 
             const market = createMarket()
-            const $default = market.add("default").static({
+            const $default = market.add("default").product({
                 factory: eagerSpy
                 // lazy not specified, should default to false
             })
 
-            const $main = market.add("main").static({
+            const $main = market.add("main").product({
                 suppliers: [$default],
                 factory: () => "main"
             })
@@ -621,13 +621,13 @@ describe("typectx", () => {
             const factorySpy = vi.fn().mockReturnValue("lazy-with-init")
 
             const market = createMarket()
-            const $lazy = market.add("lazy").static({
+            const $lazy = market.add("lazy").product({
                 factory: factorySpy,
                 init: initSpy,
                 lazy: true
             })
 
-            const $main = market.add("main").static({
+            const $main = market.add("main").product({
                 suppliers: [$lazy],
                 factory: () => "main"
             })
@@ -651,13 +651,13 @@ describe("typectx", () => {
             const factorySpy = vi.fn().mockReturnValue(() => "eager-with-init")
 
             const market = createMarket()
-            const $eager = market.add("eager").static({
+            const $eager = market.add("eager").product({
                 factory: factorySpy,
                 init: initSpy,
                 lazy: false
             })
 
-            const $main = market.add("main").static({
+            const $main = market.add("main").product({
                 suppliers: [$eager],
                 factory: () => "main"
             })
@@ -676,7 +676,7 @@ describe("typectx", () => {
     describe("Type Safety and Edge Cases", () => {
         it("should handle empty suppliers correctly", () => {
             const market = createMarket()
-            const $empty = market.add("empty").static({
+            const $empty = market.add("empty").product({
                 factory: () => "empty"
             })
 

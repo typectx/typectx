@@ -56,7 +56,7 @@ html {
         @apply bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-1;
     }
 
-    .input {
+    .ctx {
         @apply px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors;
     }
 }

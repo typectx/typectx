@@ -9,21 +9,20 @@ import {
     TransitiveSuppliers,
     type Deps,
     type Resolved,
-    type StaticConfig,
-    type MainDynamicSupplier,
-    type StaticSupplier,
-    type DynamicSupplier,
+    type ProductConfig,
+    type MainRequestSupplier,
+    type ProductSupplier,
+    type RequestSupplier,
     type Supply,
     type SuppliesOrUndefinedRecord
 } from "#types"
 
-import { once, team as buildTeam, isStaticSupplier, isPacked } from "#utils"
+import { once, team as buildTeam, isProductSupplier, isPacked } from "#utils"
 import {
     assertName,
     assertPlainObject,
-    assertStaticConfig,
-    assertStaticSuppliers,
-    assertString
+    assertProductConfig,
+    assertProductSuppliers
 } from "#validation"
 
 /**
@@ -53,7 +52,7 @@ export const createMarket = () => {
             }
             names.add(name)
 
-            function dynamic<CONSTRAINT = any>() {
+            function request<CONSTRAINT = any>() {
                 return {
                     name,
                     suppliers: [] ,
@@ -78,42 +77,42 @@ export const createMarket = () => {
                     },
                     _: {
                         constraint: null as unknown as CONSTRAINT,       
-                        dynamic: true as const,
-                        isMock: false as const
+                        request: true as const,
+                        mock: false as const
                     },
                 }
             }
 
             return {
-                dynamic,
+                request,
                 /**
-                 * Creates a static supplier that can assemble complex objects from dependencies.
-                 * Static suppliers can depend on other suppliers and have factory functions for creation.
+                 * Creates a product supplier that can assemble complex objects from dependencies.
+                 * Product suppliers can depend on other suppliers and have factory functions for creation.
                  *
-                 * @typeParam CONSTRAINT - The type constraint for values this supplier produces
+                 * @typeParam CONSTRAINT - The type constraint for products this supplier produces
                  * @typeParam LAZY - Whether this supplier should be lazily evaluated
                  * @typeParam SUPPLIERS - Array of suppliers this supplier depends on
-                 * @typeParam OPTIONALS - Array of optional type suppliers this supplier may depend on
-                 * @typeParam ASSEMBLERS - Array of assemblers (lazy unassembled static suppliers)
+                 * @typeParam OPTIONALS - Array of optional ctx suppliers this supplier may depend on
+                 * @typeParam ASSEMBLERS - Array of assemblers (lazy unassembled product suppliers)
                  * @param config - Configuration object for the supplier
                  * @param config.suppliers - Array of suppliers this supplier depends on
-                 * @param config.optionals - Array of optional dynamic suppliers this supplier may depend on
-                 * @param config.assemblers - Array of assemblers (lazy unassembled static suppliers)
-                 * @param config.factory - Factory function that creates the static value from its dependencies
+                 * @param config.optionals - Array of optional ctx suppliers this supplier may depend on
+                 * @param config.assemblers - Array of assemblers (lazy unassembled product suppliers)
+                 * @param config.factory - Factory function that creates the product from its dependencies
                  * @param config.init - Optional initialization function called after factory
                  * @param config.lazy - Whether the supplier should be lazily evaluated
                  *
-                 * @returns A static supplier with methods like assemble, pack, mock, and hire
+                 * @returns A product supplier with methods like assemble, pack, mock, and hire
                  * @public
                  */
-                static<
+                product<
                     CONSTRAINT=any,
                     LAZY extends boolean = false,
                     SUPPLIERS extends MainSupplier[] = [],
-                    OPTIONALS extends MainDynamicSupplier[] = [],
-                    ASSEMBLERS extends StaticSupplier[] = []
+                    OPTIONALS extends MainRequestSupplier[] = [],
+                    ASSEMBLERS extends ProductSupplier[] = []
                 >(
-                    config: StaticConfig<
+                    config: ProductConfig<
                         CONSTRAINT,
                         LAZY,
                         SUPPLIERS,
@@ -125,11 +124,11 @@ export const createMarket = () => {
                         CONSTRAINT2 extends CONSTRAINT,
                         LAZY extends boolean = false,
                         SUPPLIERS extends MainSupplier[] = [],
-                        OPTIONALS extends MainDynamicSupplier[] = [],
-                        ASSEMBLERS extends StaticSupplier[] = [],
-                        HIRED extends StaticSupplier[] = []
+                        OPTIONALS extends MainRequestSupplier[] = [],
+                        ASSEMBLERS extends ProductSupplier[] = [],
+                        HIRED extends ProductSupplier[] = []
                     >(
-                        config: StaticConfig<
+                        config: ProductConfig<
                             CONSTRAINT2,
                             LAZY,
                             SUPPLIERS,
@@ -138,8 +137,8 @@ export const createMarket = () => {
                         >,
                         ...hired: [...HIRED]
                     ) {
-                        assertStaticConfig(name, config)
-                        assertStaticSuppliers(name, hired, true)
+                        assertProductConfig(name, config)
+                        assertProductSuppliers(name, hired, true)
 
                         const {
                             suppliers = [] as unknown as SUPPLIERS,
@@ -170,7 +169,7 @@ export const createMarket = () => {
                         ])
 
                         const _main = {
-                            ...dynamic<CONSTRAINT2>(),
+                            ...request<CONSTRAINT2>(),
                             suppliers,
                             optionals,
                             assemblers,
@@ -187,13 +186,13 @@ export const createMarket = () => {
                                 ASSEMBLE,
                                 TEAM extends Supplier[],
                                 SUPPLIERS extends Supplier[],
-                                OPTIONALS extends DynamicSupplier[],
-                                HIRED extends StaticSupplier[]
+                                OPTIONALS extends RequestSupplier[],
+                                HIRED extends ProductSupplier[]
                             >(
                                 this: THIS & {
                                     team: TEAM
                                     hire: HIRE &
-                                        ((...hired: StaticSupplier[]) => {
+                                        ((...hired: ProductSupplier[]) => {
                                             assemble: ASSEMBLE &
                                                 ((...args: any[]) => any)
                                         })
@@ -207,16 +206,16 @@ export const createMarket = () => {
                                 return _main._.build(this, supplies)
                             },
                             _: {
-                                static: true as const,
-                                isMock: false as const,
+                                product: true as const,
+                                mock: false as const,
                                 constraint: null as unknown as CONSTRAINT2,
                                 /**
-                                * Assembles the product by resolving all dependencies and creating the final instance.
+                                * Assembles the supply by resolving all dependencies and creating the final instance.
                                 * This method orchestrates the dependency resolution by building the transitive team
-                                * of all suppliers, autowiring static dependencies, and calling the internal build method.
-                                * Only dynamic dependencies need to be supplied; static dependencies are autowired.
+                                * of all suppliers, autowiring product dependencies, and calling the internal build method.
+                                * Only ctx dependencies need to be supplied; product dependencies are autowired.
                                 *
-                                * @param supplied - Map of dynamic supplies to use for dependency resolution
+                                * @param supplied - Map of supplies to use for dependency resolution
                                 * @returns A supply instance with unpack(), deps, supplies and the supplier reference
                                 * @public
                                 */
@@ -226,13 +225,13 @@ export const createMarket = () => {
                                     ASSEMBLE,
                                     TEAM extends Supplier[],
                                     SUPPLIERS extends Supplier[],
-                                    OPTIONALS extends DynamicSupplier[],
-                                    HIRED extends StaticSupplier[]
+                                    OPTIONALS extends RequestSupplier[],
+                                    HIRED extends ProductSupplier[]
                                 >(
                                     thisSupplier: THIS & {
                                         team: TEAM
                                         hire: HIRE &
-                                            ((...hired: StaticSupplier[]) => {
+                                            ((...hired: ProductSupplier[]) => {
                                                 assemble: ASSEMBLE &
                                                     ((...args: any[]) => any)
                                             })
@@ -254,7 +253,7 @@ export const createMarket = () => {
                                         thisSupplier.team
                                     )) {
                                         if (
-                                            !isStaticSupplier(supplier) ||
+                                            !isProductSupplier(supplier) ||
                                             supplier.name in supplied
                                         )
                                             continue
@@ -280,18 +279,18 @@ export const createMarket = () => {
                                 build: <
                                     THIS,
                                     TEAM extends Supplier[],
-                                    OPTIONALS extends DynamicSupplier[],
-                                    ASSEMBLERS extends StaticSupplier[],
+                                    OPTIONALS extends RequestSupplier[],
+                                    ASSEMBLERS extends ProductSupplier[],
                                     HIRE,
                                     ASSEMBLE,
                                     SUPPLIES extends
-                                        SuppliesRecord<StaticSupplier>
+                                        SuppliesRecord<ProductSupplier>
                                 >(
                                     thisSupplier: THIS & {
                                         team: TEAM
                                         optionals: OPTIONALS
                                         hire: HIRE &
-                                            ((...hired: StaticSupplier[]) => {
+                                            ((...hired: ProductSupplier[]) => {
                                                 assemble: ASSEMBLE &
                                                     ((...args: any[]) => any)
                                             })
@@ -384,7 +383,7 @@ export const createMarket = () => {
                                     }
 
                                     const ctx = ((assembler: any) => {
-                                        if (!isStaticSupplier(assembler)) {
+                                        if (!isProductSupplier(assembler)) {
                                             return assembler
                                         }
                                         const actual = assemblersTeam.find(
@@ -405,7 +404,7 @@ export const createMarket = () => {
                                                 const actualHired = hired.map(
                                                     (hired) => {
                                                         if (
-                                                            !isStaticSupplier(
+                                                            !isProductSupplier(
                                                                 hired
                                                             )
                                                         ) {
@@ -419,7 +418,7 @@ export const createMarket = () => {
                                                                     assembler.name ===
                                                                     hired.name
                                                             ) as
-                                                                | StaticSupplier
+                                                                | ProductSupplier
                                                                 | undefined
                                                         if (!actual) {
                                                             throw new Error(
@@ -448,7 +447,7 @@ export const createMarket = () => {
                                     function reassemble(
                                         assembler: any,
                                         supplied: SuppliesOrUndefinedRecord,
-                                        ...hired: StaticSupplier[]
+                                        ...hired: ProductSupplier[]
                                     ) {
                                         const resolved = resolve()
                                         // Stores the supplies that can be preserved to optimize reassemble
@@ -542,15 +541,15 @@ export const createMarket = () => {
 
                     const supplier = {
                         /**
-                         * Creates a mock version of this static supplier with different dependencies.
-                         * Mocks are used for creating test variations of a static supplier with different implementations
+                         * Creates a mock version of this product supplier with different dependencies.
+                         * Mocks are used for creating test variations of a product supplier with different implementations
                          * while keeping the same name. This is useful for testing, stubbing, or providing
                          * alternative implementations without affecting the original supplier.
                          *
                          * @typeParam CONSTRAINT - The type constraint for the mock
                          * @typeParam LAZY - Whether the mock should be lazily evaluated
                          * @typeParam SUPPLIERS - Dependencies for the mock (can be different from the original)
-                         * @typeParam OPTIONALS - Array of optional dynamic suppliers for the mock
+                         * @typeParam OPTIONALS - Array of optional ctx suppliers for the mock
                          * @typeParam ASSEMBLERS - Array of assemblers for the mock
                          * @param config - Configuration for the mock
                          * @param config.factory - Factory function for the mock
@@ -559,7 +558,7 @@ export const createMarket = () => {
                          * @param config.assemblers - Assemblers for the mock
                          * @param config.init - Optional initialization function for the mock
                          * @param config.lazy - Whether the mock should be lazily evaluated
-                         * @returns A mock static supplier with isMock flag set to true
+                         * @returns A mock product supplier with mock flag set to true
                          * @public
                          */
                         mock<
@@ -569,14 +568,14 @@ export const createMarket = () => {
                             CONSTRAINT2 extends CONSTRAINT,
                             LAZY extends boolean = false,
                             SUPPLIERS extends MainSupplier[] = [],
-                            OPTIONALS extends MainDynamicSupplier[] = [],
-                            ASSEMBLERS extends StaticSupplier[] = []
+                            OPTIONALS extends MainRequestSupplier[] = [],
+                            ASSEMBLERS extends ProductSupplier[] = []
                         >(
                             this: THIS & {
                                 mock: MOCK
                                 hire: HIRE
                             },
-                            config: StaticConfig<
+                            config: ProductConfig<
                                 CONSTRAINT2,
                                 LAZY,
                                 SUPPLIERS,
@@ -592,7 +591,7 @@ export const createMarket = () => {
                                 ...main,
                                 _: {
                                     ...main._,
-                                    isMock: true as const
+                                    mock: true as const
                                 }
                             }
 
@@ -601,13 +600,13 @@ export const createMarket = () => {
                             >
                         },
                         /**
-                         * Hires additional suppliers into the dependency chain of this static supplier.
+                         * Hires additional suppliers into the dependency chain of this product supplier.
                          * This allows replacing or adding suppliers composition-root style for testing,
                          * mocking, or batch assembly. Hired suppliers override suppliers with matching
                          * names in the transitive dependency tree.
                          *
-                         * @param hiredSuppliers - Static suppliers to hire (replace/add to the team)
-                         * @returns A new static supplier with the hired suppliers merged into the team
+                         * @param hiredSuppliers - Product suppliers to hire (replace/add to the team)
+                         * @returns A new product supplier with the hired suppliers merged into the team
                          * @public
                          */
                         hire<
@@ -617,13 +616,13 @@ export const createMarket = () => {
                             CONSTRAINT2 extends CONSTRAINT,
                             LAZY extends boolean,
                             SUPPLIERS extends MainSupplier[],
-                            OPTIONALS extends MainDynamicSupplier[],
-                            ASSEMBLERS extends StaticSupplier[],
-                            HIRED extends StaticSupplier[],
-                            HIRED_2 extends StaticSupplier[]
+                            OPTIONALS extends MainRequestSupplier[],
+                            ASSEMBLERS extends ProductSupplier[],
+                            HIRED extends ProductSupplier[],
+                            HIRED_2 extends ProductSupplier[]
                         >(
                             this: THIS &
-                                StaticConfig<
+                                ProductConfig<
                                     CONSTRAINT2,
                                     LAZY,
                                     SUPPLIERS,
@@ -644,7 +643,7 @@ export const createMarket = () => {
                                 ...main,
                                 _: {
                                     ...main._,
-                                    isMock: false as const,
+                                    mock: false as const,
                                     isComposite: true as const
                                 }
                             }

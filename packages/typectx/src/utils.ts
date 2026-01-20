@@ -1,4 +1,4 @@
-import { StaticSupplier, Supplier } from "#types"
+import { ProductSupplier, Supplier } from "#types"
 
 /**
  * Minimal once implementation for memoizing function results.
@@ -111,16 +111,16 @@ export function dedupe(suppliers: Supplier[]) {
 }
 
 /**
- * Type guard to check if a supplier is a StaticSupplier.
+ * Type guard to check if a supplier is a ProductSupplier.
  * @param supplier - The supplier to check
- * @returns True if the supplier is a StaticSupplier, false if it's a DynamicSupplier
+ * @returns True if the supplier is a ProductSupplier, false if it's a RequestSupplier
  * @internal
  */
-export function isStaticSupplier(supplier: any): supplier is StaticSupplier {
+export function isProductSupplier(supplier: any): supplier is ProductSupplier {
     return (
         "_" in supplier &&
-        "static" in supplier._ &&
-        supplier._.static === true
+        "product" in supplier._ &&
+        supplier._.product === true
     )
 }
 

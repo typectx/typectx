@@ -25,10 +25,16 @@ The simplest way to mock a dependency is to use `.pack()` on a **Product Supplie
 
 ```typescript
 // Production services
-const $db = market.offer("db").asProduct({
-    /* ... */
+const $db = market.add("db").product({
+    factory: () => {
+        return {
+            async findUser(id:string) {
+                /*... Complex implementation...*/
+            }
+        }
+    }
 })
-const $userRepo = market.offer("userRepo").asProduct({
+const $userRepo = market.add("userRepo").product({
     suppliers: [$db],
     factory: ({ db }) => new UserRepo(db)
 })
@@ -36,20 +42,22 @@ const $userRepo = market.offer("userRepo").asProduct({
 // In your test file
 it("should return user data", async () => {
     const mockDb = {
-        findUser: jest.fn().mockResolvedValue({ id: "user-123", name: "John" })
+        async findUser(id:string) {
+            /*... Simple implementation*/
+        }
     }
 
-    // Assemble the service, packing the mock db directly
+    // Assemble the service, packing the mock db directly. The mockDb type must extend the db type
+    // Otherwise typescript will complain.
     const userRepo = $userRepo.assemble(index($db.pack(mockDb))).unpack()
 
     const user = await userRepo.getUser("user-123")
 
     expect(mockDb.findUser).toHaveBeenCalledWith("user-123")
-    expect(user.name).toBe("John")
 })
 ```
 
-**Note**: When you `.pack()` a product, you must still pass to its assemble() method all the resources it depends on recursively, even if they aren't used by the mock. You can often provide `undefined` if the types allow. For more complex cases, consider using .mock().
+**Note**: When you `.pack()` a product, you must still pass to its assemble() method all the request data it depends on recursively, even if they aren't used by the mock. You can often provide `undefined` if the types allow. For more complex cases, consider using .mock().
 
 ## Method 2: Mocking with `.mock()` and `.hire()`
 
@@ -63,7 +71,7 @@ For more complex scenarios where your mock needs its own logic, state, or depend
 
 ```typescript
 // Production user supplier
-const $user = market.offer("user").asProduct({
+const $user = market.add("user").product({
     suppliers: [$db, $session],
     factory: ({ db, session }) => db.findUserById(session.userId)
 })
@@ -71,11 +79,13 @@ const $user = market.offer("user").asProduct({
 // Create a mock with a different factory and NO dependencies
 const $userMock = $user.mock({
     suppliers: [], // No dependencies for this mock
+    // Return type of mock factory must extend return type of original factory
+    // Otherwise Typescript will complain.
     factory: () => ({ name: "Mock John Doe" })
 })
 
 // The product supplier to test
-const $profile = market.offer("profile").asProduct({
+const $profile = market.add("profile").product({
     suppliers: [$user],
     factory: ({ user }) => `<h1>Profile of ${user.name}</h1>`
 })

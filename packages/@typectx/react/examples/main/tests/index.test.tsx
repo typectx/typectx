@@ -5,12 +5,12 @@ import { QueryClientProvider } from "@tanstack/react-query"
 import { queryClient } from "@/query"
 import { StrictMode } from "react"
 import { index } from "typectx"
-import { dynamics } from "@/dynamics"
+import { req } from "@/req"
 
 describe("React Client", () => {
     it("should be able to render the app", async () => {
         const App = $App
-            .assemble(index(dynamics.$defaultUser.pack("userA")))
+            .assemble(index(req.$defaultUser.pack("userA")))
             .unpack()
 
         function Test() {

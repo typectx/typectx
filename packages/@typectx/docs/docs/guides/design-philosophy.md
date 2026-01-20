@@ -26,14 +26,15 @@ typectx's "Dependency Injection Supply Chain" (DISC) model can do everything con
 
 typectx uses an intuitive supply chain metaphor to make dependency injection easier to understand. You create fully-decoupled, hyper-specialized **suppliers** that exchange **resources** and **products** in a free-market fashion to assemble new, more complex products.
 
-| Term                 | Classical DI Equivalent | Description                                                                                                |
+| Term                 | Classical DI Equivalent | Description       |
 | -------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------- |
-| **`createMarket()`** | `createContainer()`     | A namespace/scope for all your suppliers.                                                                  |
-| **Resource**         | Value Service result    | A simple container for data or configuration.                                                              |
-| **Product**          | Factory Service result  | A container for a value created via a factory function with dependencies.                                  |
-| **Supplier**         | Resolver                | Provides access to a resource or product to an application or another supplier.                            |
-| **`assemble()`**     | `resolve()`             | Gather all requires supplies and inject in factories. Builds the product if supplier is eager.             |
-| **Supplies**         | Container / Context     | The collection of resolved dependencies, but still within their product or resource "container" or "pack". |
+| **`createMarket()`** | `createContainer()`     | A namespace/scope for all your suppliers.                     |
+| **Supplier**         |  Service                | Provides dependencies to other suppliers. Node in your dependency graph.    |
+| **Request Supplier**|  Value Service           | Supplier for a value from the user's request (request params, cookies, etc.)  |
+| **Product Supplier** |  Factory Service        | Supplier for a value derived from other product or request suppliers via a factory function                |
+| **Supply or Pack**   |         Proxy           | Value wrapper for type-checking and transport across suppliers                                             |
+| **Supplies**         | Container / Context     | The collection of resolved dependencies, but still within their supply or pack wrapper.                    |
+| **`assemble()`**     | `resolve()`             | Gathers all required request supplies (product supplies are auto-wired) and injects them in product supplier factories.|
 | **Deps**             | Values                  | The collection of resolved unpacked dependencies a factory receives                                        |
 
 ## How it Works Under the Hood
@@ -43,8 +44,8 @@ Injection happens statelessly via a memoized, recursive, self-referential, lazy 
 ```typescript
 const supplies = {
     // Resources are provided directly
-    resourceA,
-    resourceB,
+    reqA,
+    reqB,
 
     // Products are wrapped in a function to be lazily evaluated and memoized.
     // The supplies object is passed to assemble, creating a recursive structure.

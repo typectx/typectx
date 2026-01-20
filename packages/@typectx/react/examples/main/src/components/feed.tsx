@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query"
 import { useDeps } from "@typectx/react"
 import { useAssertStable } from "@/hooks"
 
-export const $Feed = market.add("Feed").static({
+export const $Feed = market.add("Feed").product({
     suppliers: [$postsQuery, $Post],
     factory: (initDeps) =>
         function Feed() {

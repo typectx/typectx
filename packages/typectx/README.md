@@ -46,13 +46,13 @@ import { createMarket, index } from "typectx"
 // 1. Create a market
 const market = createMarket()
 
-// 2. Define data (resources) and services (products)
-const $session = market.offer("session").asResource<{ userId: string }>()
-const $todosDb = market.offer("todosDb").asProduct({
+// 2. Define request and product suppliers
+const $session = market.add("session").request<{ userId: string }>()
+const $todosDb = market.add("todosDb").product({
     suppliers: [],
     factory: () => new Map<string, string[]>() // Simple in-memory DB
 })
-const $addTodo = market.offer("addTodo").asProduct({
+const $addTodo = market.add("addTodo").product({
     suppliers: [$session, $todosDb],
     factory:
         ({ session, todosDb }) =>
@@ -74,16 +74,17 @@ console.log(addTodo("Build app")) // ["Learn typectx", "Build app"]
 
 ## Intuitive, opinionated terminology
 
-typectx uses an intuitive supply chain metaphor to make dependency injection easier to understand. You create fully-decoupled, hyper-specialized **suppliers** that exchange **resources** and **products** in a free-market fashion to assemble new, more complex products.
+typectx uses an intuitive supply chain metaphor to make dependency injection easier to understand. You create fully-decoupled, hyper-specialized **suppliers** that exchange **supplies** in a free-market fashion to assemble new, more complex products.
 
-| Term                 | Classical DI Equivalent | Description                                                                                                |
+| Term                 | Classical DI Equivalent | Description       |
 | -------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------- |
-| **`createMarket()`** | `createContainer()`     | A namespace/scope for all your suppliers.                                                                  |
-| **Resource**         | Value Service result    | A simple container for data or configuration.                                                              |
-| **Product**          | Factory Service result  | A container for a value created via a factory function with dependencies.                                  |
-| **Supplier**         | Resolver                | Provides access to a resource or product to an application or another supplier.                            |
-| **`assemble()`**     | `resolve()`             | Gather all requires supplies and inject in factories. Builds the product if supplier is eager.             |
-| **Supplies**         | Container / Context     | The collection of resolved dependencies, but still within their product or resource "container" or "pack". |
+| **`createMarket()`** | `createContainer()`     | A namespace/scope for all your suppliers.                     |
+| **Supplier**         |  Service                | Provides dependencies to other suppliers. Node in your dependency graph.    |
+| **Request Supplier**|  Value Service           | Supplier for a value from the user's request (request params, cookies, etc.)  |
+| **Product Supplier** |  Factory Service        | Supplier for a value derived from other product or request suppliers via a factory function                |
+| **Supply or Pack**   |         Proxy           | Value wrapper for type-checking and transport across suppliers                                             |
+| **Supplies**         | Container / Context     | The collection of resolved dependencies, but still within their supply or pack wrapper.                    |
+| **`assemble()`**     | `resolve()`             | Gathers all required request supplies (product supplies are auto-wired) and injects them in product supplier factories.|
 | **Deps**             | Values                  | The collection of resolved unpacked dependencies a factory receives                                        |
 
 ## Full features list
@@ -112,17 +113,17 @@ typectx uses an intuitive supply chain metaphor to make dependency injection eas
 ⚡ Waterfall Management
 
 - Eager loading - Use lazy: false for immediate background construction of all supplies in parallel in assemble() call (default).
-- Lazy loading - Use lazy: true for on-demand construction of a product when its value is first accessed in a factory.
+- Lazy loading - Use lazy: true for on-demand call of the product supplier's factory when it's first accessed in another factory.
 
 🧪 Testing and Packing
 
-- You can mock any product using pack(), which will use the provided value directly, bypassing the product's factory.
+- You can mock any product using pack(), which will use the provided value directly, bypassing the supplier's factory.
 - For more complex mocks which would benefit from a factory, see mock() below.
 
 🚀 Mocking and A/B testing
 
-- Use `mock()` to create alternative implementations of a product, that may depend on different suppliers than the original.
-- Mocks' factories must return values of the same type than the original product's factory.
+- Use `mock()` to create alternative implementations of a product supplier, that may depend on different suppliers than the original.
+- Mocks' factories must return products of the same type than the original product's factory.
 - Define mock suppliers or assemblers to `hire()` at the entry-point of your app
 - For example, you can easily hire different versions of a UI component for A/B testing.
 
@@ -130,8 +131,8 @@ typectx uses an intuitive supply chain metaphor to make dependency injection eas
 
 ### 1. Create a Market
 
-All suppliers are created from a `market`, which creates a scope shared by Resource and Product Suppliers.
-You'll usually create one market per application. Markets register the names of the resources and products it `offers` so that no name conflicts occur. The name registry is the only state the market manages.
+All suppliers are created from a `market`, which creates a scope shared by Request and Product Suppliers.
+You'll usually create one market per application. Markets register the names of the suppliers so that no name conflicts occur. The name registry is the only state the market manages. Names can **only** contain digits, letters, underscores or `$` signs and cannot start with a digit, just like any Javascript identifier.
 
 ```ts
 import { createMarket } from "typectx"
@@ -139,13 +140,13 @@ import { createMarket } from "typectx"
 const market = createMarket()
 ```
 
-### 2. Define Resources
+### 2. Define Request Suppliers
 
-Resources represent the data and context your application needs, like configuration or user sessions. You define a `$resource` supplier and then `.pack()` it with a value at runtime. The value can be anything you want, even functions. Just specify its type.
+Request suppliers are used to wire the data you get from the user's request, and that cannot be derived from other request or product suppliers, like sessions or request params. You define a `$request` supplier and then `.pack()` it with a value at request time. The value can be anything you want, just specify its type.
 
 ```tsx
 // I like calling suppliers with $ prefix, but this is up to you.
-const $session = market.offer("session").asResource<{
+const $session = market.add("session").request<{
     userId: string
 }>()
 
@@ -156,15 +157,16 @@ const session = $session
     .unpack()
 ```
 
-### 3. Define Products (Services)
+### 3. Define Product Suppliers
 
-Products are your application's services, components or features. They are factory functions that can depend on other products or resources. Factories can return anything: simple values, promises or other functions.
+Product suppliers are your application's services, components or features. They are factory functions that can depend on other products or request data. Factories can return anything: simple values, promises or other functions.
 
 Dependencies are accessed via the 1st argument of the factory (deps).
 
 ```tsx
-const $user = market.offer("user").asProduct({
-    suppliers: [$session, $db], // Depends on session and db resources.
+const $user = market.add("user").product({
+    suppliers: [$session, $db], // Depends on session and db suppliers.
+    // properties of the deps object are the names provided to market.add() for $session and $db suppliers.
     factory: ({ session, db }) => {
         return db.getUser(session.userId) // query the db to retrieve the user.
     }
@@ -179,7 +181,7 @@ const $user = market.offer("user").asProduct({
 
 ```ts
 // ✅ Good: Factory called once, returns a function for multiple calls or side-effects
-const $createUser = market.offer("createUser").asProduct({
+const $createUser = market.add("createUser").product({
     suppliers: [$db],
     factory: ({ db }) => {
         // This setup code runs only once per assemble()
@@ -207,14 +209,14 @@ By default, all products are constructed on `assemble()` call immediately in the
 
 ```ts
 // Eager loading - constructed immediately when assemble() is called
-const $eagerService = market.offer("eagerService").asProduct({
+const $eagerService = market.add("eagerService").product({
     suppliers: [$db],
     factory: ({ db }) => buildExpensiveService(db)
     lazy: false // default
 })
 
 // Lazy loading - constructed only when accessed
-const $lazyService = market.offer("lazyService").asProduct({
+const $lazyService = market.add("lazyService").product({
     suppliers: [$db],
     factory: ({db}) => buildExpensiveService(db),
     lazy: true // Loaded when first accessed via deps
@@ -226,7 +228,7 @@ const $lazyService = market.offer("lazyService").asProduct({
 Your Application is just a product like the other ones. It's the main, most complex product at the top of the supply chain.
 
 ```tsx
-const $app = market.offer("app").asProduct({
+const $app = market.add("app").product({
     suppliers: [$user], // Depends on User product
     // Destructure the user value.
     // Its type will be automatically inferred from $user's factory's inferred return type.
@@ -238,10 +240,10 @@ const $app = market.offer("app").asProduct({
 
 ### 5. Assemble at Entry Point
 
-At your application's entry point, you `assemble` your main $appProduct, providing just the resources (not the products) requested recursively by the $appProduct's suppliers chain. Typescript will tell you if any resource is missing.
+At your application's entry point, you `assemble` your main $app, providing just the request data (not the products) requested recursively by the $app's suppliers chain. Typescript will tell you if any request data is missing.
 
 ```tsx
-const db = //...Get your db connection
+
 const req = //...Get the current http request
 
 // Assemble the App, providing the Session and Db resources.
@@ -250,40 +252,40 @@ const app = $app.assemble({
     [$session.name]: $session.pack({
         userId: req.userId
     }),
-    [$db.name]: $db.pack(db)
+    [$params.name]: params.pack(req.params)
 }).unpack()
 
 // Return or render app...
 ```
 
-The flow of the assemble call is as follows: raw data is obtained, which is provided to `$resource` suppliers using pack(). Then those resources are supplied to `$app`'s suppliers recursively, which assemble their own product, and pass them up along the supply chain until they reach `$app`, which assembles the final `app` product. All this work happens in the background, no matter the complexity of your application.
+The flow of the assemble call is as follows: request data is obtained, which is provided to `$request` suppliers using pack(). Then those request data are supplied to `$app`'s suppliers recursively, which assemble their own product, and pass them up along the supply chain until they reach `$app`, which assembles the final `app` product. All this work happens in the background, no matter the complexity of your application.
 
 To simplify the assemble() call, you should use the index() utility, which just transforms an array like
-`...[resource1, product1]` into an indexed object like
-`{[resource1.name]: resource1, [product1.name]: product1}`. I unfortunately did not find a way to merge index() with assemble() without losing assemble's type-safety, because typescript doesn't have an unordered tuple type.
+`...[req1, product1]` into an indexed object like
+`{[req1.name]: req1, [product1.name]: product1}`. I unfortunately did not find a way to merge index() with assemble() without losing assemble's type-safety, because typescript doesn't have an unordered tuple type.
 
 ```tsx
 import { index } from "typectx"
 
-const appProduct = $app.assemble(
+const app = $app.assemble(
     index(
-        $$session.pack({
+        $session.pack({
             userId: req.userId
         }),
-        $$db.pack(db)
+        $db.pack(db)
     )
-)
+).unpack()
 ```
 
 ## Optionals
 
-Sometimes a product can work with or without certain dependencies. For these cases, use the `optionals` parameter alongside `suppliers`. Optional resources may be `undefined` at runtime, and TypeScript will enforce proper undefined checks. You can also use optionals if a piece of context is not yet known at the entry point of the application, so you don't want Typescript to enforce it being supplied in the assemble() call.
+Sometimes a product can work with or without certain dependencies. For these cases, use the `optionals` parameter alongside `suppliers`. Optional values may be `undefined` at runtime, and TypeScript will enforce proper undefined checks. You can also use optionals if a piece of request data is not yet known at the entry point of the application, so you don't want Typescript to enforce it being supplied in the assemble() call.
 
 [Learn more about optionals →](https://typectx.github.io/typectx/docs/guides/optionals)
 
 ## Assemblers
 
-Not all products in your supply chain can be assembled at the entry point of the application. Sometimes, a product depends on a resource that is not yet known at the entry point, but only computed later on in a product's factory. In these situations, you need assemblers.
+Assemblers are typectx's flagship feature — they transform DI containers into Context Containers. Think of assemblers as a streamlined way to create nested DI containers, dividing monolithic apps into a tree of different sub-contexts. Perfect for when products depend on values computed deeper in your call stack, or when you need to reassemble dependencies with new context (like impersonating users for secure operations).
 
 [Learn more about assemblers →](https://typectx.github.io/typectx/docs/guides/assemblers)
 
@@ -291,17 +293,17 @@ Not all products in your supply chain can be assembled at the entry point of the
 
 ### 1. Mocking in tests with `.pack()`
 
-You usually use `pack()` to provide resources to `assemble()`, but you can also use `pack()` on products. This allows to provide a value for that product directly, bypassing its factory. Perfect to override a product's implementation with a mock for testing.
+You usually use `pack()` to provide request data to `assemble()`, but you can also use `pack()` on products. This allows to provide a value for that product directly, bypassing its factory. Perfect to override a product's implementation with a mock for testing.
 
 ```tsx
-const $profile = market.offer("profile").asProduct({
+const $profile = market.add("profile").product({
     suppliers: [$user],
     factory: ({ user }) => {
         return <h1>Profile of {user.name}</h1>
     }
 })
 
-const $user = market.offer("user").asProduct({
+const $user = market.add("user").product({
     suppliers: [$db, $session],
     factory: ({db,session}) => {
         return db.findUserById(session.userId)
@@ -327,17 +329,17 @@ const profile = $profile.assemble(
 
 ### 2. `.mock()` and `.hire()` alternative implementations
 
-For more complete alternative implementations, with complex dependency and context needs, you can use `.mock()` and `.hire()` instead of `.pack()` to access the whole power of your supply chain. The same example as above could be:
+For more complete alternative implementations, with complex dependency needs, you can use `.mock()` and `.hire()` instead of `.pack()` to access the whole power of your supply chain. The same example as above could be:
 
 ```tsx
-const $profile = market.offer("profile").asProduct({
+const $profile = market.add("profile").product({
     suppliers: [$user],
     factory: ({ user }) => {
         return <h1>Profile of user.name}</h1>
     }
 })
 
-const $user = market.offer("user").asProduct({
+const $user = market.add("user").product({
     suppliers: [$db, $session],
     factory: ({db, session}) => {
         return db.findUserById(session.userId)
@@ -373,9 +375,9 @@ Injection happens statelessly via a memoized, recursive, self-referential, lazy 
 
 ```typescript
 const supplies = {
-    // Resources are provided directly
-    resourceA,
-    resourceB,
+    // request data is provided directly
+    reqA,
+    reqB,
 
     // Products are wrapped in a function to be lazily evaluated and memoized.
     // The supplies object is passed to assemble, creating a recursive structure.

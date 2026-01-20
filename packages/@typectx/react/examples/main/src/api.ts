@@ -74,7 +74,7 @@ const populatedPosts = mockPosts.map((post) => {
 
 // React Query hooks
 
-export const $userQuery = market.add("userQuery").static({
+export const $userQuery = market.add("userQuery").product({
     factory: () => (id: string) => {
         return {
             queryKey: ["user", id],
@@ -90,7 +90,7 @@ export const $userQuery = market.add("userQuery").static({
     }
 })
 
-export const $usersQuery = market.add("usersQuery").static({
+export const $usersQuery = market.add("usersQuery").product({
     suppliers: [$userQuery],
     factory: () => {
         return {
@@ -109,7 +109,7 @@ export const $usersQuery = market.add("usersQuery").static({
     }
 })
 
-export const $repliesQuery = market.add("repliesQuery").static({
+export const $repliesQuery = market.add("repliesQuery").product({
     factory: () => (commentId: string) => {
         return {
             queryKey: ["replies", commentId],
@@ -123,7 +123,7 @@ export const $repliesQuery = market.add("repliesQuery").static({
     }
 })
 
-export const $commentsQuery = market.add("commentsQuery").static({
+export const $commentsQuery = market.add("commentsQuery").product({
     factory: () => (postId: string) => {
         return {
             queryKey: ["comments", postId],
@@ -137,7 +137,7 @@ export const $commentsQuery = market.add("commentsQuery").static({
     }
 })
 
-export const $postsQuery = market.add("postsQuery").static({
+export const $postsQuery = market.add("postsQuery").product({
     suppliers: [$commentsQuery, $repliesQuery],
     factory: () => {
         return {

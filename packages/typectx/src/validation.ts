@@ -4,7 +4,7 @@
  * @internal
  */
 
-import { Supplier, type StaticSupplier, type DynamicSupplier } from "#types"
+import { Supplier, type ProductSupplier, type RequestSupplier } from "#types"
 
 /**
  * Validates that a value is a non-empty string.
@@ -97,12 +97,12 @@ export function assertFunction(
 }
 
 /**
- * Validates the configuration object for static supplier.
+ * Validates the configuration object for product suppliers.
  * @param config - The configuration object to validate
  * @internal
  * @throws TypeError if the configuration is invalid
  */
-export function assertStaticConfig(
+export function assertProductConfig(
     name: string,
     config: {
         suppliers?: unknown
@@ -125,10 +125,10 @@ export function assertStaticConfig(
     const hiredAssemblers = config.hiredAssemblers ?? []
 
     assertSuppliers(name, suppliers)
-    assertDynamicSuppliers(name, optionals)
-    assertStaticSuppliers(name, assemblers, true)
+    assertRequestSuppliers(name, optionals)
+    assertProductSuppliers(name, assemblers, true)
     assertSuppliers(name, hiredSuppliers, true)
-    assertStaticSuppliers(name, hiredAssemblers, true)
+    assertProductSuppliers(name, hiredAssemblers, true)
 
     if (config.init !== undefined) {
         assertFunction(name, config.init)
@@ -141,24 +141,24 @@ export function assertStaticConfig(
     }
 }
 
-export function assertDynamicSupplier(
+export function assertRequestSupplier(
     supplier: unknown
-): asserts supplier is DynamicSupplier {
+): asserts supplier is RequestSupplier {
     assertHasProperty("noname", supplier, "name")
     assertString("noname", supplier.name)
     assertHasProperty(supplier.name, supplier, "_")
-    assertHasProperty(supplier.name, supplier._, "dynamic")
+    assertHasProperty(supplier.name, supplier._, "request")
 }
 
-export function assertStaticSupplier(
+export function assertProductSupplier(
     supplier: unknown,
     allowMocks: boolean = false
-): asserts supplier is StaticSupplier {
+): asserts supplier is ProductSupplier {
     assertHasProperty("noname", supplier, "name")
     assertString("noname", supplier.name)
     assertHasProperty(supplier.name, supplier, "_")
-    assertHasProperty(supplier.name, supplier._, "static")
-    assertHasProperty(supplier.name, supplier._, "isMock")
+    assertHasProperty(supplier.name, supplier._, "product")
+    assertHasProperty(supplier.name, supplier._, "mock")
 
     if (
         !allowMocks &&
@@ -182,7 +182,7 @@ export function assertStaticSupplier(
         )
     }
 
-    if (!allowMocks && supplier._.isMock) {
+    if (!allowMocks && supplier._.mock) {
         throw new TypeError(`Cannot depend on ${supplier.name} mock supplier`)
     }
 }
@@ -206,35 +206,35 @@ export function assertSuppliers(
 
     suppliers.forEach((supplier) => {
         try {
-            assertDynamicSupplier(supplier)
+            assertRequestSupplier(supplier)
             return
         } catch (e) {
-            assertStaticSupplier(supplier, allowMocks)
+            assertProductSupplier(supplier, allowMocks)
         }
     })
 }
 
-export function assertDynamicSuppliers(
+export function assertRequestSuppliers(
     name: string,
     suppliers: unknown
-): asserts suppliers is DynamicSupplier[] {
+): asserts suppliers is RequestSupplier[] {
     if (!Array.isArray(suppliers)) {
         throw new TypeError(`${name} must be an array`)
     }
     suppliers.forEach((supplier) => {
-        assertDynamicSupplier(supplier)
+        assertRequestSupplier(supplier)
     })
 }
 
-export function assertStaticSuppliers(
+export function assertProductSuppliers(
     name: string,
     suppliers: unknown,
     allowMocks: boolean = false
-): asserts suppliers is StaticSupplier[] {
+): asserts suppliers is ProductSupplier[] {
     if (!Array.isArray(suppliers)) {
         throw new TypeError(`${name} must be an array`)
     }
     suppliers.forEach((supplier) => {
-        assertStaticSupplier(supplier, allowMocks)
+        assertProductSupplier(supplier, allowMocks)
     })
 }

@@ -7,11 +7,11 @@ describe("Mocks Feature", () => {
         it("should handle mock with less suppliers", () => {
             const market = createMarket()
 
-            const $dynamic = market.add("dynamic").dynamic<boolean>()
+            const $input = market.add("input").request<boolean>()
 
-            const $base = market.add("base").static({
-                suppliers: [$dynamic],
-                factory: ({ dynamic }) => ({ base: dynamic })
+            const $base = market.add("base").product({
+                suppliers: [$input],
+                factory: ({ input }) => ({ base: input })
             })
 
             const $mocked = $base.mock({
@@ -28,7 +28,7 @@ describe("Mocks Feature", () => {
         it("should not allow mocks in suppliers array", () => {
             const market = createMarket()
 
-            const $base = market.add("mock").static({
+            const $base = market.add("mock").product({
                 factory: () => "base"
             })
 
@@ -38,7 +38,7 @@ describe("Mocks Feature", () => {
             })
 
             expect(() => {
-                const $next = market.add("next").static({
+                const $next = market.add("next").product({
                     factory: () => "next",
                     //@ts-expect-error - mock in suppliers array
                     suppliers: [$mock]
@@ -51,16 +51,16 @@ describe("Mocks Feature", () => {
             const baseSpy = vi.fn().mockReturnValue("base")
             const initedSpy = vi.fn().mockReturnValue("inited")
 
-            const $base = market.add("base").static({
+            const $base = market.add("base").product({
                 factory: () => baseSpy
             })
 
             const $mocked = $base.mock({
                 factory: () => once(initedSpy),
-                init: (value) => value()
+                init: (product) => product()
             })
 
-            const $test = market.add("test").static({
+            const $test = market.add("test").product({
                 suppliers: [$base],
                 factory: ({ base }) => base
             })
@@ -79,19 +79,19 @@ describe("Mocks Feature", () => {
         it("should compute precise TOSUPPLY types with mock", () => {
             const market = createMarket()
 
-            const $config = market.add("config").dynamic<string>()
-            const $apiKey = market.add("apiKey").dynamic<string>()
+            const $config = market.add("config").request<string>()
+            const $apiKey = market.add("apiKey").request<string>()
 
-            const $logger = market.add("logger").static({
+            const $logger = market.add("logger").product({
                 factory: () => "logger"
             })
 
             // Base service - return compatible type that can be extended
-            const $base = market.add("base").static({
+            const $base = market.add("base").product({
                 factory: () => "base"
             })
 
-            // mock with mixed dynamic and static suppliers
+            // mock with mixed request and product suppliers
             const $mocked = $base.mock({
                 suppliers: [$config, $apiKey, $logger],
                 factory: () => "proto"
@@ -108,8 +108,8 @@ describe("Mocks Feature", () => {
             )
 
             // The type system should now know exactly what needs to be supplied:
-            // - config and apiKey (type supplies must be provided)
-            // - logger should NOT need to be provided (it's a static supplier)
+            // - config and apiKey (request supplies must be provided)
+            // - logger should NOT need to be provided (it's a product supplier)
             const supply = $mocked.assemble(
                 index($config.pack("test"), $apiKey.pack("secret-key"))
             )
@@ -121,11 +121,11 @@ describe("Mocks Feature", () => {
         it("should detect circular dependencies in mocks", () => {
             const market = createMarket()
 
-            const $A = market.add("A").static({
+            const $A = market.add("A").product({
                 factory: () => "serviceA"
             })
 
-            const $B = market.add("B").static({
+            const $B = market.add("B").product({
                 suppliers: [$A],
                 factory: ({ A }) => "serviceB uses " + A
             })
@@ -153,22 +153,22 @@ describe("Mocks Feature", () => {
     })
 
     describe("Hire Method", () => {
-        it("should allow trying alternative suppliers for testing", () => {
+        it("should allow hiring alternative suppliers for testing", () => {
             const market = createMarket()
 
-            const $db = market.add("db").static({
+            const $db = market.add("db").product({
                 factory: () => "real-db"
             })
 
-            const $cache = market.add("cache").static({
+            const $cache = market.add("cache").product({
                 factory: () => "real-cache"
             })
 
-            const $logger = market.add("logger").static({
+            const $logger = market.add("logger").product({
                 factory: () => "real-logger"
             })
 
-            const $service = market.add("service").static({
+            const $service = market.add("service").product({
                 suppliers: [$db, $cache, $logger],
                 factory: ({ db, cache, logger }) => ({
                     db,
@@ -196,19 +196,19 @@ describe("Mocks Feature", () => {
             expect(test.logger).toBe("real-logger")
         })
 
-        it("should handle trying unused suppliers", () => {
+        it("should handle hiring unused suppliers", () => {
             const market = createMarket()
 
-            const $db = market.add("db").static({
+            const $db = market.add("db").product({
                 factory: () => "db"
             })
 
-            const $main = market.add("main").static({
+            const $main = market.add("main").product({
                 suppliers: [$db],
                 factory: ({ db }) => "main-" + db
             })
 
-            const $unused = market.add("unused").static({
+            const $unused = market.add("unused").product({
                 factory: () => "base-extra"
             })
 
@@ -227,7 +227,7 @@ describe("Mocks Feature", () => {
         it("should handle empty hire calls gracefully", () => {
             const market = createMarket()
 
-            const $main = market.add("main").static({
+            const $main = market.add("main").product({
                 factory: () => "main"
             })
 
@@ -241,11 +241,11 @@ describe("Mocks Feature", () => {
         it("should handle duplicate supplier names in hire (last one wins)", () => {
             const market = createMarket()
 
-            const $db = market.add("db").static({
+            const $db = market.add("db").product({
                 factory: () => "db"
             })
 
-            const $main = market.add("main").static({
+            const $main = market.add("main").product({
                 suppliers: [$db],
                 factory: ({ db }) => "main-" + db
             })
@@ -272,17 +272,17 @@ describe("Mocks Feature", () => {
         it("should allow assembling multiple suppliers together", () => {
             const market = createMarket()
 
-            const $shared = market.add("shared").dynamic<string>()
-            const $unique = market.add("unique").dynamic<number>()
+            const $shared = market.add("shared").request<string>()
+            const $unique = market.add("unique").request<number>()
 
-            const $A = market.add("A").static({
+            const $A = market.add("A").product({
                 suppliers: [$shared],
                 factory: ({ shared }) => {
                     return "A-" + shared
                 }
             })
 
-            const $B = market.add("B").static({
+            const $B = market.add("B").product({
                 suppliers: [$shared, $unique],
                 factory: ({ shared, unique }) => {
                     return "B-" + shared + "-" + unique
@@ -298,20 +298,20 @@ describe("Mocks Feature", () => {
             expect(BResult).toEqual("B-shared-data-123")
         })
 
-        it("should type check that all required dynamic supplies are provided", () => {
+        it("should type check that all required request supplies are provided", () => {
             const market = createMarket()
 
-            const $db = market.add("db").dynamic<string>()
-            const $cache = market.add("cache").dynamic<string>()
+            const $db = market.add("db").request<string>()
+            const $cache = market.add("cache").request<string>()
 
-            const $user = market.add("user").static({
+            const $user = market.add("user").product({
                 suppliers: [$db],
                 factory: ({ db }) => {
                     return "user-" + db
                 }
             })
 
-            const $session = market.add("session").static({
+            const $session = market.add("session").product({
                 suppliers: [$cache],
                 factory: ({ cache }) => {
                     return "session-" + cache
@@ -339,11 +339,11 @@ describe("Mocks Feature", () => {
         it("should handle errors in hire() method gracefully", () => {
             const market = createMarket()
 
-            const $working = market.add("working").static({
+            const $working = market.add("working").product({
                 factory: () => "working-value"
             })
 
-            const $failing = market.add("failing").static({
+            const $failing = market.add("failing").product({
                 factory: () => {
                     throw new Error("Supplier failed")
                     return
@@ -363,15 +363,15 @@ describe("Mocks Feature", () => {
         it("supplies of supply built with reassemble with Hire parameters should contain only the hired suppliers' supplies properly typed", () => {
             const market = createMarket()
 
-            const $supplier = market.add("supplier").static({
+            const $supplier = market.add("supplier").product({
                 factory: () => "supplier-value"
             })
 
-            const $assembler = market.add("assembler").static({
+            const $assembler = market.add("assembler").product({
                 factory: () => "assembler-value"
             })
 
-            const $main = market.add("main").static({
+            const $main = market.add("main").product({
                 suppliers: [$supplier],
                 assemblers: [$assembler],
                 factory: ({ supplier },ctx) => {

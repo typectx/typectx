@@ -14,7 +14,7 @@ describe("Runtime Validation", () => {
 
         it("should throw Error when name already exists", () => {
             const market = createMarket()
-            market.add("test").dynamic<string>()
+            market.add("test").request<string>()
             expect(() => market.add("test")).toThrow(
                 "Name test already exists"
             )
@@ -24,30 +24,30 @@ describe("Runtime Validation", () => {
     describe("product()", () => {
         it("should throw TypeError when config is not an object", () => {
             const market = createMarket()
-            expect(() => market.add("A").static(null as any)).toThrow(
+            expect(() => market.add("A").product(null as any)).toThrow(
                 TypeError
             )
-            expect(() => market.add("B").static(null as any)).toThrow(
+            expect(() => market.add("B").product(null as any)).toThrow(
                 "B must be an object, got null"
             )
         })
 
         it("should throw TypeError when config is an array", () => {
             const market = createMarket()
-            expect(() => market.add("A").static([] as any)).toThrow(
+            expect(() => market.add("A").product([] as any)).toThrow(
                 TypeError
             )
-            expect(() => market.add("B").static([] as any)).toThrow(
+            expect(() => market.add("B").product([] as any)).toThrow(
                 "B must be an object, not an array"
             )
         })
 
         it("should throw TypeError when factory is missing", () => {
             const market = createMarket()
-            expect(() => market.add("A").static({} as any)).toThrow(
+            expect(() => market.add("A").product({} as any)).toThrow(
                 TypeError
             )
-            expect(() => market.add("B").static({} as any)).toThrow(
+            expect(() => market.add("B").product({} as any)).toThrow(
                 "B must have a 'factory' property"
             )
         })
@@ -57,25 +57,25 @@ describe("Runtime Validation", () => {
             expect(() =>
                 market
                     .add("A")
-                    .static({ factory: "not a function" } as any)
+                    .product({ factory: "not a function" } as any)
             ).toThrow(TypeError)
             expect(() =>
                 market
                     .add("B")
-                    .static({ factory: "not a function" } as any)
+                    .product({ factory: "not a function" } as any)
             ).toThrow("B must be a function, got string")
         })
 
         it("should throw TypeError when suppliers is not an array", () => {
             const market = createMarket()
             expect(() =>
-                market.add("A").static({
+                market.add("A").product({
                     factory: () => ({}),
                     suppliers: "not an array"
                 } as any)
             ).toThrow(TypeError)
             expect(() =>
-                market.add("B").static({
+                market.add("B").product({
                     factory: () => ({}),
                     suppliers: "not an array"
                 } as any)
@@ -85,13 +85,13 @@ describe("Runtime Validation", () => {
         it("should throw TypeError when lazy is not a boolean", () => {
             const market = createMarket()
             expect(() =>
-                market.add("A").static({
+                market.add("A").product({
                     factory: () => ({}),
                     lazy: "yes"
                 } as any)
             ).toThrow(TypeError)
             expect(() =>
-                market.add("B").static({
+                market.add("B").product({
                     factory: () => ({}),
                     lazy: "yes"
                 } as any)
@@ -99,10 +99,10 @@ describe("Runtime Validation", () => {
         })
     })
 
-    describe("staticSupplier.assemble()", () => {
+    describe("productSupplier.assemble()", () => {
         it("should throw TypeError when supplied is not an object", () => {
             const market = createMarket()
-            const $resource = market.add("resource").static({
+            const $resource = market.add("resource").product({
                 factory: () => ({})
             })
             expect(() => $resource.assemble(null as any)).toThrow(TypeError)
@@ -113,7 +113,7 @@ describe("Runtime Validation", () => {
 
         it("should throw TypeError when supplied is an array", () => {
             const market = createMarket()
-            const $resource = market.add("resource").static({
+            const $resource = market.add("resource").product({
                 factory: () => ({})
             })
             expect(() => $resource.assemble([] as any)).toThrow(TypeError)
@@ -123,10 +123,10 @@ describe("Runtime Validation", () => {
         })
     })
 
-    describe("staticSupplier.hire()", () => {
+    describe("productSupplier.hire()", () => {
         it("should throw TypeError when suppliers contain invalid items", () => {
             const market = createMarket()
-            const $resource = market.add("resource").static({
+            const $resource = market.add("resource").product({
                 factory: () => ({})
             })
             expect(() => $resource.hire(null as any)).toThrow(TypeError)
@@ -135,17 +135,17 @@ describe("Runtime Validation", () => {
 
         it("should throw TypeError when supplier is missing name property", () => {
             const market = createMarket()
-            const $resource = market.add("resource").static({
+            const $resource = market.add("resource").product({
                 factory: () => ({})
             })
             expect(() => $resource.hire({} as any)).toThrow(TypeError)
         })
     })
 
-    describe("staticSupplier.mock()", () => {
+    describe("productSupplier.mock()", () => {
         it("should throw TypeError when config is not an object", () => {
             const market = createMarket()
-            const $resource = market.add("resource").static({
+            const $resource = market.add("resource").product({
                 factory: () => ({})
             })
             expect(() => $resource.mock(null as any)).toThrow(TypeError)
@@ -156,7 +156,7 @@ describe("Runtime Validation", () => {
 
         it("should throw TypeError when factory is missing", () => {
             const market = createMarket()
-            const $resource = market.add("resource").static({
+            const $resource = market.add("resource").product({
                 factory: () => ({})
             })
             expect(() => $resource.mock({} as any)).toThrow(TypeError)

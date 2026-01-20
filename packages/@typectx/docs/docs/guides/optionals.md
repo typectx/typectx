@@ -13,10 +13,10 @@ keywords:
 
 # Optionals
 
-Optionals are resource suppliers that a product _may_ depend on, but doesn't _require_ to function. When you declare a resource supplier in the `optionals` array instead of the `suppliers` array, you're telling typectx that:
+Optionals are request suppliers that a product _may_ depend on, but doesn't _require_ to function. When you declare a request supplier in the `optionals` array instead of the `suppliers` array, you're telling typectx that:
 
-1. The product can be assembled without providing this resource
-2. The resource will be `undefined` if not provided
+1. The product can be assembled without providing this request data
+2. The request data will be `undefined` if not provided
 3. TypeScript will enforce proper undefined checks when accessing the optional
 
 This is particularly useful for feature flags, authentication contexts, caching layers, or any dependency that might not always be present.
@@ -30,11 +30,11 @@ import { createMarket, index } from "typectx"
 
 const market = createMarket()
 
-// Define an optional configuration resource
-const $apiKey = market.offer("apiKey").asResource<string>()
+// Define an optional apiKey
+const $apiKey = market.add("apiKey").request<string>()
 
 // Use it as an optional dependency
-const $apiClient = market.offer("apiClient").asProduct({
+const $apiClient = market.add("apiClient").product({
     optionals: [$apiKey],
     // apiKey will be typed string | undefined
     factory: ({ apiKey }) => {
@@ -71,33 +71,27 @@ Create services that work differently for authenticated vs. anonymous users:
 ```typescript
 const market = createMarket()
 
-const $userAuth = market.offer("userAuth").asResource<{
+const $user = market.add("user").request<{
     userId: string
+    name:string
     token: string
 }>()
 
-const $api = market.offer("api").asProduct({
-    optionals: [$userAuth],
-    factory: ({ userAuth }) => {
-        return {
-            getPublicData: () => fetch("/api/public"),
-            getPrivateData: () => {
-                if (!auth) {
-                    throw new Error("Authentication required")
-                }
-                return fetch("/api/private", {
-                    headers: { Authorization: `Bearer ${auth.token}` }
-                })
-            }
+const $app = market.add("app").product({
+    optionals: [$user],
+    factory: ({ user }) => {
+        if (!user) {
+            return "Hello, guest!"
         }
+
+        return `Hello, ${user.name}!`
     }
 })
 
-// Public access
-const publicApi = $api.assemble({}).unpack()
-
-// Authenticated access
-const authApi = $api
-    .assemble(index($userAuth.pack({ userId: "123", token: "xyz" })))
-    .unpack()
+const token = //...
+const supplies = isValid(token) ?
+                    index($user.pack({ userId: "123", name: "John Doe", token }))
+                    :{}
+// Guest access
+return $app.assemble(supplies).unpack()
 ```

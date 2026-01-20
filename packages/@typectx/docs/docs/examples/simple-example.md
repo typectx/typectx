@@ -1,6 +1,6 @@
 ---
 title: "Simple Example"
-description: "View a simple example of a todo app built with typectx, demonstrating basic concepts like markets, resources, products, and assembly for dependency injection."
+description: "View a simple example of a todo app built with typectx, demonstrating basic concepts like markets, request suppliers, products, and assembly for dependency injection."
 keywords:
     - example
     - simple example
@@ -20,13 +20,12 @@ import { createMarket, index } from "typectx"
 // 1. Create a market
 const market = createMarket()
 
-// 2. Define data (resources) and services (products)
-const $session = market.offer("session").asResource<{ userId: string }>()
-const $todosDb = market.offer("todosDb").asProduct({
-    suppliers: [],
+// 2. Define request and product suppliers
+const $session = market.add("session").request<{ userId: string }>()
+const $todosDb = market.add("todosDb").product({
     factory: () => new Map<string, string[]>() // Simple in-memory DB
 })
-const $addTodo = market.offer("addTodo").asProduct({
+const $addTodo = market.add("addTodo").product({
     suppliers: [$session, $todosDb],
     factory:
         ({ session, todosDb }) =>
@@ -39,7 +38,7 @@ const $addTodo = market.offer("addTodo").asProduct({
 
 /*Here, we define two types of suppliers:
 
--   `$session`: A **Resource** supplier that will hold the current user's session data.
+-   `$session`: A **Request** supplier that will hold the current user's session data.
 -   `$todosDb`: A **Product** supplier that provides an in-memory `Map` to act as a database. It has no dependencies.
 -   `$addTodo`: A **Product** supplier that creates our main `addTodo` function. It depends on both the `$session` and `$todosDb`. */
 
