@@ -4,21 +4,21 @@ import type { Comment, Post } from "@/api"
 import { useState } from "react"
 import { $Comment } from "@/components/comment"
 import { index } from "typectx"
-import { resources } from "@/resources"
+import { req } from "@/req"
 import { useQuery } from "@tanstack/react-query"
 import { $SelectSession } from "./session"
 import { useAssembleComponent, useDeps } from "@typectx/react"
 import { useAssertStable } from "@/hooks"
 
-export const $Post = market.offer("Post").asProduct({
+export const $Post = market.add("Post").product({
     suppliers: [
-        resources.$session,
+        req.$session,
         $usersQuery,
         $commentsQuery,
         $userQuery,
-        resources.$defaultUser
+        req.$defaultUser
     ],
-    optionals: [resources.$post],
+    optionals: [req.$post],
     assemblers: [$Comment, $SelectSession],
     factory: (initDeps, ctx) =>
         function Post({ post }: { post: Post }) {
@@ -40,11 +40,11 @@ export const $Post = market.offer("Post").asProduct({
             const assertStableComment = useAssertStable()
 
             const newCtx = index(
-                resources.$session.pack([
+                req.$session.pack([
                     postSession ?? session ?? defaultSession,
                     setPostSession
                 ]),
-                resources.$post.pack(post)
+                req.$post.pack(post)
             )
 
             const CommentProduct = useAssembleComponent(

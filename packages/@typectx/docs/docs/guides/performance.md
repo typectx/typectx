@@ -31,7 +31,7 @@ typectx is designed for optimal performance, featuring a minimal bundle size, sm
 
 ```typescript
 // ✅ Good: Factory called once, returns a function for multiple calls
-const $createUser = market.offer("createUser").asProduct({
+const $createUser = market.add("createUser").product({
     suppliers: [$db],
     factory: ({ db }) => {
         // This setup code runs only once per assemble()
@@ -61,19 +61,27 @@ By default, all products are constructed in parallel and cached as soon as `.ass
 
 ```typescript
 // Both of these services will be constructed immediately and in parallel
-const $db = market.offer("db").asProduct({
+const $dbPromise = market.add("dbPromise").product({
+    // Async factories are possible
     factory: async () => await db.connect()
 })
-const $cache = market.offer("cache").asProduct({
+const $cache = market.add("cache").product({
     factory: () => new Map()
 })
 
-const $app = market.offer("app").asProduct({
+const $app = market.add("app").product({
     suppliers: [$db, $cache],
-    factory: () => "Hello World!"
+    factory: async ({dbPromise, cache}) => {
+        if (cache.get("greeting")) {
+            return cache.get("greeting")
+        }
+        const db = await dbPromise
+        const greeting = db.getGreeting()
+        cache.set("greeting", greeting)
+    }
 })
 
-const appProduct = $app.assemble({}) // Starts constructing both $db and $cache at once in parallel
+const appSupply = $app.assemble({}) // Starts constructing both $db and $cache at once in parallel
 ```
 
 ### Lazy Loading with `lazy: true`
@@ -81,10 +89,10 @@ const appProduct = $app.assemble({}) // Starts constructing both $db and $cache 
 For expensive services that are only used in certain situations (e.g., an admin panel service or a PDF export tool), you can enable lazy loading by setting `lazy: true`. The product will only be constructed the first time its value is accessed via `unpack()`.
 
 ```typescript
-const $lazy = market.offer("lazy").asProduct({
+const $lazy = market.add("lazy").product({
     suppliers: [$db],
-    // Will only be loaded when `deps.lazy` is called in another service,
-    // or when `$lazy.assemble({...}).unpack()` is called at the entry point.
+    // Will only be loaded when `deps.lazy` is called in another factory,
+    // or when `$lazy.assemble({...}).unpack()` is called directly.
     factory: ({db}) => new ExpensiveService(db).unpack()),
     lazy: true
 })
@@ -99,13 +107,13 @@ This is useful for pre-warming caches or running setup logic without cluttering 
 For example, you can easily implement the preload pattern:
 
 ```typescript
-const $profile = market.offer("profile").asProduct({
+const $profile = market.add("profile").product({
     suppliers: [$currentUser]
     factory: () => memo((userId) => db.profiles.get(userId))
     init: (getProfile, {currentUser}) => {
         // Allows to preload the current logged in user's profile.
         // the memoization cache will be prepopulated with the current user's profile if requested later.
-        await getProfile(currentUser).unpack().id)
+        getProfile(currentUser)
     }
 })
 ```

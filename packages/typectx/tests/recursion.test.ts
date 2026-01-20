@@ -1,6 +1,6 @@
 import { describe, it, expectTypeOf, expect } from "vitest"
 import { createMarket } from "#index"
-import type { Product, ProductSupplier } from "#types"
+import type { Supply, ProductSupplier } from "#types"
 
 describe("Deep Recursion Type Tests", () => {
     it("should handle deep linear dependency chains without type errors", () => {
@@ -8,204 +8,204 @@ describe("Deep Recursion Type Tests", () => {
 
         // Linear chain: each supplier depends on exactly ONE previous supplier
         // 51 suppliers proves we're using the 1000 recursion limit, not the 50 limit
-        const $s1 = market.offer("s1").asProduct({ factory: () => 0 })
-        const $s2 = market.offer("s2").asProduct({
+        const $s1 = market.add("s1").product({ factory: () => 0 })
+        const $s2 = market.add("s2").product({
             suppliers: [$s1],
             factory: () => 0
         })
-        const $s3 = market.offer("s3").asProduct({
+        const $s3 = market.add("s3").product({
             suppliers: [$s2],
             factory: () => 0
         })
-        const $s4 = market.offer("s4").asProduct({
+        const $s4 = market.add("s4").product({
             suppliers: [$s3],
             factory: () => 0
         })
-        const $s5 = market.offer("s5").asProduct({
+        const $s5 = market.add("s5").product({
             suppliers: [$s4],
             factory: () => 0
         })
-        const $s6 = market.offer("s6").asProduct({
+        const $s6 = market.add("s6").product({
             suppliers: [$s5],
             factory: () => 0
         })
-        const $s7 = market.offer("s7").asProduct({
+        const $s7 = market.add("s7").product({
             suppliers: [$s6],
             factory: () => 0
         })
-        const $s8 = market.offer("s8").asProduct({
+        const $s8 = market.add("s8").product({
             suppliers: [$s7],
             factory: () => 0
         })
-        const $s9 = market.offer("s9").asProduct({
+        const $s9 = market.add("s9").product({
             suppliers: [$s8],
             factory: () => 0
         })
-        const $s10 = market.offer("s10").asProduct({
+        const $s10 = market.add("s10").product({
             suppliers: [$s9],
             factory: () => 0
         })
-        const $s11 = market.offer("s11").asProduct({
+        const $s11 = market.add("s11").product({
             suppliers: [$s10],
             factory: () => 0
         })
-        const $s12 = market.offer("s12").asProduct({
+        const $s12 = market.add("s12").product({
             suppliers: [$s11],
             factory: () => 0
         })
-        const $s13 = market.offer("s13").asProduct({
+        const $s13 = market.add("s13").product({
             suppliers: [$s12],
             factory: () => 0
         })
-        const $s14 = market.offer("s14").asProduct({
+        const $s14 = market.add("s14").product({
             suppliers: [$s13],
             factory: () => 0
         })
-        const $s15 = market.offer("s15").asProduct({
+        const $s15 = market.add("s15").product({
             suppliers: [$s14],
             factory: () => 0
         })
-        const $s16 = market.offer("s16").asProduct({
+        const $s16 = market.add("s16").product({
             suppliers: [$s15],
             factory: () => 0
         })
-        const $s17 = market.offer("s17").asProduct({
+        const $s17 = market.add("s17").product({
             suppliers: [$s16],
             factory: () => 0
         })
-        const $s18 = market.offer("s18").asProduct({
+        const $s18 = market.add("s18").product({
             suppliers: [$s17],
             factory: () => 0
         })
-        const $s19 = market.offer("s19").asProduct({
+        const $s19 = market.add("s19").product({
             suppliers: [$s18],
             factory: () => 0
         })
-        const $s20 = market.offer("s20").asProduct({
+        const $s20 = market.add("s20").product({
             suppliers: [$s19],
             factory: () => 0
         })
-        const $s21 = market.offer("s21").asProduct({
+        const $s21 = market.add("s21").product({
             suppliers: [$s20],
             factory: () => 0
         })
-        const $s22 = market.offer("s22").asProduct({
+        const $s22 = market.add("s22").product({
             suppliers: [$s21],
             factory: () => 0
         })
-        const $s23 = market.offer("s23").asProduct({
+        const $s23 = market.add("s23").product({
             suppliers: [$s22],
             factory: () => 0
         })
-        const $s24 = market.offer("s24").asProduct({
+        const $s24 = market.add("s24").product({
             suppliers: [$s23],
             factory: () => 0
         })
-        const $s25 = market.offer("s25").asProduct({
+        const $s25 = market.add("s25").product({
             suppliers: [$s24],
             factory: () => 0
         })
-        const $s26 = market.offer("s26").asProduct({
+        const $s26 = market.add("s26").product({
             suppliers: [$s25],
             factory: () => 0
         })
-        const $s27 = market.offer("s27").asProduct({
+        const $s27 = market.add("s27").product({
             suppliers: [$s26],
             factory: () => 0
         })
-        const $s28 = market.offer("s28").asProduct({
+        const $s28 = market.add("s28").product({
             suppliers: [$s27],
             factory: () => 0
         })
-        const $s29 = market.offer("s29").asProduct({
+        const $s29 = market.add("s29").product({
             suppliers: [$s28],
             factory: () => 0
         })
-        const $s30 = market.offer("s30").asProduct({
+        const $s30 = market.add("s30").product({
             suppliers: [$s29],
             factory: () => 0
         })
-        const $s31 = market.offer("s31").asProduct({
+        const $s31 = market.add("s31").product({
             suppliers: [$s30],
             factory: () => 0
         })
-        const $s32 = market.offer("s32").asProduct({
+        const $s32 = market.add("s32").product({
             suppliers: [$s31],
             factory: () => 0
         })
-        const $s33 = market.offer("s33").asProduct({
+        const $s33 = market.add("s33").product({
             suppliers: [$s32],
             factory: () => 0
         })
-        const $s34 = market.offer("s34").asProduct({
+        const $s34 = market.add("s34").product({
             suppliers: [$s33],
             factory: () => 0
         })
-        const $s35 = market.offer("s35").asProduct({
+        const $s35 = market.add("s35").product({
             suppliers: [$s34],
             factory: () => 0
         })
-        const $s36 = market.offer("s36").asProduct({
+        const $s36 = market.add("s36").product({
             suppliers: [$s35],
             factory: () => 0
         })
-        const $s37 = market.offer("s37").asProduct({
+        const $s37 = market.add("s37").product({
             suppliers: [$s36],
             factory: () => 0
         })
-        const $s38 = market.offer("s38").asProduct({
+        const $s38 = market.add("s38").product({
             suppliers: [$s37],
             factory: () => 0
         })
-        const $s39 = market.offer("s39").asProduct({
+        const $s39 = market.add("s39").product({
             suppliers: [$s38],
             factory: () => 0
         })
-        const $s40 = market.offer("s40").asProduct({
+        const $s40 = market.add("s40").product({
             suppliers: [$s39],
             factory: () => 0
         })
-        const $s41 = market.offer("s41").asProduct({
+        const $s41 = market.add("s41").product({
             suppliers: [$s40],
             factory: () => 0
         })
-        const $s42 = market.offer("s42").asProduct({
+        const $s42 = market.add("s42").product({
             suppliers: [$s41],
             factory: () => 0
         })
-        const $s43 = market.offer("s43").asProduct({
+        const $s43 = market.add("s43").product({
             suppliers: [$s42],
             factory: () => 0
         })
-        const $s44 = market.offer("s44").asProduct({
+        const $s44 = market.add("s44").product({
             suppliers: [$s43],
             factory: () => 0
         })
-        const $s45 = market.offer("s45").asProduct({
+        const $s45 = market.add("s45").product({
             suppliers: [$s44],
             factory: () => 0
         })
-        const $s46 = market.offer("s46").asProduct({
+        const $s46 = market.add("s46").product({
             suppliers: [$s45],
             factory: () => 0
         })
-        const $s47 = market.offer("s47").asProduct({
+        const $s47 = market.add("s47").product({
             suppliers: [$s46],
             factory: () => 0
         })
-        const $s48 = market.offer("s48").asProduct({
+        const $s48 = market.add("s48").product({
             suppliers: [$s47],
             factory: () => 0
         })
-        const $s49 = market.offer("s49").asProduct({
+        const $s49 = market.add("s49").product({
             suppliers: [$s48],
             factory: () => 0
         })
-        const $s50 = market.offer("s50").asProduct({
+        const $s50 = market.add("s50").product({
             suppliers: [$s49],
             factory: () => 0
         })
-        const $s51 = market.offer("s51").asProduct({
+        const $s51 = market.add("s51").product({
             suppliers: [$s50],
             factory: () => 0
         })
@@ -215,7 +215,7 @@ describe("Deep Recursion Type Tests", () => {
         const resultProduct = $s51.assemble({})
 
         // Verify the type is correct
-        expectTypeOf(resultProduct).toExtend<Product<number, ProductSupplier>>()
+        expectTypeOf(resultProduct).toExtend<Supply<number, ProductSupplier>>()
         expectTypeOf(resultProduct.unpack).toBeFunction()
 
         // Runtime check to ensure it works
@@ -235,26 +235,26 @@ describe("Deep Recursion Type Tests", () => {
         // Currently testing with 3 layers. If this compiles, try adding more layers.
 
         // Create 20 base suppliers with no dependencies
-        const $base1 = market.offer("base1").asProduct({ factory: () => 1 })
-        const $base2 = market.offer("base2").asProduct({ factory: () => 2 })
-        const $base3 = market.offer("base3").asProduct({ factory: () => 3 })
-        const $base4 = market.offer("base4").asProduct({ factory: () => 4 })
-        const $base5 = market.offer("base5").asProduct({ factory: () => 5 })
-        const $base6 = market.offer("base6").asProduct({ factory: () => 6 })
-        const $base7 = market.offer("base7").asProduct({ factory: () => 7 })
-        const $base8 = market.offer("base8").asProduct({ factory: () => 8 })
-        const $base9 = market.offer("base9").asProduct({ factory: () => 9 })
-        const $base10 = market.offer("base10").asProduct({ factory: () => 10 })
-        const $base11 = market.offer("base11").asProduct({ factory: () => 11 })
-        const $base12 = market.offer("base12").asProduct({ factory: () => 12 })
-        const $base13 = market.offer("base13").asProduct({ factory: () => 13 })
-        const $base14 = market.offer("base14").asProduct({ factory: () => 14 })
-        const $base15 = market.offer("base15").asProduct({ factory: () => 15 })
-        const $base16 = market.offer("base16").asProduct({ factory: () => 16 })
-        const $base17 = market.offer("base17").asProduct({ factory: () => 17 })
-        const $base18 = market.offer("base18").asProduct({ factory: () => 18 })
-        const $base19 = market.offer("base19").asProduct({ factory: () => 19 })
-        const $base20 = market.offer("base20").asProduct({ factory: () => 20 })
+        const $base1 = market.add("base1").product({ factory: () => 1 })
+        const $base2 = market.add("base2").product({ factory: () => 2 })
+        const $base3 = market.add("base3").product({ factory: () => 3 })
+        const $base4 = market.add("base4").product({ factory: () => 4 })
+        const $base5 = market.add("base5").product({ factory: () => 5 })
+        const $base6 = market.add("base6").product({ factory: () => 6 })
+        const $base7 = market.add("base7").product({ factory: () => 7 })
+        const $base8 = market.add("base8").product({ factory: () => 8 })
+        const $base9 = market.add("base9").product({ factory: () => 9 })
+        const $base10 = market.add("base10").product({ factory: () => 10 })
+        const $base11 = market.add("base11").product({ factory: () => 11 })
+        const $base12 = market.add("base12").product({ factory: () => 12 })
+        const $base13 = market.add("base13").product({ factory: () => 13 })
+        const $base14 = market.add("base14").product({ factory: () => 14 })
+        const $base15 = market.add("base15").product({ factory: () => 15 })
+        const $base16 = market.add("base16").product({ factory: () => 16 })
+        const $base17 = market.add("base17").product({ factory: () => 17 })
+        const $base18 = market.add("base18").product({ factory: () => 18 })
+        const $base19 = market.add("base19").product({ factory: () => 19 })
+        const $base20 = market.add("base20").product({ factory: () => 20 })
 
         const baseSuppliers = [
             $base1,
@@ -286,65 +286,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 1: depends on base suppliers
         const $l1_1 = market
-            .offer("l1_1")
-            .asProduct({ suppliers: baseSuppliers, factory: () => 101 })
+            .add("l1_1")
+            .product({ suppliers: baseSuppliers, factory: () => 101 })
         const $l1_2 = market
-            .offer("l1_2")
-            .asProduct({ suppliers: baseSuppliers, factory: () => 102 })
+            .add("l1_2")
+            .product({ suppliers: baseSuppliers, factory: () => 102 })
         const $l1_3 = market
-            .offer("l1_3")
-            .asProduct({ suppliers: baseSuppliers, factory: () => 103 })
+            .add("l1_3")
+            .product({ suppliers: baseSuppliers, factory: () => 103 })
         const $l1_4 = market
-            .offer("l1_4")
-            .asProduct({ suppliers: baseSuppliers, factory: () => 104 })
+            .add("l1_4")
+            .product({ suppliers: baseSuppliers, factory: () => 104 })
         const $l1_5 = market
-            .offer("l1_5")
-            .asProduct({ suppliers: baseSuppliers, factory: () => 105 })
+            .add("l1_5")
+            .product({ suppliers: baseSuppliers, factory: () => 105 })
         const $l1_6 = market
-            .offer("l1_6")
-            .asProduct({ suppliers: baseSuppliers, factory: () => 106 })
+            .add("l1_6")
+            .product({ suppliers: baseSuppliers, factory: () => 106 })
         const $l1_7 = market
-            .offer("l1_7")
-            .asProduct({ suppliers: baseSuppliers, factory: () => 107 })
+            .add("l1_7")
+            .product({ suppliers: baseSuppliers, factory: () => 107 })
         const $l1_8 = market
-            .offer("l1_8")
-            .asProduct({ suppliers: baseSuppliers, factory: () => 108 })
+            .add("l1_8")
+            .product({ suppliers: baseSuppliers, factory: () => 108 })
         const $l1_9 = market
-            .offer("l1_9")
-            .asProduct({ suppliers: baseSuppliers, factory: () => 109 })
+            .add("l1_9")
+            .product({ suppliers: baseSuppliers, factory: () => 109 })
         const $l1_10 = market
-            .offer("l1_10")
-            .asProduct({ suppliers: baseSuppliers, factory: () => 110 })
+            .add("l1_10")
+            .product({ suppliers: baseSuppliers, factory: () => 110 })
         const $l1_11 = market
-            .offer("l1_11")
-            .asProduct({ suppliers: baseSuppliers, factory: () => 111 })
+            .add("l1_11")
+            .product({ suppliers: baseSuppliers, factory: () => 111 })
         const $l1_12 = market
-            .offer("l1_12")
-            .asProduct({ suppliers: baseSuppliers, factory: () => 112 })
+            .add("l1_12")
+            .product({ suppliers: baseSuppliers, factory: () => 112 })
         const $l1_13 = market
-            .offer("l1_13")
-            .asProduct({ suppliers: baseSuppliers, factory: () => 113 })
+            .add("l1_13")
+            .product({ suppliers: baseSuppliers, factory: () => 113 })
         const $l1_14 = market
-            .offer("l1_14")
-            .asProduct({ suppliers: baseSuppliers, factory: () => 114 })
+            .add("l1_14")
+            .product({ suppliers: baseSuppliers, factory: () => 114 })
         const $l1_15 = market
-            .offer("l1_15")
-            .asProduct({ suppliers: baseSuppliers, factory: () => 115 })
+            .add("l1_15")
+            .product({ suppliers: baseSuppliers, factory: () => 115 })
         const $l1_16 = market
-            .offer("l1_16")
-            .asProduct({ suppliers: baseSuppliers, factory: () => 116 })
+            .add("l1_16")
+            .product({ suppliers: baseSuppliers, factory: () => 116 })
         const $l1_17 = market
-            .offer("l1_17")
-            .asProduct({ suppliers: baseSuppliers, factory: () => 117 })
+            .add("l1_17")
+            .product({ suppliers: baseSuppliers, factory: () => 117 })
         const $l1_18 = market
-            .offer("l1_18")
-            .asProduct({ suppliers: baseSuppliers, factory: () => 118 })
+            .add("l1_18")
+            .product({ suppliers: baseSuppliers, factory: () => 118 })
         const $l1_19 = market
-            .offer("l1_19")
-            .asProduct({ suppliers: baseSuppliers, factory: () => 119 })
+            .add("l1_19")
+            .product({ suppliers: baseSuppliers, factory: () => 119 })
         const $l1_20 = market
-            .offer("l1_20")
-            .asProduct({ suppliers: baseSuppliers, factory: () => 120 })
+            .add("l1_20")
+            .product({ suppliers: baseSuppliers, factory: () => 120 })
 
         const layer1 = [
             $l1_1,
@@ -371,65 +371,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 2: depends on layer1 suppliers
         const $l2_1 = market
-            .offer("l2_1")
-            .asProduct({ suppliers: layer1, factory: () => 201 })
+            .add("l2_1")
+            .product({ suppliers: layer1, factory: () => 201 })
         const $l2_2 = market
-            .offer("l2_2")
-            .asProduct({ suppliers: layer1, factory: () => 202 })
+            .add("l2_2")
+            .product({ suppliers: layer1, factory: () => 202 })
         const $l2_3 = market
-            .offer("l2_3")
-            .asProduct({ suppliers: layer1, factory: () => 203 })
+            .add("l2_3")
+            .product({ suppliers: layer1, factory: () => 203 })
         const $l2_4 = market
-            .offer("l2_4")
-            .asProduct({ suppliers: layer1, factory: () => 204 })
+            .add("l2_4")
+            .product({ suppliers: layer1, factory: () => 204 })
         const $l2_5 = market
-            .offer("l2_5")
-            .asProduct({ suppliers: layer1, factory: () => 205 })
+            .add("l2_5")
+            .product({ suppliers: layer1, factory: () => 205 })
         const $l2_6 = market
-            .offer("l2_6")
-            .asProduct({ suppliers: layer1, factory: () => 206 })
+            .add("l2_6")
+            .product({ suppliers: layer1, factory: () => 206 })
         const $l2_7 = market
-            .offer("l2_7")
-            .asProduct({ suppliers: layer1, factory: () => 207 })
+            .add("l2_7")
+            .product({ suppliers: layer1, factory: () => 207 })
         const $l2_8 = market
-            .offer("l2_8")
-            .asProduct({ suppliers: layer1, factory: () => 208 })
+            .add("l2_8")
+            .product({ suppliers: layer1, factory: () => 208 })
         const $l2_9 = market
-            .offer("l2_9")
-            .asProduct({ suppliers: layer1, factory: () => 209 })
+            .add("l2_9")
+            .product({ suppliers: layer1, factory: () => 209 })
         const $l2_10 = market
-            .offer("l2_10")
-            .asProduct({ suppliers: layer1, factory: () => 210 })
+            .add("l2_10")
+            .product({ suppliers: layer1, factory: () => 210 })
         const $l2_11 = market
-            .offer("l2_11")
-            .asProduct({ suppliers: layer1, factory: () => 211 })
+            .add("l2_11")
+            .product({ suppliers: layer1, factory: () => 211 })
         const $l2_12 = market
-            .offer("l2_12")
-            .asProduct({ suppliers: layer1, factory: () => 212 })
+            .add("l2_12")
+            .product({ suppliers: layer1, factory: () => 212 })
         const $l2_13 = market
-            .offer("l2_13")
-            .asProduct({ suppliers: layer1, factory: () => 213 })
+            .add("l2_13")
+            .product({ suppliers: layer1, factory: () => 213 })
         const $l2_14 = market
-            .offer("l2_14")
-            .asProduct({ suppliers: layer1, factory: () => 214 })
+            .add("l2_14")
+            .product({ suppliers: layer1, factory: () => 214 })
         const $l2_15 = market
-            .offer("l2_15")
-            .asProduct({ suppliers: layer1, factory: () => 215 })
+            .add("l2_15")
+            .product({ suppliers: layer1, factory: () => 215 })
         const $l2_16 = market
-            .offer("l2_16")
-            .asProduct({ suppliers: layer1, factory: () => 216 })
+            .add("l2_16")
+            .product({ suppliers: layer1, factory: () => 216 })
         const $l2_17 = market
-            .offer("l2_17")
-            .asProduct({ suppliers: layer1, factory: () => 217 })
+            .add("l2_17")
+            .product({ suppliers: layer1, factory: () => 217 })
         const $l2_18 = market
-            .offer("l2_18")
-            .asProduct({ suppliers: layer1, factory: () => 218 })
+            .add("l2_18")
+            .product({ suppliers: layer1, factory: () => 218 })
         const $l2_19 = market
-            .offer("l2_19")
-            .asProduct({ suppliers: layer1, factory: () => 219 })
+            .add("l2_19")
+            .product({ suppliers: layer1, factory: () => 219 })
         const $l2_20 = market
-            .offer("l2_20")
-            .asProduct({ suppliers: layer1, factory: () => 220 })
+            .add("l2_20")
+            .product({ suppliers: layer1, factory: () => 220 })
 
         const layer2 = [
             $l2_1,
@@ -456,65 +456,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 3: depends on layer2 suppliers
         const $l3_1 = market
-            .offer("l3_1")
-            .asProduct({ suppliers: layer2, factory: () => 301 })
+            .add("l3_1")
+            .product({ suppliers: layer2, factory: () => 301 })
         const $l3_2 = market
-            .offer("l3_2")
-            .asProduct({ suppliers: layer2, factory: () => 302 })
+            .add("l3_2")
+            .product({ suppliers: layer2, factory: () => 302 })
         const $l3_3 = market
-            .offer("l3_3")
-            .asProduct({ suppliers: layer2, factory: () => 303 })
+            .add("l3_3")
+            .product({ suppliers: layer2, factory: () => 303 })
         const $l3_4 = market
-            .offer("l3_4")
-            .asProduct({ suppliers: layer2, factory: () => 304 })
+            .add("l3_4")
+            .product({ suppliers: layer2, factory: () => 304 })
         const $l3_5 = market
-            .offer("l3_5")
-            .asProduct({ suppliers: layer2, factory: () => 305 })
+            .add("l3_5")
+            .product({ suppliers: layer2, factory: () => 305 })
         const $l3_6 = market
-            .offer("l3_6")
-            .asProduct({ suppliers: layer2, factory: () => 306 })
+            .add("l3_6")
+            .product({ suppliers: layer2, factory: () => 306 })
         const $l3_7 = market
-            .offer("l3_7")
-            .asProduct({ suppliers: layer2, factory: () => 307 })
+            .add("l3_7")
+            .product({ suppliers: layer2, factory: () => 307 })
         const $l3_8 = market
-            .offer("l3_8")
-            .asProduct({ suppliers: layer2, factory: () => 308 })
+            .add("l3_8")
+            .product({ suppliers: layer2, factory: () => 308 })
         const $l3_9 = market
-            .offer("l3_9")
-            .asProduct({ suppliers: layer2, factory: () => 309 })
+            .add("l3_9")
+            .product({ suppliers: layer2, factory: () => 309 })
         const $l3_10 = market
-            .offer("l3_10")
-            .asProduct({ suppliers: layer2, factory: () => 310 })
+            .add("l3_10")
+            .product({ suppliers: layer2, factory: () => 310 })
         const $l3_11 = market
-            .offer("l3_11")
-            .asProduct({ suppliers: layer2, factory: () => 311 })
+            .add("l3_11")
+            .product({ suppliers: layer2, factory: () => 311 })
         const $l3_12 = market
-            .offer("l3_12")
-            .asProduct({ suppliers: layer2, factory: () => 312 })
+            .add("l3_12")
+            .product({ suppliers: layer2, factory: () => 312 })
         const $l3_13 = market
-            .offer("l3_13")
-            .asProduct({ suppliers: layer2, factory: () => 313 })
+            .add("l3_13")
+            .product({ suppliers: layer2, factory: () => 313 })
         const $l3_14 = market
-            .offer("l3_14")
-            .asProduct({ suppliers: layer2, factory: () => 314 })
+            .add("l3_14")
+            .product({ suppliers: layer2, factory: () => 314 })
         const $l3_15 = market
-            .offer("l3_15")
-            .asProduct({ suppliers: layer2, factory: () => 315 })
+            .add("l3_15")
+            .product({ suppliers: layer2, factory: () => 315 })
         const $l3_16 = market
-            .offer("l3_16")
-            .asProduct({ suppliers: layer2, factory: () => 316 })
+            .add("l3_16")
+            .product({ suppliers: layer2, factory: () => 316 })
         const $l3_17 = market
-            .offer("l3_17")
-            .asProduct({ suppliers: layer2, factory: () => 317 })
+            .add("l3_17")
+            .product({ suppliers: layer2, factory: () => 317 })
         const $l3_18 = market
-            .offer("l3_18")
-            .asProduct({ suppliers: layer2, factory: () => 318 })
+            .add("l3_18")
+            .product({ suppliers: layer2, factory: () => 318 })
         const $l3_19 = market
-            .offer("l3_19")
-            .asProduct({ suppliers: layer2, factory: () => 319 })
+            .add("l3_19")
+            .product({ suppliers: layer2, factory: () => 319 })
         const $l3_20 = market
-            .offer("l3_20")
-            .asProduct({ suppliers: layer2, factory: () => 320 })
+            .add("l3_20")
+            .product({ suppliers: layer2, factory: () => 320 })
 
         const layer3 = [
             $l3_1,
@@ -541,65 +541,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 4: depends on layer3 suppliers
         const $l4_1 = market
-            .offer("l4_1")
-            .asProduct({ suppliers: layer3, factory: () => 401 })
+            .add("l4_1")
+            .product({ suppliers: layer3, factory: () => 401 })
         const $l4_2 = market
-            .offer("l4_2")
-            .asProduct({ suppliers: layer3, factory: () => 402 })
+            .add("l4_2")
+            .product({ suppliers: layer3, factory: () => 402 })
         const $l4_3 = market
-            .offer("l4_3")
-            .asProduct({ suppliers: layer3, factory: () => 403 })
+            .add("l4_3")
+            .product({ suppliers: layer3, factory: () => 403 })
         const $l4_4 = market
-            .offer("l4_4")
-            .asProduct({ suppliers: layer3, factory: () => 404 })
+            .add("l4_4")
+            .product({ suppliers: layer3, factory: () => 404 })
         const $l4_5 = market
-            .offer("l4_5")
-            .asProduct({ suppliers: layer3, factory: () => 405 })
+            .add("l4_5")
+            .product({ suppliers: layer3, factory: () => 405 })
         const $l4_6 = market
-            .offer("l4_6")
-            .asProduct({ suppliers: layer3, factory: () => 406 })
+            .add("l4_6")
+            .product({ suppliers: layer3, factory: () => 406 })
         const $l4_7 = market
-            .offer("l4_7")
-            .asProduct({ suppliers: layer3, factory: () => 407 })
+            .add("l4_7")
+            .product({ suppliers: layer3, factory: () => 407 })
         const $l4_8 = market
-            .offer("l4_8")
-            .asProduct({ suppliers: layer3, factory: () => 408 })
+            .add("l4_8")
+            .product({ suppliers: layer3, factory: () => 408 })
         const $l4_9 = market
-            .offer("l4_9")
-            .asProduct({ suppliers: layer3, factory: () => 409 })
+            .add("l4_9")
+            .product({ suppliers: layer3, factory: () => 409 })
         const $l4_10 = market
-            .offer("l4_10")
-            .asProduct({ suppliers: layer3, factory: () => 410 })
+            .add("l4_10")
+            .product({ suppliers: layer3, factory: () => 410 })
         const $l4_11 = market
-            .offer("l4_11")
-            .asProduct({ suppliers: layer3, factory: () => 411 })
+            .add("l4_11")
+            .product({ suppliers: layer3, factory: () => 411 })
         const $l4_12 = market
-            .offer("l4_12")
-            .asProduct({ suppliers: layer3, factory: () => 412 })
+            .add("l4_12")
+            .product({ suppliers: layer3, factory: () => 412 })
         const $l4_13 = market
-            .offer("l4_13")
-            .asProduct({ suppliers: layer3, factory: () => 413 })
+            .add("l4_13")
+            .product({ suppliers: layer3, factory: () => 413 })
         const $l4_14 = market
-            .offer("l4_14")
-            .asProduct({ suppliers: layer3, factory: () => 414 })
+            .add("l4_14")
+            .product({ suppliers: layer3, factory: () => 414 })
         const $l4_15 = market
-            .offer("l4_15")
-            .asProduct({ suppliers: layer3, factory: () => 415 })
+            .add("l4_15")
+            .product({ suppliers: layer3, factory: () => 415 })
         const $l4_16 = market
-            .offer("l4_16")
-            .asProduct({ suppliers: layer3, factory: () => 416 })
+            .add("l4_16")
+            .product({ suppliers: layer3, factory: () => 416 })
         const $l4_17 = market
-            .offer("l4_17")
-            .asProduct({ suppliers: layer3, factory: () => 417 })
+            .add("l4_17")
+            .product({ suppliers: layer3, factory: () => 417 })
         const $l4_18 = market
-            .offer("l4_18")
-            .asProduct({ suppliers: layer3, factory: () => 418 })
+            .add("l4_18")
+            .product({ suppliers: layer3, factory: () => 418 })
         const $l4_19 = market
-            .offer("l4_19")
-            .asProduct({ suppliers: layer3, factory: () => 419 })
+            .add("l4_19")
+            .product({ suppliers: layer3, factory: () => 419 })
         const $l4_20 = market
-            .offer("l4_20")
-            .asProduct({ suppliers: layer3, factory: () => 420 })
+            .add("l4_20")
+            .product({ suppliers: layer3, factory: () => 420 })
         const layer4 = [
             $l4_1,
             $l4_2,
@@ -625,65 +625,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 5: depends on layer4 suppliers
         const $l5_1 = market
-            .offer("l5_1")
-            .asProduct({ suppliers: layer4, factory: () => 501 })
+            .add("l5_1")
+            .product({ suppliers: layer4, factory: () => 501 })
         const $l5_2 = market
-            .offer("l5_2")
-            .asProduct({ suppliers: layer4, factory: () => 502 })
+            .add("l5_2")
+            .product({ suppliers: layer4, factory: () => 502 })
         const $l5_3 = market
-            .offer("l5_3")
-            .asProduct({ suppliers: layer4, factory: () => 503 })
+            .add("l5_3")
+            .product({ suppliers: layer4, factory: () => 503 })
         const $l5_4 = market
-            .offer("l5_4")
-            .asProduct({ suppliers: layer4, factory: () => 504 })
+            .add("l5_4")
+            .product({ suppliers: layer4, factory: () => 504 })
         const $l5_5 = market
-            .offer("l5_5")
-            .asProduct({ suppliers: layer4, factory: () => 505 })
+            .add("l5_5")
+            .product({ suppliers: layer4, factory: () => 505 })
         const $l5_6 = market
-            .offer("l5_6")
-            .asProduct({ suppliers: layer4, factory: () => 506 })
+            .add("l5_6")
+            .product({ suppliers: layer4, factory: () => 506 })
         const $l5_7 = market
-            .offer("l5_7")
-            .asProduct({ suppliers: layer4, factory: () => 507 })
+            .add("l5_7")
+            .product({ suppliers: layer4, factory: () => 507 })
         const $l5_8 = market
-            .offer("l5_8")
-            .asProduct({ suppliers: layer4, factory: () => 508 })
+            .add("l5_8")
+            .product({ suppliers: layer4, factory: () => 508 })
         const $l5_9 = market
-            .offer("l5_9")
-            .asProduct({ suppliers: layer4, factory: () => 509 })
+            .add("l5_9")
+            .product({ suppliers: layer4, factory: () => 509 })
         const $l5_10 = market
-            .offer("l5_10")
-            .asProduct({ suppliers: layer4, factory: () => 510 })
+            .add("l5_10")
+            .product({ suppliers: layer4, factory: () => 510 })
         const $l5_11 = market
-            .offer("l5_11")
-            .asProduct({ suppliers: layer4, factory: () => 511 })
+            .add("l5_11")
+            .product({ suppliers: layer4, factory: () => 511 })
         const $l5_12 = market
-            .offer("l5_12")
-            .asProduct({ suppliers: layer4, factory: () => 512 })
+            .add("l5_12")
+            .product({ suppliers: layer4, factory: () => 512 })
         const $l5_13 = market
-            .offer("l5_13")
-            .asProduct({ suppliers: layer4, factory: () => 513 })
+            .add("l5_13")
+            .product({ suppliers: layer4, factory: () => 513 })
         const $l5_14 = market
-            .offer("l5_14")
-            .asProduct({ suppliers: layer4, factory: () => 514 })
+            .add("l5_14")
+            .product({ suppliers: layer4, factory: () => 514 })
         const $l5_15 = market
-            .offer("l5_15")
-            .asProduct({ suppliers: layer4, factory: () => 515 })
+            .add("l5_15")
+            .product({ suppliers: layer4, factory: () => 515 })
         const $l5_16 = market
-            .offer("l5_16")
-            .asProduct({ suppliers: layer4, factory: () => 516 })
+            .add("l5_16")
+            .product({ suppliers: layer4, factory: () => 516 })
         const $l5_17 = market
-            .offer("l5_17")
-            .asProduct({ suppliers: layer4, factory: () => 517 })
+            .add("l5_17")
+            .product({ suppliers: layer4, factory: () => 517 })
         const $l5_18 = market
-            .offer("l5_18")
-            .asProduct({ suppliers: layer4, factory: () => 518 })
+            .add("l5_18")
+            .product({ suppliers: layer4, factory: () => 518 })
         const $l5_19 = market
-            .offer("l5_19")
-            .asProduct({ suppliers: layer4, factory: () => 519 })
+            .add("l5_19")
+            .product({ suppliers: layer4, factory: () => 519 })
         const $l5_20 = market
-            .offer("l5_20")
-            .asProduct({ suppliers: layer4, factory: () => 520 })
+            .add("l5_20")
+            .product({ suppliers: layer4, factory: () => 520 })
         const layer5 = [
             $l5_1,
             $l5_2,
@@ -709,65 +709,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 6: depends on layer5 suppliers
         const $l6_1 = market
-            .offer("l6_1")
-            .asProduct({ suppliers: layer5, factory: () => 601 })
+            .add("l6_1")
+            .product({ suppliers: layer5, factory: () => 601 })
         const $l6_2 = market
-            .offer("l6_2")
-            .asProduct({ suppliers: layer5, factory: () => 602 })
+            .add("l6_2")
+            .product({ suppliers: layer5, factory: () => 602 })
         const $l6_3 = market
-            .offer("l6_3")
-            .asProduct({ suppliers: layer5, factory: () => 603 })
+            .add("l6_3")
+            .product({ suppliers: layer5, factory: () => 603 })
         const $l6_4 = market
-            .offer("l6_4")
-            .asProduct({ suppliers: layer5, factory: () => 604 })
+            .add("l6_4")
+            .product({ suppliers: layer5, factory: () => 604 })
         const $l6_5 = market
-            .offer("l6_5")
-            .asProduct({ suppliers: layer5, factory: () => 605 })
+            .add("l6_5")
+            .product({ suppliers: layer5, factory: () => 605 })
         const $l6_6 = market
-            .offer("l6_6")
-            .asProduct({ suppliers: layer5, factory: () => 606 })
+            .add("l6_6")
+            .product({ suppliers: layer5, factory: () => 606 })
         const $l6_7 = market
-            .offer("l6_7")
-            .asProduct({ suppliers: layer5, factory: () => 607 })
+            .add("l6_7")
+            .product({ suppliers: layer5, factory: () => 607 })
         const $l6_8 = market
-            .offer("l6_8")
-            .asProduct({ suppliers: layer5, factory: () => 608 })
+            .add("l6_8")
+            .product({ suppliers: layer5, factory: () => 608 })
         const $l6_9 = market
-            .offer("l6_9")
-            .asProduct({ suppliers: layer5, factory: () => 609 })
+            .add("l6_9")
+            .product({ suppliers: layer5, factory: () => 609 })
         const $l6_10 = market
-            .offer("l6_10")
-            .asProduct({ suppliers: layer5, factory: () => 610 })
+            .add("l6_10")
+            .product({ suppliers: layer5, factory: () => 610 })
         const $l6_11 = market
-            .offer("l6_11")
-            .asProduct({ suppliers: layer5, factory: () => 611 })
+            .add("l6_11")
+            .product({ suppliers: layer5, factory: () => 611 })
         const $l6_12 = market
-            .offer("l6_12")
-            .asProduct({ suppliers: layer5, factory: () => 612 })
+            .add("l6_12")
+            .product({ suppliers: layer5, factory: () => 612 })
         const $l6_13 = market
-            .offer("l6_13")
-            .asProduct({ suppliers: layer5, factory: () => 613 })
+            .add("l6_13")
+            .product({ suppliers: layer5, factory: () => 613 })
         const $l6_14 = market
-            .offer("l6_14")
-            .asProduct({ suppliers: layer5, factory: () => 614 })
+            .add("l6_14")
+            .product({ suppliers: layer5, factory: () => 614 })
         const $l6_15 = market
-            .offer("l6_15")
-            .asProduct({ suppliers: layer5, factory: () => 615 })
+            .add("l6_15")
+            .product({ suppliers: layer5, factory: () => 615 })
         const $l6_16 = market
-            .offer("l6_16")
-            .asProduct({ suppliers: layer5, factory: () => 616 })
+            .add("l6_16")
+            .product({ suppliers: layer5, factory: () => 616 })
         const $l6_17 = market
-            .offer("l6_17")
-            .asProduct({ suppliers: layer5, factory: () => 617 })
+            .add("l6_17")
+            .product({ suppliers: layer5, factory: () => 617 })
         const $l6_18 = market
-            .offer("l6_18")
-            .asProduct({ suppliers: layer5, factory: () => 618 })
+            .add("l6_18")
+            .product({ suppliers: layer5, factory: () => 618 })
         const $l6_19 = market
-            .offer("l6_19")
-            .asProduct({ suppliers: layer5, factory: () => 619 })
+            .add("l6_19")
+            .product({ suppliers: layer5, factory: () => 619 })
         const $l6_20 = market
-            .offer("l6_20")
-            .asProduct({ suppliers: layer5, factory: () => 620 })
+            .add("l6_20")
+            .product({ suppliers: layer5, factory: () => 620 })
         const layer6 = [
             $l6_1,
             $l6_2,
@@ -793,65 +793,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 7: depends on layer6 suppliers
         const $l7_1 = market
-            .offer("l7_1")
-            .asProduct({ suppliers: layer6, factory: () => 701 })
+            .add("l7_1")
+            .product({ suppliers: layer6, factory: () => 701 })
         const $l7_2 = market
-            .offer("l7_2")
-            .asProduct({ suppliers: layer6, factory: () => 702 })
+            .add("l7_2")
+            .product({ suppliers: layer6, factory: () => 702 })
         const $l7_3 = market
-            .offer("l7_3")
-            .asProduct({ suppliers: layer6, factory: () => 703 })
+            .add("l7_3")
+            .product({ suppliers: layer6, factory: () => 703 })
         const $l7_4 = market
-            .offer("l7_4")
-            .asProduct({ suppliers: layer6, factory: () => 704 })
+            .add("l7_4")
+            .product({ suppliers: layer6, factory: () => 704 })
         const $l7_5 = market
-            .offer("l7_5")
-            .asProduct({ suppliers: layer6, factory: () => 705 })
+            .add("l7_5")
+            .product({ suppliers: layer6, factory: () => 705 })
         const $l7_6 = market
-            .offer("l7_6")
-            .asProduct({ suppliers: layer6, factory: () => 706 })
+            .add("l7_6")
+            .product({ suppliers: layer6, factory: () => 706 })
         const $l7_7 = market
-            .offer("l7_7")
-            .asProduct({ suppliers: layer6, factory: () => 707 })
+            .add("l7_7")
+            .product({ suppliers: layer6, factory: () => 707 })
         const $l7_8 = market
-            .offer("l7_8")
-            .asProduct({ suppliers: layer6, factory: () => 708 })
+            .add("l7_8")
+            .product({ suppliers: layer6, factory: () => 708 })
         const $l7_9 = market
-            .offer("l7_9")
-            .asProduct({ suppliers: layer6, factory: () => 709 })
+            .add("l7_9")
+            .product({ suppliers: layer6, factory: () => 709 })
         const $l7_10 = market
-            .offer("l7_10")
-            .asProduct({ suppliers: layer6, factory: () => 710 })
+            .add("l7_10")
+            .product({ suppliers: layer6, factory: () => 710 })
         const $l7_11 = market
-            .offer("l7_11")
-            .asProduct({ suppliers: layer6, factory: () => 711 })
+            .add("l7_11")
+            .product({ suppliers: layer6, factory: () => 711 })
         const $l7_12 = market
-            .offer("l7_12")
-            .asProduct({ suppliers: layer6, factory: () => 712 })
+            .add("l7_12")
+            .product({ suppliers: layer6, factory: () => 712 })
         const $l7_13 = market
-            .offer("l7_13")
-            .asProduct({ suppliers: layer6, factory: () => 713 })
+            .add("l7_13")
+            .product({ suppliers: layer6, factory: () => 713 })
         const $l7_14 = market
-            .offer("l7_14")
-            .asProduct({ suppliers: layer6, factory: () => 714 })
+            .add("l7_14")
+            .product({ suppliers: layer6, factory: () => 714 })
         const $l7_15 = market
-            .offer("l7_15")
-            .asProduct({ suppliers: layer6, factory: () => 715 })
+            .add("l7_15")
+            .product({ suppliers: layer6, factory: () => 715 })
         const $l7_16 = market
-            .offer("l7_16")
-            .asProduct({ suppliers: layer6, factory: () => 716 })
+            .add("l7_16")
+            .product({ suppliers: layer6, factory: () => 716 })
         const $l7_17 = market
-            .offer("l7_17")
-            .asProduct({ suppliers: layer6, factory: () => 717 })
+            .add("l7_17")
+            .product({ suppliers: layer6, factory: () => 717 })
         const $l7_18 = market
-            .offer("l7_18")
-            .asProduct({ suppliers: layer6, factory: () => 718 })
+            .add("l7_18")
+            .product({ suppliers: layer6, factory: () => 718 })
         const $l7_19 = market
-            .offer("l7_19")
-            .asProduct({ suppliers: layer6, factory: () => 719 })
+            .add("l7_19")
+            .product({ suppliers: layer6, factory: () => 719 })
         const $l7_20 = market
-            .offer("l7_20")
-            .asProduct({ suppliers: layer6, factory: () => 720 })
+            .add("l7_20")
+            .product({ suppliers: layer6, factory: () => 720 })
         const layer7 = [
             $l7_1,
             $l7_2,
@@ -877,65 +877,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 8: depends on layer7 suppliers
         const $l8_1 = market
-            .offer("l8_1")
-            .asProduct({ suppliers: layer7, factory: () => 801 })
+            .add("l8_1")
+            .product({ suppliers: layer7, factory: () => 801 })
         const $l8_2 = market
-            .offer("l8_2")
-            .asProduct({ suppliers: layer7, factory: () => 802 })
+            .add("l8_2")
+            .product({ suppliers: layer7, factory: () => 802 })
         const $l8_3 = market
-            .offer("l8_3")
-            .asProduct({ suppliers: layer7, factory: () => 803 })
+            .add("l8_3")
+            .product({ suppliers: layer7, factory: () => 803 })
         const $l8_4 = market
-            .offer("l8_4")
-            .asProduct({ suppliers: layer7, factory: () => 804 })
+            .add("l8_4")
+            .product({ suppliers: layer7, factory: () => 804 })
         const $l8_5 = market
-            .offer("l8_5")
-            .asProduct({ suppliers: layer7, factory: () => 805 })
+            .add("l8_5")
+            .product({ suppliers: layer7, factory: () => 805 })
         const $l8_6 = market
-            .offer("l8_6")
-            .asProduct({ suppliers: layer7, factory: () => 806 })
+            .add("l8_6")
+            .product({ suppliers: layer7, factory: () => 806 })
         const $l8_7 = market
-            .offer("l8_7")
-            .asProduct({ suppliers: layer7, factory: () => 807 })
+            .add("l8_7")
+            .product({ suppliers: layer7, factory: () => 807 })
         const $l8_8 = market
-            .offer("l8_8")
-            .asProduct({ suppliers: layer7, factory: () => 808 })
+            .add("l8_8")
+            .product({ suppliers: layer7, factory: () => 808 })
         const $l8_9 = market
-            .offer("l8_9")
-            .asProduct({ suppliers: layer7, factory: () => 809 })
+            .add("l8_9")
+            .product({ suppliers: layer7, factory: () => 809 })
         const $l8_10 = market
-            .offer("l8_10")
-            .asProduct({ suppliers: layer7, factory: () => 810 })
+            .add("l8_10")
+            .product({ suppliers: layer7, factory: () => 810 })
         const $l8_11 = market
-            .offer("l8_11")
-            .asProduct({ suppliers: layer7, factory: () => 811 })
+            .add("l8_11")
+            .product({ suppliers: layer7, factory: () => 811 })
         const $l8_12 = market
-            .offer("l8_12")
-            .asProduct({ suppliers: layer7, factory: () => 812 })
+            .add("l8_12")
+            .product({ suppliers: layer7, factory: () => 812 })
         const $l8_13 = market
-            .offer("l8_13")
-            .asProduct({ suppliers: layer7, factory: () => 813 })
+            .add("l8_13")
+            .product({ suppliers: layer7, factory: () => 813 })
         const $l8_14 = market
-            .offer("l8_14")
-            .asProduct({ suppliers: layer7, factory: () => 814 })
+            .add("l8_14")
+            .product({ suppliers: layer7, factory: () => 814 })
         const $l8_15 = market
-            .offer("l8_15")
-            .asProduct({ suppliers: layer7, factory: () => 815 })
+            .add("l8_15")
+            .product({ suppliers: layer7, factory: () => 815 })
         const $l8_16 = market
-            .offer("l8_16")
-            .asProduct({ suppliers: layer7, factory: () => 816 })
+            .add("l8_16")
+            .product({ suppliers: layer7, factory: () => 816 })
         const $l8_17 = market
-            .offer("l8_17")
-            .asProduct({ suppliers: layer7, factory: () => 817 })
+            .add("l8_17")
+            .product({ suppliers: layer7, factory: () => 817 })
         const $l8_18 = market
-            .offer("l8_18")
-            .asProduct({ suppliers: layer7, factory: () => 818 })
+            .add("l8_18")
+            .product({ suppliers: layer7, factory: () => 818 })
         const $l8_19 = market
-            .offer("l8_19")
-            .asProduct({ suppliers: layer7, factory: () => 819 })
+            .add("l8_19")
+            .product({ suppliers: layer7, factory: () => 819 })
         const $l8_20 = market
-            .offer("l8_20")
-            .asProduct({ suppliers: layer7, factory: () => 820 })
+            .add("l8_20")
+            .product({ suppliers: layer7, factory: () => 820 })
         const layer8 = [
             $l8_1,
             $l8_2,
@@ -961,65 +961,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 9: depends on layer8 suppliers
         const $l9_1 = market
-            .offer("l9_1")
-            .asProduct({ suppliers: layer8, factory: () => 901 })
+            .add("l9_1")
+            .product({ suppliers: layer8, factory: () => 901 })
         const $l9_2 = market
-            .offer("l9_2")
-            .asProduct({ suppliers: layer8, factory: () => 902 })
+            .add("l9_2")
+            .product({ suppliers: layer8, factory: () => 902 })
         const $l9_3 = market
-            .offer("l9_3")
-            .asProduct({ suppliers: layer8, factory: () => 903 })
+            .add("l9_3")
+            .product({ suppliers: layer8, factory: () => 903 })
         const $l9_4 = market
-            .offer("l9_4")
-            .asProduct({ suppliers: layer8, factory: () => 904 })
+            .add("l9_4")
+            .product({ suppliers: layer8, factory: () => 904 })
         const $l9_5 = market
-            .offer("l9_5")
-            .asProduct({ suppliers: layer8, factory: () => 905 })
+            .add("l9_5")
+            .product({ suppliers: layer8, factory: () => 905 })
         const $l9_6 = market
-            .offer("l9_6")
-            .asProduct({ suppliers: layer8, factory: () => 906 })
+            .add("l9_6")
+            .product({ suppliers: layer8, factory: () => 906 })
         const $l9_7 = market
-            .offer("l9_7")
-            .asProduct({ suppliers: layer8, factory: () => 907 })
+            .add("l9_7")
+            .product({ suppliers: layer8, factory: () => 907 })
         const $l9_8 = market
-            .offer("l9_8")
-            .asProduct({ suppliers: layer8, factory: () => 908 })
+            .add("l9_8")
+            .product({ suppliers: layer8, factory: () => 908 })
         const $l9_9 = market
-            .offer("l9_9")
-            .asProduct({ suppliers: layer8, factory: () => 909 })
+            .add("l9_9")
+            .product({ suppliers: layer8, factory: () => 909 })
         const $l9_10 = market
-            .offer("l9_10")
-            .asProduct({ suppliers: layer8, factory: () => 910 })
+            .add("l9_10")
+            .product({ suppliers: layer8, factory: () => 910 })
         const $l9_11 = market
-            .offer("l9_11")
-            .asProduct({ suppliers: layer8, factory: () => 911 })
+            .add("l9_11")
+            .product({ suppliers: layer8, factory: () => 911 })
         const $l9_12 = market
-            .offer("l9_12")
-            .asProduct({ suppliers: layer8, factory: () => 912 })
+            .add("l9_12")
+            .product({ suppliers: layer8, factory: () => 912 })
         const $l9_13 = market
-            .offer("l9_13")
-            .asProduct({ suppliers: layer8, factory: () => 913 })
+            .add("l9_13")
+            .product({ suppliers: layer8, factory: () => 913 })
         const $l9_14 = market
-            .offer("l9_14")
-            .asProduct({ suppliers: layer8, factory: () => 914 })
+            .add("l9_14")
+            .product({ suppliers: layer8, factory: () => 914 })
         const $l9_15 = market
-            .offer("l9_15")
-            .asProduct({ suppliers: layer8, factory: () => 915 })
+            .add("l9_15")
+            .product({ suppliers: layer8, factory: () => 915 })
         const $l9_16 = market
-            .offer("l9_16")
-            .asProduct({ suppliers: layer8, factory: () => 916 })
+            .add("l9_16")
+            .product({ suppliers: layer8, factory: () => 916 })
         const $l9_17 = market
-            .offer("l9_17")
-            .asProduct({ suppliers: layer8, factory: () => 917 })
+            .add("l9_17")
+            .product({ suppliers: layer8, factory: () => 917 })
         const $l9_18 = market
-            .offer("l9_18")
-            .asProduct({ suppliers: layer8, factory: () => 918 })
+            .add("l9_18")
+            .product({ suppliers: layer8, factory: () => 918 })
         const $l9_19 = market
-            .offer("l9_19")
-            .asProduct({ suppliers: layer8, factory: () => 919 })
+            .add("l9_19")
+            .product({ suppliers: layer8, factory: () => 919 })
         const $l9_20 = market
-            .offer("l9_20")
-            .asProduct({ suppliers: layer8, factory: () => 920 })
+            .add("l9_20")
+            .product({ suppliers: layer8, factory: () => 920 })
         const layer9 = [
             $l9_1,
             $l9_2,
@@ -1045,65 +1045,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 10: depends on layer9 suppliers
         const $l10_1 = market
-            .offer("l10_1")
-            .asProduct({ suppliers: layer9, factory: () => 1001 })
+            .add("l10_1")
+            .product({ suppliers: layer9, factory: () => 1001 })
         const $l10_2 = market
-            .offer("l10_2")
-            .asProduct({ suppliers: layer9, factory: () => 1002 })
+            .add("l10_2")
+            .product({ suppliers: layer9, factory: () => 1002 })
         const $l10_3 = market
-            .offer("l10_3")
-            .asProduct({ suppliers: layer9, factory: () => 1003 })
+            .add("l10_3")
+            .product({ suppliers: layer9, factory: () => 1003 })
         const $l10_4 = market
-            .offer("l10_4")
-            .asProduct({ suppliers: layer9, factory: () => 1004 })
+            .add("l10_4")
+            .product({ suppliers: layer9, factory: () => 1004 })
         const $l10_5 = market
-            .offer("l10_5")
-            .asProduct({ suppliers: layer9, factory: () => 1005 })
+            .add("l10_5")
+            .product({ suppliers: layer9, factory: () => 1005 })
         const $l10_6 = market
-            .offer("l10_6")
-            .asProduct({ suppliers: layer9, factory: () => 1006 })
+            .add("l10_6")
+            .product({ suppliers: layer9, factory: () => 1006 })
         const $l10_7 = market
-            .offer("l10_7")
-            .asProduct({ suppliers: layer9, factory: () => 1007 })
+            .add("l10_7")
+            .product({ suppliers: layer9, factory: () => 1007 })
         const $l10_8 = market
-            .offer("l10_8")
-            .asProduct({ suppliers: layer9, factory: () => 1008 })
+            .add("l10_8")
+            .product({ suppliers: layer9, factory: () => 1008 })
         const $l10_9 = market
-            .offer("l10_9")
-            .asProduct({ suppliers: layer9, factory: () => 1009 })
+            .add("l10_9")
+            .product({ suppliers: layer9, factory: () => 1009 })
         const $l10_10 = market
-            .offer("l10_10")
-            .asProduct({ suppliers: layer9, factory: () => 1010 })
+            .add("l10_10")
+            .product({ suppliers: layer9, factory: () => 1010 })
         const $l10_11 = market
-            .offer("l10_11")
-            .asProduct({ suppliers: layer9, factory: () => 1011 })
+            .add("l10_11")
+            .product({ suppliers: layer9, factory: () => 1011 })
         const $l10_12 = market
-            .offer("l10_12")
-            .asProduct({ suppliers: layer9, factory: () => 1012 })
+            .add("l10_12")
+            .product({ suppliers: layer9, factory: () => 1012 })
         const $l10_13 = market
-            .offer("l10_13")
-            .asProduct({ suppliers: layer9, factory: () => 1013 })
+            .add("l10_13")
+            .product({ suppliers: layer9, factory: () => 1013 })
         const $l10_14 = market
-            .offer("l10_14")
-            .asProduct({ suppliers: layer9, factory: () => 1014 })
+            .add("l10_14")
+            .product({ suppliers: layer9, factory: () => 1014 })
         const $l10_15 = market
-            .offer("l10_15")
-            .asProduct({ suppliers: layer9, factory: () => 1015 })
+            .add("l10_15")
+            .product({ suppliers: layer9, factory: () => 1015 })
         const $l10_16 = market
-            .offer("l10_16")
-            .asProduct({ suppliers: layer9, factory: () => 1016 })
+            .add("l10_16")
+            .product({ suppliers: layer9, factory: () => 1016 })
         const $l10_17 = market
-            .offer("l10_17")
-            .asProduct({ suppliers: layer9, factory: () => 1017 })
+            .add("l10_17")
+            .product({ suppliers: layer9, factory: () => 1017 })
         const $l10_18 = market
-            .offer("l10_18")
-            .asProduct({ suppliers: layer9, factory: () => 1018 })
+            .add("l10_18")
+            .product({ suppliers: layer9, factory: () => 1018 })
         const $l10_19 = market
-            .offer("l10_19")
-            .asProduct({ suppliers: layer9, factory: () => 1019 })
+            .add("l10_19")
+            .product({ suppliers: layer9, factory: () => 1019 })
         const $l10_20 = market
-            .offer("l10_20")
-            .asProduct({ suppliers: layer9, factory: () => 1020 })
+            .add("l10_20")
+            .product({ suppliers: layer9, factory: () => 1020 })
         const layer10 = [
             $l10_1,
             $l10_2,
@@ -1129,65 +1129,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 11: depends on layer10 suppliers
         const $l11_1 = market
-            .offer("l11_1")
-            .asProduct({ suppliers: layer10, factory: () => 1101 })
+            .add("l11_1")
+            .product({ suppliers: layer10, factory: () => 1101 })
         const $l11_2 = market
-            .offer("l11_2")
-            .asProduct({ suppliers: layer10, factory: () => 1102 })
+            .add("l11_2")
+            .product({ suppliers: layer10, factory: () => 1102 })
         const $l11_3 = market
-            .offer("l11_3")
-            .asProduct({ suppliers: layer10, factory: () => 1103 })
+            .add("l11_3")
+            .product({ suppliers: layer10, factory: () => 1103 })
         const $l11_4 = market
-            .offer("l11_4")
-            .asProduct({ suppliers: layer10, factory: () => 1104 })
+            .add("l11_4")
+            .product({ suppliers: layer10, factory: () => 1104 })
         const $l11_5 = market
-            .offer("l11_5")
-            .asProduct({ suppliers: layer10, factory: () => 1105 })
+            .add("l11_5")
+            .product({ suppliers: layer10, factory: () => 1105 })
         const $l11_6 = market
-            .offer("l11_6")
-            .asProduct({ suppliers: layer10, factory: () => 1106 })
+            .add("l11_6")
+            .product({ suppliers: layer10, factory: () => 1106 })
         const $l11_7 = market
-            .offer("l11_7")
-            .asProduct({ suppliers: layer10, factory: () => 1107 })
+            .add("l11_7")
+            .product({ suppliers: layer10, factory: () => 1107 })
         const $l11_8 = market
-            .offer("l11_8")
-            .asProduct({ suppliers: layer10, factory: () => 1108 })
+            .add("l11_8")
+            .product({ suppliers: layer10, factory: () => 1108 })
         const $l11_9 = market
-            .offer("l11_9")
-            .asProduct({ suppliers: layer10, factory: () => 1109 })
+            .add("l11_9")
+            .product({ suppliers: layer10, factory: () => 1109 })
         const $l11_10 = market
-            .offer("l11_10")
-            .asProduct({ suppliers: layer10, factory: () => 1110 })
+            .add("l11_10")
+            .product({ suppliers: layer10, factory: () => 1110 })
         const $l11_11 = market
-            .offer("l11_11")
-            .asProduct({ suppliers: layer10, factory: () => 1111 })
+            .add("l11_11")
+            .product({ suppliers: layer10, factory: () => 1111 })
         const $l11_12 = market
-            .offer("l11_12")
-            .asProduct({ suppliers: layer10, factory: () => 1112 })
+            .add("l11_12")
+            .product({ suppliers: layer10, factory: () => 1112 })
         const $l11_13 = market
-            .offer("l11_13")
-            .asProduct({ suppliers: layer10, factory: () => 1113 })
+            .add("l11_13")
+            .product({ suppliers: layer10, factory: () => 1113 })
         const $l11_14 = market
-            .offer("l11_14")
-            .asProduct({ suppliers: layer10, factory: () => 1114 })
+            .add("l11_14")
+            .product({ suppliers: layer10, factory: () => 1114 })
         const $l11_15 = market
-            .offer("l11_15")
-            .asProduct({ suppliers: layer10, factory: () => 1115 })
+            .add("l11_15")
+            .product({ suppliers: layer10, factory: () => 1115 })
         const $l11_16 = market
-            .offer("l11_16")
-            .asProduct({ suppliers: layer10, factory: () => 1116 })
+            .add("l11_16")
+            .product({ suppliers: layer10, factory: () => 1116 })
         const $l11_17 = market
-            .offer("l11_17")
-            .asProduct({ suppliers: layer10, factory: () => 1117 })
+            .add("l11_17")
+            .product({ suppliers: layer10, factory: () => 1117 })
         const $l11_18 = market
-            .offer("l11_18")
-            .asProduct({ suppliers: layer10, factory: () => 1118 })
+            .add("l11_18")
+            .product({ suppliers: layer10, factory: () => 1118 })
         const $l11_19 = market
-            .offer("l11_19")
-            .asProduct({ suppliers: layer10, factory: () => 1119 })
+            .add("l11_19")
+            .product({ suppliers: layer10, factory: () => 1119 })
         const $l11_20 = market
-            .offer("l11_20")
-            .asProduct({ suppliers: layer10, factory: () => 1120 })
+            .add("l11_20")
+            .product({ suppliers: layer10, factory: () => 1120 })
         const layer11 = [
             $l11_1,
             $l11_2,
@@ -1213,65 +1213,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 12: depends on layer11 suppliers
         const $l12_1 = market
-            .offer("l12_1")
-            .asProduct({ suppliers: layer11, factory: () => 1201 })
+            .add("l12_1")
+            .product({ suppliers: layer11, factory: () => 1201 })
         const $l12_2 = market
-            .offer("l12_2")
-            .asProduct({ suppliers: layer11, factory: () => 1202 })
+            .add("l12_2")
+            .product({ suppliers: layer11, factory: () => 1202 })
         const $l12_3 = market
-            .offer("l12_3")
-            .asProduct({ suppliers: layer11, factory: () => 1203 })
+            .add("l12_3")
+            .product({ suppliers: layer11, factory: () => 1203 })
         const $l12_4 = market
-            .offer("l12_4")
-            .asProduct({ suppliers: layer11, factory: () => 1204 })
+            .add("l12_4")
+            .product({ suppliers: layer11, factory: () => 1204 })
         const $l12_5 = market
-            .offer("l12_5")
-            .asProduct({ suppliers: layer11, factory: () => 1205 })
+            .add("l12_5")
+            .product({ suppliers: layer11, factory: () => 1205 })
         const $l12_6 = market
-            .offer("l12_6")
-            .asProduct({ suppliers: layer11, factory: () => 1206 })
+            .add("l12_6")
+            .product({ suppliers: layer11, factory: () => 1206 })
         const $l12_7 = market
-            .offer("l12_7")
-            .asProduct({ suppliers: layer11, factory: () => 1207 })
+            .add("l12_7")
+            .product({ suppliers: layer11, factory: () => 1207 })
         const $l12_8 = market
-            .offer("l12_8")
-            .asProduct({ suppliers: layer11, factory: () => 1208 })
+            .add("l12_8")
+            .product({ suppliers: layer11, factory: () => 1208 })
         const $l12_9 = market
-            .offer("l12_9")
-            .asProduct({ suppliers: layer11, factory: () => 1209 })
+            .add("l12_9")
+            .product({ suppliers: layer11, factory: () => 1209 })
         const $l12_10 = market
-            .offer("l12_10")
-            .asProduct({ suppliers: layer11, factory: () => 1210 })
+            .add("l12_10")
+            .product({ suppliers: layer11, factory: () => 1210 })
         const $l12_11 = market
-            .offer("l12_11")
-            .asProduct({ suppliers: layer11, factory: () => 1211 })
+            .add("l12_11")
+            .product({ suppliers: layer11, factory: () => 1211 })
         const $l12_12 = market
-            .offer("l12_12")
-            .asProduct({ suppliers: layer11, factory: () => 1212 })
+            .add("l12_12")
+            .product({ suppliers: layer11, factory: () => 1212 })
         const $l12_13 = market
-            .offer("l12_13")
-            .asProduct({ suppliers: layer11, factory: () => 1213 })
+            .add("l12_13")
+            .product({ suppliers: layer11, factory: () => 1213 })
         const $l12_14 = market
-            .offer("l12_14")
-            .asProduct({ suppliers: layer11, factory: () => 1214 })
+            .add("l12_14")
+            .product({ suppliers: layer11, factory: () => 1214 })
         const $l12_15 = market
-            .offer("l12_15")
-            .asProduct({ suppliers: layer11, factory: () => 1215 })
+            .add("l12_15")
+            .product({ suppliers: layer11, factory: () => 1215 })
         const $l12_16 = market
-            .offer("l12_16")
-            .asProduct({ suppliers: layer11, factory: () => 1216 })
+            .add("l12_16")
+            .product({ suppliers: layer11, factory: () => 1216 })
         const $l12_17 = market
-            .offer("l12_17")
-            .asProduct({ suppliers: layer11, factory: () => 1217 })
+            .add("l12_17")
+            .product({ suppliers: layer11, factory: () => 1217 })
         const $l12_18 = market
-            .offer("l12_18")
-            .asProduct({ suppliers: layer11, factory: () => 1218 })
+            .add("l12_18")
+            .product({ suppliers: layer11, factory: () => 1218 })
         const $l12_19 = market
-            .offer("l12_19")
-            .asProduct({ suppliers: layer11, factory: () => 1219 })
+            .add("l12_19")
+            .product({ suppliers: layer11, factory: () => 1219 })
         const $l12_20 = market
-            .offer("l12_20")
-            .asProduct({ suppliers: layer11, factory: () => 1220 })
+            .add("l12_20")
+            .product({ suppliers: layer11, factory: () => 1220 })
         const layer12 = [
             $l12_1,
             $l12_2,
@@ -1297,65 +1297,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 13: depends on layer12 suppliers
         const $l13_1 = market
-            .offer("l13_1")
-            .asProduct({ suppliers: layer12, factory: () => 1301 })
+            .add("l13_1")
+            .product({ suppliers: layer12, factory: () => 1301 })
         const $l13_2 = market
-            .offer("l13_2")
-            .asProduct({ suppliers: layer12, factory: () => 1302 })
+            .add("l13_2")
+            .product({ suppliers: layer12, factory: () => 1302 })
         const $l13_3 = market
-            .offer("l13_3")
-            .asProduct({ suppliers: layer12, factory: () => 1303 })
+            .add("l13_3")
+            .product({ suppliers: layer12, factory: () => 1303 })
         const $l13_4 = market
-            .offer("l13_4")
-            .asProduct({ suppliers: layer12, factory: () => 1304 })
+            .add("l13_4")
+            .product({ suppliers: layer12, factory: () => 1304 })
         const $l13_5 = market
-            .offer("l13_5")
-            .asProduct({ suppliers: layer12, factory: () => 1305 })
+            .add("l13_5")
+            .product({ suppliers: layer12, factory: () => 1305 })
         const $l13_6 = market
-            .offer("l13_6")
-            .asProduct({ suppliers: layer12, factory: () => 1306 })
+            .add("l13_6")
+            .product({ suppliers: layer12, factory: () => 1306 })
         const $l13_7 = market
-            .offer("l13_7")
-            .asProduct({ suppliers: layer12, factory: () => 1307 })
+            .add("l13_7")
+            .product({ suppliers: layer12, factory: () => 1307 })
         const $l13_8 = market
-            .offer("l13_8")
-            .asProduct({ suppliers: layer12, factory: () => 1308 })
+            .add("l13_8")
+            .product({ suppliers: layer12, factory: () => 1308 })
         const $l13_9 = market
-            .offer("l13_9")
-            .asProduct({ suppliers: layer12, factory: () => 1309 })
+            .add("l13_9")
+            .product({ suppliers: layer12, factory: () => 1309 })
         const $l13_10 = market
-            .offer("l13_10")
-            .asProduct({ suppliers: layer12, factory: () => 1310 })
+            .add("l13_10")
+            .product({ suppliers: layer12, factory: () => 1310 })
         const $l13_11 = market
-            .offer("l13_11")
-            .asProduct({ suppliers: layer12, factory: () => 1311 })
+            .add("l13_11")
+            .product({ suppliers: layer12, factory: () => 1311 })
         const $l13_12 = market
-            .offer("l13_12")
-            .asProduct({ suppliers: layer12, factory: () => 1312 })
+            .add("l13_12")
+            .product({ suppliers: layer12, factory: () => 1312 })
         const $l13_13 = market
-            .offer("l13_13")
-            .asProduct({ suppliers: layer12, factory: () => 1313 })
+            .add("l13_13")
+            .product({ suppliers: layer12, factory: () => 1313 })
         const $l13_14 = market
-            .offer("l13_14")
-            .asProduct({ suppliers: layer12, factory: () => 1314 })
+            .add("l13_14")
+            .product({ suppliers: layer12, factory: () => 1314 })
         const $l13_15 = market
-            .offer("l13_15")
-            .asProduct({ suppliers: layer12, factory: () => 1315 })
+            .add("l13_15")
+            .product({ suppliers: layer12, factory: () => 1315 })
         const $l13_16 = market
-            .offer("l13_16")
-            .asProduct({ suppliers: layer12, factory: () => 1316 })
+            .add("l13_16")
+            .product({ suppliers: layer12, factory: () => 1316 })
         const $l13_17 = market
-            .offer("l13_17")
-            .asProduct({ suppliers: layer12, factory: () => 1317 })
+            .add("l13_17")
+            .product({ suppliers: layer12, factory: () => 1317 })
         const $l13_18 = market
-            .offer("l13_18")
-            .asProduct({ suppliers: layer12, factory: () => 1318 })
+            .add("l13_18")
+            .product({ suppliers: layer12, factory: () => 1318 })
         const $l13_19 = market
-            .offer("l13_19")
-            .asProduct({ suppliers: layer12, factory: () => 1319 })
+            .add("l13_19")
+            .product({ suppliers: layer12, factory: () => 1319 })
         const $l13_20 = market
-            .offer("l13_20")
-            .asProduct({ suppliers: layer12, factory: () => 1320 })
+            .add("l13_20")
+            .product({ suppliers: layer12, factory: () => 1320 })
         const layer13 = [
             $l13_1,
             $l13_2,
@@ -1381,65 +1381,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 14: depends on layer13 suppliers
         const $l14_1 = market
-            .offer("l14_1")
-            .asProduct({ suppliers: layer13, factory: () => 1401 })
+            .add("l14_1")
+            .product({ suppliers: layer13, factory: () => 1401 })
         const $l14_2 = market
-            .offer("l14_2")
-            .asProduct({ suppliers: layer13, factory: () => 1402 })
+            .add("l14_2")
+            .product({ suppliers: layer13, factory: () => 1402 })
         const $l14_3 = market
-            .offer("l14_3")
-            .asProduct({ suppliers: layer13, factory: () => 1403 })
+            .add("l14_3")
+            .product({ suppliers: layer13, factory: () => 1403 })
         const $l14_4 = market
-            .offer("l14_4")
-            .asProduct({ suppliers: layer13, factory: () => 1404 })
+            .add("l14_4")
+            .product({ suppliers: layer13, factory: () => 1404 })
         const $l14_5 = market
-            .offer("l14_5")
-            .asProduct({ suppliers: layer13, factory: () => 1405 })
+            .add("l14_5")
+            .product({ suppliers: layer13, factory: () => 1405 })
         const $l14_6 = market
-            .offer("l14_6")
-            .asProduct({ suppliers: layer13, factory: () => 1406 })
+            .add("l14_6")
+            .product({ suppliers: layer13, factory: () => 1406 })
         const $l14_7 = market
-            .offer("l14_7")
-            .asProduct({ suppliers: layer13, factory: () => 1407 })
+            .add("l14_7")
+            .product({ suppliers: layer13, factory: () => 1407 })
         const $l14_8 = market
-            .offer("l14_8")
-            .asProduct({ suppliers: layer13, factory: () => 1408 })
+            .add("l14_8")
+            .product({ suppliers: layer13, factory: () => 1408 })
         const $l14_9 = market
-            .offer("l14_9")
-            .asProduct({ suppliers: layer13, factory: () => 1409 })
+            .add("l14_9")
+            .product({ suppliers: layer13, factory: () => 1409 })
         const $l14_10 = market
-            .offer("l14_10")
-            .asProduct({ suppliers: layer13, factory: () => 1410 })
+            .add("l14_10")
+            .product({ suppliers: layer13, factory: () => 1410 })
         const $l14_11 = market
-            .offer("l14_11")
-            .asProduct({ suppliers: layer13, factory: () => 1411 })
+            .add("l14_11")
+            .product({ suppliers: layer13, factory: () => 1411 })
         const $l14_12 = market
-            .offer("l14_12")
-            .asProduct({ suppliers: layer13, factory: () => 1412 })
+            .add("l14_12")
+            .product({ suppliers: layer13, factory: () => 1412 })
         const $l14_13 = market
-            .offer("l14_13")
-            .asProduct({ suppliers: layer13, factory: () => 1413 })
+            .add("l14_13")
+            .product({ suppliers: layer13, factory: () => 1413 })
         const $l14_14 = market
-            .offer("l14_14")
-            .asProduct({ suppliers: layer13, factory: () => 1414 })
+            .add("l14_14")
+            .product({ suppliers: layer13, factory: () => 1414 })
         const $l14_15 = market
-            .offer("l14_15")
-            .asProduct({ suppliers: layer13, factory: () => 1415 })
+            .add("l14_15")
+            .product({ suppliers: layer13, factory: () => 1415 })
         const $l14_16 = market
-            .offer("l14_16")
-            .asProduct({ suppliers: layer13, factory: () => 1416 })
+            .add("l14_16")
+            .product({ suppliers: layer13, factory: () => 1416 })
         const $l14_17 = market
-            .offer("l14_17")
-            .asProduct({ suppliers: layer13, factory: () => 1417 })
+            .add("l14_17")
+            .product({ suppliers: layer13, factory: () => 1417 })
         const $l14_18 = market
-            .offer("l14_18")
-            .asProduct({ suppliers: layer13, factory: () => 1418 })
+            .add("l14_18")
+            .product({ suppliers: layer13, factory: () => 1418 })
         const $l14_19 = market
-            .offer("l14_19")
-            .asProduct({ suppliers: layer13, factory: () => 1419 })
+            .add("l14_19")
+            .product({ suppliers: layer13, factory: () => 1419 })
         const $l14_20 = market
-            .offer("l14_20")
-            .asProduct({ suppliers: layer13, factory: () => 1420 })
+            .add("l14_20")
+            .product({ suppliers: layer13, factory: () => 1420 })
         const layer14 = [
             $l14_1,
             $l14_2,
@@ -1465,65 +1465,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 15: depends on layer14 suppliers
         const $l15_1 = market
-            .offer("l15_1")
-            .asProduct({ suppliers: layer14, factory: () => 1501 })
+            .add("l15_1")
+            .product({ suppliers: layer14, factory: () => 1501 })
         const $l15_2 = market
-            .offer("l15_2")
-            .asProduct({ suppliers: layer14, factory: () => 1502 })
+            .add("l15_2")
+            .product({ suppliers: layer14, factory: () => 1502 })
         const $l15_3 = market
-            .offer("l15_3")
-            .asProduct({ suppliers: layer14, factory: () => 1503 })
+            .add("l15_3")
+            .product({ suppliers: layer14, factory: () => 1503 })
         const $l15_4 = market
-            .offer("l15_4")
-            .asProduct({ suppliers: layer14, factory: () => 1504 })
+            .add("l15_4")
+            .product({ suppliers: layer14, factory: () => 1504 })
         const $l15_5 = market
-            .offer("l15_5")
-            .asProduct({ suppliers: layer14, factory: () => 1505 })
+            .add("l15_5")
+            .product({ suppliers: layer14, factory: () => 1505 })
         const $l15_6 = market
-            .offer("l15_6")
-            .asProduct({ suppliers: layer14, factory: () => 1506 })
+            .add("l15_6")
+            .product({ suppliers: layer14, factory: () => 1506 })
         const $l15_7 = market
-            .offer("l15_7")
-            .asProduct({ suppliers: layer14, factory: () => 1507 })
+            .add("l15_7")
+            .product({ suppliers: layer14, factory: () => 1507 })
         const $l15_8 = market
-            .offer("l15_8")
-            .asProduct({ suppliers: layer14, factory: () => 1508 })
+            .add("l15_8")
+            .product({ suppliers: layer14, factory: () => 1508 })
         const $l15_9 = market
-            .offer("l15_9")
-            .asProduct({ suppliers: layer14, factory: () => 1509 })
+            .add("l15_9")
+            .product({ suppliers: layer14, factory: () => 1509 })
         const $l15_10 = market
-            .offer("l15_10")
-            .asProduct({ suppliers: layer14, factory: () => 1510 })
+            .add("l15_10")
+            .product({ suppliers: layer14, factory: () => 1510 })
         const $l15_11 = market
-            .offer("l15_11")
-            .asProduct({ suppliers: layer14, factory: () => 1511 })
+            .add("l15_11")
+            .product({ suppliers: layer14, factory: () => 1511 })
         const $l15_12 = market
-            .offer("l15_12")
-            .asProduct({ suppliers: layer14, factory: () => 1512 })
+            .add("l15_12")
+            .product({ suppliers: layer14, factory: () => 1512 })
         const $l15_13 = market
-            .offer("l15_13")
-            .asProduct({ suppliers: layer14, factory: () => 1513 })
+            .add("l15_13")
+            .product({ suppliers: layer14, factory: () => 1513 })
         const $l15_14 = market
-            .offer("l15_14")
-            .asProduct({ suppliers: layer14, factory: () => 1514 })
+            .add("l15_14")
+            .product({ suppliers: layer14, factory: () => 1514 })
         const $l15_15 = market
-            .offer("l15_15")
-            .asProduct({ suppliers: layer14, factory: () => 1515 })
+            .add("l15_15")
+            .product({ suppliers: layer14, factory: () => 1515 })
         const $l15_16 = market
-            .offer("l15_16")
-            .asProduct({ suppliers: layer14, factory: () => 1516 })
+            .add("l15_16")
+            .product({ suppliers: layer14, factory: () => 1516 })
         const $l15_17 = market
-            .offer("l15_17")
-            .asProduct({ suppliers: layer14, factory: () => 1517 })
+            .add("l15_17")
+            .product({ suppliers: layer14, factory: () => 1517 })
         const $l15_18 = market
-            .offer("l15_18")
-            .asProduct({ suppliers: layer14, factory: () => 1518 })
+            .add("l15_18")
+            .product({ suppliers: layer14, factory: () => 1518 })
         const $l15_19 = market
-            .offer("l15_19")
-            .asProduct({ suppliers: layer14, factory: () => 1519 })
+            .add("l15_19")
+            .product({ suppliers: layer14, factory: () => 1519 })
         const $l15_20 = market
-            .offer("l15_20")
-            .asProduct({ suppliers: layer14, factory: () => 1520 })
+            .add("l15_20")
+            .product({ suppliers: layer14, factory: () => 1520 })
         const layer15 = [
             $l15_1,
             $l15_2,
@@ -1549,65 +1549,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 16: depends on layer15 suppliers
         const $l16_1 = market
-            .offer("l16_1")
-            .asProduct({ suppliers: layer15, factory: () => 1601 })
+            .add("l16_1")
+            .product({ suppliers: layer15, factory: () => 1601 })
         const $l16_2 = market
-            .offer("l16_2")
-            .asProduct({ suppliers: layer15, factory: () => 1602 })
+            .add("l16_2")
+            .product({ suppliers: layer15, factory: () => 1602 })
         const $l16_3 = market
-            .offer("l16_3")
-            .asProduct({ suppliers: layer15, factory: () => 1603 })
+            .add("l16_3")
+            .product({ suppliers: layer15, factory: () => 1603 })
         const $l16_4 = market
-            .offer("l16_4")
-            .asProduct({ suppliers: layer15, factory: () => 1604 })
+            .add("l16_4")
+            .product({ suppliers: layer15, factory: () => 1604 })
         const $l16_5 = market
-            .offer("l16_5")
-            .asProduct({ suppliers: layer15, factory: () => 1605 })
+            .add("l16_5")
+            .product({ suppliers: layer15, factory: () => 1605 })
         const $l16_6 = market
-            .offer("l16_6")
-            .asProduct({ suppliers: layer15, factory: () => 1606 })
+            .add("l16_6")
+            .product({ suppliers: layer15, factory: () => 1606 })
         const $l16_7 = market
-            .offer("l16_7")
-            .asProduct({ suppliers: layer15, factory: () => 1607 })
+            .add("l16_7")
+            .product({ suppliers: layer15, factory: () => 1607 })
         const $l16_8 = market
-            .offer("l16_8")
-            .asProduct({ suppliers: layer15, factory: () => 1608 })
+            .add("l16_8")
+            .product({ suppliers: layer15, factory: () => 1608 })
         const $l16_9 = market
-            .offer("l16_9")
-            .asProduct({ suppliers: layer15, factory: () => 1609 })
+            .add("l16_9")
+            .product({ suppliers: layer15, factory: () => 1609 })
         const $l16_10 = market
-            .offer("l16_10")
-            .asProduct({ suppliers: layer15, factory: () => 1610 })
+            .add("l16_10")
+            .product({ suppliers: layer15, factory: () => 1610 })
         const $l16_11 = market
-            .offer("l16_11")
-            .asProduct({ suppliers: layer15, factory: () => 1611 })
+            .add("l16_11")
+            .product({ suppliers: layer15, factory: () => 1611 })
         const $l16_12 = market
-            .offer("l16_12")
-            .asProduct({ suppliers: layer15, factory: () => 1612 })
+            .add("l16_12")
+            .product({ suppliers: layer15, factory: () => 1612 })
         const $l16_13 = market
-            .offer("l16_13")
-            .asProduct({ suppliers: layer15, factory: () => 1613 })
+            .add("l16_13")
+            .product({ suppliers: layer15, factory: () => 1613 })
         const $l16_14 = market
-            .offer("l16_14")
-            .asProduct({ suppliers: layer15, factory: () => 1614 })
+            .add("l16_14")
+            .product({ suppliers: layer15, factory: () => 1614 })
         const $l16_15 = market
-            .offer("l16_15")
-            .asProduct({ suppliers: layer15, factory: () => 1615 })
+            .add("l16_15")
+            .product({ suppliers: layer15, factory: () => 1615 })
         const $l16_16 = market
-            .offer("l16_16")
-            .asProduct({ suppliers: layer15, factory: () => 1616 })
+            .add("l16_16")
+            .product({ suppliers: layer15, factory: () => 1616 })
         const $l16_17 = market
-            .offer("l16_17")
-            .asProduct({ suppliers: layer15, factory: () => 1617 })
+            .add("l16_17")
+            .product({ suppliers: layer15, factory: () => 1617 })
         const $l16_18 = market
-            .offer("l16_18")
-            .asProduct({ suppliers: layer15, factory: () => 1618 })
+            .add("l16_18")
+            .product({ suppliers: layer15, factory: () => 1618 })
         const $l16_19 = market
-            .offer("l16_19")
-            .asProduct({ suppliers: layer15, factory: () => 1619 })
+            .add("l16_19")
+            .product({ suppliers: layer15, factory: () => 1619 })
         const $l16_20 = market
-            .offer("l16_20")
-            .asProduct({ suppliers: layer15, factory: () => 1620 })
+            .add("l16_20")
+            .product({ suppliers: layer15, factory: () => 1620 })
         const layer16 = [
             $l16_1,
             $l16_2,
@@ -1633,65 +1633,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 17: depends on layer16 suppliers
         const $l17_1 = market
-            .offer("l17_1")
-            .asProduct({ suppliers: layer16, factory: () => 1701 })
+            .add("l17_1")
+            .product({ suppliers: layer16, factory: () => 1701 })
         const $l17_2 = market
-            .offer("l17_2")
-            .asProduct({ suppliers: layer16, factory: () => 1702 })
+            .add("l17_2")
+            .product({ suppliers: layer16, factory: () => 1702 })
         const $l17_3 = market
-            .offer("l17_3")
-            .asProduct({ suppliers: layer16, factory: () => 1703 })
+            .add("l17_3")
+            .product({ suppliers: layer16, factory: () => 1703 })
         const $l17_4 = market
-            .offer("l17_4")
-            .asProduct({ suppliers: layer16, factory: () => 1704 })
+            .add("l17_4")
+            .product({ suppliers: layer16, factory: () => 1704 })
         const $l17_5 = market
-            .offer("l17_5")
-            .asProduct({ suppliers: layer16, factory: () => 1705 })
+            .add("l17_5")
+            .product({ suppliers: layer16, factory: () => 1705 })
         const $l17_6 = market
-            .offer("l17_6")
-            .asProduct({ suppliers: layer16, factory: () => 1706 })
+            .add("l17_6")
+            .product({ suppliers: layer16, factory: () => 1706 })
         const $l17_7 = market
-            .offer("l17_7")
-            .asProduct({ suppliers: layer16, factory: () => 1707 })
+            .add("l17_7")
+            .product({ suppliers: layer16, factory: () => 1707 })
         const $l17_8 = market
-            .offer("l17_8")
-            .asProduct({ suppliers: layer16, factory: () => 1708 })
+            .add("l17_8")
+            .product({ suppliers: layer16, factory: () => 1708 })
         const $l17_9 = market
-            .offer("l17_9")
-            .asProduct({ suppliers: layer16, factory: () => 1709 })
+            .add("l17_9")
+            .product({ suppliers: layer16, factory: () => 1709 })
         const $l17_10 = market
-            .offer("l17_10")
-            .asProduct({ suppliers: layer16, factory: () => 1710 })
+            .add("l17_10")
+            .product({ suppliers: layer16, factory: () => 1710 })
         const $l17_11 = market
-            .offer("l17_11")
-            .asProduct({ suppliers: layer16, factory: () => 1711 })
+            .add("l17_11")
+            .product({ suppliers: layer16, factory: () => 1711 })
         const $l17_12 = market
-            .offer("l17_12")
-            .asProduct({ suppliers: layer16, factory: () => 1712 })
+            .add("l17_12")
+            .product({ suppliers: layer16, factory: () => 1712 })
         const $l17_13 = market
-            .offer("l17_13")
-            .asProduct({ suppliers: layer16, factory: () => 1713 })
+            .add("l17_13")
+            .product({ suppliers: layer16, factory: () => 1713 })
         const $l17_14 = market
-            .offer("l17_14")
-            .asProduct({ suppliers: layer16, factory: () => 1714 })
+            .add("l17_14")
+            .product({ suppliers: layer16, factory: () => 1714 })
         const $l17_15 = market
-            .offer("l17_15")
-            .asProduct({ suppliers: layer16, factory: () => 1715 })
+            .add("l17_15")
+            .product({ suppliers: layer16, factory: () => 1715 })
         const $l17_16 = market
-            .offer("l17_16")
-            .asProduct({ suppliers: layer16, factory: () => 1716 })
+            .add("l17_16")
+            .product({ suppliers: layer16, factory: () => 1716 })
         const $l17_17 = market
-            .offer("l17_17")
-            .asProduct({ suppliers: layer16, factory: () => 1717 })
+            .add("l17_17")
+            .product({ suppliers: layer16, factory: () => 1717 })
         const $l17_18 = market
-            .offer("l17_18")
-            .asProduct({ suppliers: layer16, factory: () => 1718 })
+            .add("l17_18")
+            .product({ suppliers: layer16, factory: () => 1718 })
         const $l17_19 = market
-            .offer("l17_19")
-            .asProduct({ suppliers: layer16, factory: () => 1719 })
+            .add("l17_19")
+            .product({ suppliers: layer16, factory: () => 1719 })
         const $l17_20 = market
-            .offer("l17_20")
-            .asProduct({ suppliers: layer16, factory: () => 1720 })
+            .add("l17_20")
+            .product({ suppliers: layer16, factory: () => 1720 })
         const layer17 = [
             $l17_1,
             $l17_2,
@@ -1717,65 +1717,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 18: depends on layer17 suppliers
         const $l18_1 = market
-            .offer("l18_1")
-            .asProduct({ suppliers: layer17, factory: () => 1801 })
+            .add("l18_1")
+            .product({ suppliers: layer17, factory: () => 1801 })
         const $l18_2 = market
-            .offer("l18_2")
-            .asProduct({ suppliers: layer17, factory: () => 1802 })
+            .add("l18_2")
+            .product({ suppliers: layer17, factory: () => 1802 })
         const $l18_3 = market
-            .offer("l18_3")
-            .asProduct({ suppliers: layer17, factory: () => 1803 })
+            .add("l18_3")
+            .product({ suppliers: layer17, factory: () => 1803 })
         const $l18_4 = market
-            .offer("l18_4")
-            .asProduct({ suppliers: layer17, factory: () => 1804 })
+            .add("l18_4")
+            .product({ suppliers: layer17, factory: () => 1804 })
         const $l18_5 = market
-            .offer("l18_5")
-            .asProduct({ suppliers: layer17, factory: () => 1805 })
+            .add("l18_5")
+            .product({ suppliers: layer17, factory: () => 1805 })
         const $l18_6 = market
-            .offer("l18_6")
-            .asProduct({ suppliers: layer17, factory: () => 1806 })
+            .add("l18_6")
+            .product({ suppliers: layer17, factory: () => 1806 })
         const $l18_7 = market
-            .offer("l18_7")
-            .asProduct({ suppliers: layer17, factory: () => 1807 })
+            .add("l18_7")
+            .product({ suppliers: layer17, factory: () => 1807 })
         const $l18_8 = market
-            .offer("l18_8")
-            .asProduct({ suppliers: layer17, factory: () => 1808 })
+            .add("l18_8")
+            .product({ suppliers: layer17, factory: () => 1808 })
         const $l18_9 = market
-            .offer("l18_9")
-            .asProduct({ suppliers: layer17, factory: () => 1809 })
+            .add("l18_9")
+            .product({ suppliers: layer17, factory: () => 1809 })
         const $l18_10 = market
-            .offer("l18_10")
-            .asProduct({ suppliers: layer17, factory: () => 1810 })
+            .add("l18_10")
+            .product({ suppliers: layer17, factory: () => 1810 })
         const $l18_11 = market
-            .offer("l18_11")
-            .asProduct({ suppliers: layer17, factory: () => 1811 })
+            .add("l18_11")
+            .product({ suppliers: layer17, factory: () => 1811 })
         const $l18_12 = market
-            .offer("l18_12")
-            .asProduct({ suppliers: layer17, factory: () => 1812 })
+            .add("l18_12")
+            .product({ suppliers: layer17, factory: () => 1812 })
         const $l18_13 = market
-            .offer("l18_13")
-            .asProduct({ suppliers: layer17, factory: () => 1813 })
+            .add("l18_13")
+            .product({ suppliers: layer17, factory: () => 1813 })
         const $l18_14 = market
-            .offer("l18_14")
-            .asProduct({ suppliers: layer17, factory: () => 1814 })
+            .add("l18_14")
+            .product({ suppliers: layer17, factory: () => 1814 })
         const $l18_15 = market
-            .offer("l18_15")
-            .asProduct({ suppliers: layer17, factory: () => 1815 })
+            .add("l18_15")
+            .product({ suppliers: layer17, factory: () => 1815 })
         const $l18_16 = market
-            .offer("l18_16")
-            .asProduct({ suppliers: layer17, factory: () => 1816 })
+            .add("l18_16")
+            .product({ suppliers: layer17, factory: () => 1816 })
         const $l18_17 = market
-            .offer("l18_17")
-            .asProduct({ suppliers: layer17, factory: () => 1817 })
+            .add("l18_17")
+            .product({ suppliers: layer17, factory: () => 1817 })
         const $l18_18 = market
-            .offer("l18_18")
-            .asProduct({ suppliers: layer17, factory: () => 1818 })
+            .add("l18_18")
+            .product({ suppliers: layer17, factory: () => 1818 })
         const $l18_19 = market
-            .offer("l18_19")
-            .asProduct({ suppliers: layer17, factory: () => 1819 })
+            .add("l18_19")
+            .product({ suppliers: layer17, factory: () => 1819 })
         const $l18_20 = market
-            .offer("l18_20")
-            .asProduct({ suppliers: layer17, factory: () => 1820 })
+            .add("l18_20")
+            .product({ suppliers: layer17, factory: () => 1820 })
         const layer18 = [
             $l18_1,
             $l18_2,
@@ -1801,65 +1801,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 19: depends on layer18 suppliers
         const $l19_1 = market
-            .offer("l19_1")
-            .asProduct({ suppliers: layer18, factory: () => 1901 })
+            .add("l19_1")
+            .product({ suppliers: layer18, factory: () => 1901 })
         const $l19_2 = market
-            .offer("l19_2")
-            .asProduct({ suppliers: layer18, factory: () => 1902 })
+            .add("l19_2")
+            .product({ suppliers: layer18, factory: () => 1902 })
         const $l19_3 = market
-            .offer("l19_3")
-            .asProduct({ suppliers: layer18, factory: () => 1903 })
+            .add("l19_3")
+            .product({ suppliers: layer18, factory: () => 1903 })
         const $l19_4 = market
-            .offer("l19_4")
-            .asProduct({ suppliers: layer18, factory: () => 1904 })
+            .add("l19_4")
+            .product({ suppliers: layer18, factory: () => 1904 })
         const $l19_5 = market
-            .offer("l19_5")
-            .asProduct({ suppliers: layer18, factory: () => 1905 })
+            .add("l19_5")
+            .product({ suppliers: layer18, factory: () => 1905 })
         const $l19_6 = market
-            .offer("l19_6")
-            .asProduct({ suppliers: layer18, factory: () => 1906 })
+            .add("l19_6")
+            .product({ suppliers: layer18, factory: () => 1906 })
         const $l19_7 = market
-            .offer("l19_7")
-            .asProduct({ suppliers: layer18, factory: () => 1907 })
+            .add("l19_7")
+            .product({ suppliers: layer18, factory: () => 1907 })
         const $l19_8 = market
-            .offer("l19_8")
-            .asProduct({ suppliers: layer18, factory: () => 1908 })
+            .add("l19_8")
+            .product({ suppliers: layer18, factory: () => 1908 })
         const $l19_9 = market
-            .offer("l19_9")
-            .asProduct({ suppliers: layer18, factory: () => 1909 })
+            .add("l19_9")
+            .product({ suppliers: layer18, factory: () => 1909 })
         const $l19_10 = market
-            .offer("l19_10")
-            .asProduct({ suppliers: layer18, factory: () => 1910 })
+            .add("l19_10")
+            .product({ suppliers: layer18, factory: () => 1910 })
         const $l19_11 = market
-            .offer("l19_11")
-            .asProduct({ suppliers: layer18, factory: () => 1911 })
+            .add("l19_11")
+            .product({ suppliers: layer18, factory: () => 1911 })
         const $l19_12 = market
-            .offer("l19_12")
-            .asProduct({ suppliers: layer18, factory: () => 1912 })
+            .add("l19_12")
+            .product({ suppliers: layer18, factory: () => 1912 })
         const $l19_13 = market
-            .offer("l19_13")
-            .asProduct({ suppliers: layer18, factory: () => 1913 })
+            .add("l19_13")
+            .product({ suppliers: layer18, factory: () => 1913 })
         const $l19_14 = market
-            .offer("l19_14")
-            .asProduct({ suppliers: layer18, factory: () => 1914 })
+            .add("l19_14")
+            .product({ suppliers: layer18, factory: () => 1914 })
         const $l19_15 = market
-            .offer("l19_15")
-            .asProduct({ suppliers: layer18, factory: () => 1915 })
+            .add("l19_15")
+            .product({ suppliers: layer18, factory: () => 1915 })
         const $l19_16 = market
-            .offer("l19_16")
-            .asProduct({ suppliers: layer18, factory: () => 1916 })
+            .add("l19_16")
+            .product({ suppliers: layer18, factory: () => 1916 })
         const $l19_17 = market
-            .offer("l19_17")
-            .asProduct({ suppliers: layer18, factory: () => 1917 })
+            .add("l19_17")
+            .product({ suppliers: layer18, factory: () => 1917 })
         const $l19_18 = market
-            .offer("l19_18")
-            .asProduct({ suppliers: layer18, factory: () => 1918 })
+            .add("l19_18")
+            .product({ suppliers: layer18, factory: () => 1918 })
         const $l19_19 = market
-            .offer("l19_19")
-            .asProduct({ suppliers: layer18, factory: () => 1919 })
+            .add("l19_19")
+            .product({ suppliers: layer18, factory: () => 1919 })
         const $l19_20 = market
-            .offer("l19_20")
-            .asProduct({ suppliers: layer18, factory: () => 1920 })
+            .add("l19_20")
+            .product({ suppliers: layer18, factory: () => 1920 })
         const layer19 = [
             $l19_1,
             $l19_2,
@@ -1885,65 +1885,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 20: depends on layer19 suppliers
         const $l20_1 = market
-            .offer("l20_1")
-            .asProduct({ suppliers: layer19, factory: () => 2001 })
+            .add("l20_1")
+            .product({ suppliers: layer19, factory: () => 2001 })
         const $l20_2 = market
-            .offer("l20_2")
-            .asProduct({ suppliers: layer19, factory: () => 2002 })
+            .add("l20_2")
+            .product({ suppliers: layer19, factory: () => 2002 })
         const $l20_3 = market
-            .offer("l20_3")
-            .asProduct({ suppliers: layer19, factory: () => 2003 })
+            .add("l20_3")
+            .product({ suppliers: layer19, factory: () => 2003 })
         const $l20_4 = market
-            .offer("l20_4")
-            .asProduct({ suppliers: layer19, factory: () => 2004 })
+            .add("l20_4")
+            .product({ suppliers: layer19, factory: () => 2004 })
         const $l20_5 = market
-            .offer("l20_5")
-            .asProduct({ suppliers: layer19, factory: () => 2005 })
+            .add("l20_5")
+            .product({ suppliers: layer19, factory: () => 2005 })
         const $l20_6 = market
-            .offer("l20_6")
-            .asProduct({ suppliers: layer19, factory: () => 2006 })
+            .add("l20_6")
+            .product({ suppliers: layer19, factory: () => 2006 })
         const $l20_7 = market
-            .offer("l20_7")
-            .asProduct({ suppliers: layer19, factory: () => 2007 })
+            .add("l20_7")
+            .product({ suppliers: layer19, factory: () => 2007 })
         const $l20_8 = market
-            .offer("l20_8")
-            .asProduct({ suppliers: layer19, factory: () => 2008 })
+            .add("l20_8")
+            .product({ suppliers: layer19, factory: () => 2008 })
         const $l20_9 = market
-            .offer("l20_9")
-            .asProduct({ suppliers: layer19, factory: () => 2009 })
+            .add("l20_9")
+            .product({ suppliers: layer19, factory: () => 2009 })
         const $l20_10 = market
-            .offer("l20_10")
-            .asProduct({ suppliers: layer19, factory: () => 2010 })
+            .add("l20_10")
+            .product({ suppliers: layer19, factory: () => 2010 })
         const $l20_11 = market
-            .offer("l20_11")
-            .asProduct({ suppliers: layer19, factory: () => 2011 })
+            .add("l20_11")
+            .product({ suppliers: layer19, factory: () => 2011 })
         const $l20_12 = market
-            .offer("l20_12")
-            .asProduct({ suppliers: layer19, factory: () => 2012 })
+            .add("l20_12")
+            .product({ suppliers: layer19, factory: () => 2012 })
         const $l20_13 = market
-            .offer("l20_13")
-            .asProduct({ suppliers: layer19, factory: () => 2013 })
+            .add("l20_13")
+            .product({ suppliers: layer19, factory: () => 2013 })
         const $l20_14 = market
-            .offer("l20_14")
-            .asProduct({ suppliers: layer19, factory: () => 2014 })
+            .add("l20_14")
+            .product({ suppliers: layer19, factory: () => 2014 })
         const $l20_15 = market
-            .offer("l20_15")
-            .asProduct({ suppliers: layer19, factory: () => 2015 })
+            .add("l20_15")
+            .product({ suppliers: layer19, factory: () => 2015 })
         const $l20_16 = market
-            .offer("l20_16")
-            .asProduct({ suppliers: layer19, factory: () => 2016 })
+            .add("l20_16")
+            .product({ suppliers: layer19, factory: () => 2016 })
         const $l20_17 = market
-            .offer("l20_17")
-            .asProduct({ suppliers: layer19, factory: () => 2017 })
+            .add("l20_17")
+            .product({ suppliers: layer19, factory: () => 2017 })
         const $l20_18 = market
-            .offer("l20_18")
-            .asProduct({ suppliers: layer19, factory: () => 2018 })
+            .add("l20_18")
+            .product({ suppliers: layer19, factory: () => 2018 })
         const $l20_19 = market
-            .offer("l20_19")
-            .asProduct({ suppliers: layer19, factory: () => 2019 })
+            .add("l20_19")
+            .product({ suppliers: layer19, factory: () => 2019 })
         const $l20_20 = market
-            .offer("l20_20")
-            .asProduct({ suppliers: layer19, factory: () => 2020 })
+            .add("l20_20")
+            .product({ suppliers: layer19, factory: () => 2020 })
         const layer20 = [
             $l20_1,
             $l20_2,
@@ -1968,65 +1968,65 @@ describe("Deep Recursion Type Tests", () => {
         ]
         // Layer 21: depends on layer20 suppliers
         const $l21_1 = market
-            .offer("l21_1")
-            .asProduct({ suppliers: layer20, factory: () => 2101 })
+            .add("l21_1")
+            .product({ suppliers: layer20, factory: () => 2101 })
         const $l21_2 = market
-            .offer("l21_2")
-            .asProduct({ suppliers: layer20, factory: () => 2102 })
+            .add("l21_2")
+            .product({ suppliers: layer20, factory: () => 2102 })
         const $l21_3 = market
-            .offer("l21_3")
-            .asProduct({ suppliers: layer20, factory: () => 2103 })
+            .add("l21_3")
+            .product({ suppliers: layer20, factory: () => 2103 })
         const $l21_4 = market
-            .offer("l21_4")
-            .asProduct({ suppliers: layer20, factory: () => 2104 })
+            .add("l21_4")
+            .product({ suppliers: layer20, factory: () => 2104 })
         const $l21_5 = market
-            .offer("l21_5")
-            .asProduct({ suppliers: layer20, factory: () => 2105 })
+            .add("l21_5")
+            .product({ suppliers: layer20, factory: () => 2105 })
         const $l21_6 = market
-            .offer("l21_6")
-            .asProduct({ suppliers: layer20, factory: () => 2106 })
+            .add("l21_6")
+            .product({ suppliers: layer20, factory: () => 2106 })
         const $l21_7 = market
-            .offer("l21_7")
-            .asProduct({ suppliers: layer20, factory: () => 2107 })
+            .add("l21_7")
+            .product({ suppliers: layer20, factory: () => 2107 })
         const $l21_8 = market
-            .offer("l21_8")
-            .asProduct({ suppliers: layer20, factory: () => 2108 })
+            .add("l21_8")
+            .product({ suppliers: layer20, factory: () => 2108 })
         const $l21_9 = market
-            .offer("l21_9")
-            .asProduct({ suppliers: layer20, factory: () => 2109 })
+            .add("l21_9")
+            .product({ suppliers: layer20, factory: () => 2109 })
         const $l21_10 = market
-            .offer("l21_10")
-            .asProduct({ suppliers: layer20, factory: () => 2110 })
+            .add("l21_10")
+            .product({ suppliers: layer20, factory: () => 2110 })
         const $l21_11 = market
-            .offer("l21_11")
-            .asProduct({ suppliers: layer20, factory: () => 2111 })
+            .add("l21_11")
+            .product({ suppliers: layer20, factory: () => 2111 })
         const $l21_12 = market
-            .offer("l21_12")
-            .asProduct({ suppliers: layer20, factory: () => 2112 })
+            .add("l21_12")
+            .product({ suppliers: layer20, factory: () => 2112 })
         const $l21_13 = market
-            .offer("l21_13")
-            .asProduct({ suppliers: layer20, factory: () => 2113 })
+            .add("l21_13")
+            .product({ suppliers: layer20, factory: () => 2113 })
         const $l21_14 = market
-            .offer("l21_14")
-            .asProduct({ suppliers: layer20, factory: () => 2114 })
+            .add("l21_14")
+            .product({ suppliers: layer20, factory: () => 2114 })
         const $l21_15 = market
-            .offer("l21_15")
-            .asProduct({ suppliers: layer20, factory: () => 2115 })
+            .add("l21_15")
+            .product({ suppliers: layer20, factory: () => 2115 })
         const $l21_16 = market
-            .offer("l21_16")
-            .asProduct({ suppliers: layer20, factory: () => 2116 })
+            .add("l21_16")
+            .product({ suppliers: layer20, factory: () => 2116 })
         const $l21_17 = market
-            .offer("l21_17")
-            .asProduct({ suppliers: layer20, factory: () => 2117 })
+            .add("l21_17")
+            .product({ suppliers: layer20, factory: () => 2117 })
         const $l21_18 = market
-            .offer("l21_18")
-            .asProduct({ suppliers: layer20, factory: () => 2118 })
+            .add("l21_18")
+            .product({ suppliers: layer20, factory: () => 2118 })
         const $l21_19 = market
-            .offer("l21_19")
-            .asProduct({ suppliers: layer20, factory: () => 2119 })
+            .add("l21_19")
+            .product({ suppliers: layer20, factory: () => 2119 })
         const $l21_20 = market
-            .offer("l21_20")
-            .asProduct({ suppliers: layer20, factory: () => 2120 })
+            .add("l21_20")
+            .product({ suppliers: layer20, factory: () => 2120 })
         const layer21 = [
             $l21_1,
             $l21_2,
@@ -2052,65 +2052,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 22: depends on layer21 suppliers
         const $l22_1 = market
-            .offer("l22_1")
-            .asProduct({ suppliers: layer21, factory: () => 2201 })
+            .add("l22_1")
+            .product({ suppliers: layer21, factory: () => 2201 })
         const $l22_2 = market
-            .offer("l22_2")
-            .asProduct({ suppliers: layer21, factory: () => 2202 })
+            .add("l22_2")
+            .product({ suppliers: layer21, factory: () => 2202 })
         const $l22_3 = market
-            .offer("l22_3")
-            .asProduct({ suppliers: layer21, factory: () => 2203 })
+            .add("l22_3")
+            .product({ suppliers: layer21, factory: () => 2203 })
         const $l22_4 = market
-            .offer("l22_4")
-            .asProduct({ suppliers: layer21, factory: () => 2204 })
+            .add("l22_4")
+            .product({ suppliers: layer21, factory: () => 2204 })
         const $l22_5 = market
-            .offer("l22_5")
-            .asProduct({ suppliers: layer21, factory: () => 2205 })
+            .add("l22_5")
+            .product({ suppliers: layer21, factory: () => 2205 })
         const $l22_6 = market
-            .offer("l22_6")
-            .asProduct({ suppliers: layer21, factory: () => 2206 })
+            .add("l22_6")
+            .product({ suppliers: layer21, factory: () => 2206 })
         const $l22_7 = market
-            .offer("l22_7")
-            .asProduct({ suppliers: layer21, factory: () => 2207 })
+            .add("l22_7")
+            .product({ suppliers: layer21, factory: () => 2207 })
         const $l22_8 = market
-            .offer("l22_8")
-            .asProduct({ suppliers: layer21, factory: () => 2208 })
+            .add("l22_8")
+            .product({ suppliers: layer21, factory: () => 2208 })
         const $l22_9 = market
-            .offer("l22_9")
-            .asProduct({ suppliers: layer21, factory: () => 2209 })
+            .add("l22_9")
+            .product({ suppliers: layer21, factory: () => 2209 })
         const $l22_10 = market
-            .offer("l22_10")
-            .asProduct({ suppliers: layer21, factory: () => 2210 })
+            .add("l22_10")
+            .product({ suppliers: layer21, factory: () => 2210 })
         const $l22_11 = market
-            .offer("l22_11")
-            .asProduct({ suppliers: layer21, factory: () => 2211 })
+            .add("l22_11")
+            .product({ suppliers: layer21, factory: () => 2211 })
         const $l22_12 = market
-            .offer("l22_12")
-            .asProduct({ suppliers: layer21, factory: () => 2212 })
+            .add("l22_12")
+            .product({ suppliers: layer21, factory: () => 2212 })
         const $l22_13 = market
-            .offer("l22_13")
-            .asProduct({ suppliers: layer21, factory: () => 2213 })
+            .add("l22_13")
+            .product({ suppliers: layer21, factory: () => 2213 })
         const $l22_14 = market
-            .offer("l22_14")
-            .asProduct({ suppliers: layer21, factory: () => 2214 })
+            .add("l22_14")
+            .product({ suppliers: layer21, factory: () => 2214 })
         const $l22_15 = market
-            .offer("l22_15")
-            .asProduct({ suppliers: layer21, factory: () => 2215 })
+            .add("l22_15")
+            .product({ suppliers: layer21, factory: () => 2215 })
         const $l22_16 = market
-            .offer("l22_16")
-            .asProduct({ suppliers: layer21, factory: () => 2216 })
+            .add("l22_16")
+            .product({ suppliers: layer21, factory: () => 2216 })
         const $l22_17 = market
-            .offer("l22_17")
-            .asProduct({ suppliers: layer21, factory: () => 2217 })
+            .add("l22_17")
+            .product({ suppliers: layer21, factory: () => 2217 })
         const $l22_18 = market
-            .offer("l22_18")
-            .asProduct({ suppliers: layer21, factory: () => 2218 })
+            .add("l22_18")
+            .product({ suppliers: layer21, factory: () => 2218 })
         const $l22_19 = market
-            .offer("l22_19")
-            .asProduct({ suppliers: layer21, factory: () => 2219 })
+            .add("l22_19")
+            .product({ suppliers: layer21, factory: () => 2219 })
         const $l22_20 = market
-            .offer("l22_20")
-            .asProduct({ suppliers: layer21, factory: () => 2220 })
+            .add("l22_20")
+            .product({ suppliers: layer21, factory: () => 2220 })
         const layer22 = [
             $l22_1,
             $l22_2,
@@ -2136,65 +2136,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 23: depends on layer22 suppliers
         const $l23_1 = market
-            .offer("l23_1")
-            .asProduct({ suppliers: layer22, factory: () => 2301 })
+            .add("l23_1")
+            .product({ suppliers: layer22, factory: () => 2301 })
         const $l23_2 = market
-            .offer("l23_2")
-            .asProduct({ suppliers: layer22, factory: () => 2302 })
+            .add("l23_2")
+            .product({ suppliers: layer22, factory: () => 2302 })
         const $l23_3 = market
-            .offer("l23_3")
-            .asProduct({ suppliers: layer22, factory: () => 2303 })
+            .add("l23_3")
+            .product({ suppliers: layer22, factory: () => 2303 })
         const $l23_4 = market
-            .offer("l23_4")
-            .asProduct({ suppliers: layer22, factory: () => 2304 })
+            .add("l23_4")
+            .product({ suppliers: layer22, factory: () => 2304 })
         const $l23_5 = market
-            .offer("l23_5")
-            .asProduct({ suppliers: layer22, factory: () => 2305 })
+            .add("l23_5")
+            .product({ suppliers: layer22, factory: () => 2305 })
         const $l23_6 = market
-            .offer("l23_6")
-            .asProduct({ suppliers: layer22, factory: () => 2306 })
+            .add("l23_6")
+            .product({ suppliers: layer22, factory: () => 2306 })
         const $l23_7 = market
-            .offer("l23_7")
-            .asProduct({ suppliers: layer22, factory: () => 2307 })
+            .add("l23_7")
+            .product({ suppliers: layer22, factory: () => 2307 })
         const $l23_8 = market
-            .offer("l23_8")
-            .asProduct({ suppliers: layer22, factory: () => 2308 })
+            .add("l23_8")
+            .product({ suppliers: layer22, factory: () => 2308 })
         const $l23_9 = market
-            .offer("l23_9")
-            .asProduct({ suppliers: layer22, factory: () => 2309 })
+            .add("l23_9")
+            .product({ suppliers: layer22, factory: () => 2309 })
         const $l23_10 = market
-            .offer("l23_10")
-            .asProduct({ suppliers: layer22, factory: () => 2310 })
+            .add("l23_10")
+            .product({ suppliers: layer22, factory: () => 2310 })
         const $l23_11 = market
-            .offer("l23_11")
-            .asProduct({ suppliers: layer22, factory: () => 2311 })
+            .add("l23_11")
+            .product({ suppliers: layer22, factory: () => 2311 })
         const $l23_12 = market
-            .offer("l23_12")
-            .asProduct({ suppliers: layer22, factory: () => 2312 })
+            .add("l23_12")
+            .product({ suppliers: layer22, factory: () => 2312 })
         const $l23_13 = market
-            .offer("l23_13")
-            .asProduct({ suppliers: layer22, factory: () => 2313 })
+            .add("l23_13")
+            .product({ suppliers: layer22, factory: () => 2313 })
         const $l23_14 = market
-            .offer("l23_14")
-            .asProduct({ suppliers: layer22, factory: () => 2314 })
+            .add("l23_14")
+            .product({ suppliers: layer22, factory: () => 2314 })
         const $l23_15 = market
-            .offer("l23_15")
-            .asProduct({ suppliers: layer22, factory: () => 2315 })
+            .add("l23_15")
+            .product({ suppliers: layer22, factory: () => 2315 })
         const $l23_16 = market
-            .offer("l23_16")
-            .asProduct({ suppliers: layer22, factory: () => 2316 })
+            .add("l23_16")
+            .product({ suppliers: layer22, factory: () => 2316 })
         const $l23_17 = market
-            .offer("l23_17")
-            .asProduct({ suppliers: layer22, factory: () => 2317 })
+            .add("l23_17")
+            .product({ suppliers: layer22, factory: () => 2317 })
         const $l23_18 = market
-            .offer("l23_18")
-            .asProduct({ suppliers: layer22, factory: () => 2318 })
+            .add("l23_18")
+            .product({ suppliers: layer22, factory: () => 2318 })
         const $l23_19 = market
-            .offer("l23_19")
-            .asProduct({ suppliers: layer22, factory: () => 2319 })
+            .add("l23_19")
+            .product({ suppliers: layer22, factory: () => 2319 })
         const $l23_20 = market
-            .offer("l23_20")
-            .asProduct({ suppliers: layer22, factory: () => 2320 })
+            .add("l23_20")
+            .product({ suppliers: layer22, factory: () => 2320 })
         const layer23 = [
             $l23_1,
             $l23_2,
@@ -2220,65 +2220,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 24: depends on layer23 suppliers
         const $l24_1 = market
-            .offer("l24_1")
-            .asProduct({ suppliers: layer23, factory: () => 2401 })
+            .add("l24_1")
+            .product({ suppliers: layer23, factory: () => 2401 })
         const $l24_2 = market
-            .offer("l24_2")
-            .asProduct({ suppliers: layer23, factory: () => 2402 })
+            .add("l24_2")
+            .product({ suppliers: layer23, factory: () => 2402 })
         const $l24_3 = market
-            .offer("l24_3")
-            .asProduct({ suppliers: layer23, factory: () => 2403 })
+            .add("l24_3")
+            .product({ suppliers: layer23, factory: () => 2403 })
         const $l24_4 = market
-            .offer("l24_4")
-            .asProduct({ suppliers: layer23, factory: () => 2404 })
+            .add("l24_4")
+            .product({ suppliers: layer23, factory: () => 2404 })
         const $l24_5 = market
-            .offer("l24_5")
-            .asProduct({ suppliers: layer23, factory: () => 2405 })
+            .add("l24_5")
+            .product({ suppliers: layer23, factory: () => 2405 })
         const $l24_6 = market
-            .offer("l24_6")
-            .asProduct({ suppliers: layer23, factory: () => 2406 })
+            .add("l24_6")
+            .product({ suppliers: layer23, factory: () => 2406 })
         const $l24_7 = market
-            .offer("l24_7")
-            .asProduct({ suppliers: layer23, factory: () => 2407 })
+            .add("l24_7")
+            .product({ suppliers: layer23, factory: () => 2407 })
         const $l24_8 = market
-            .offer("l24_8")
-            .asProduct({ suppliers: layer23, factory: () => 2408 })
+            .add("l24_8")
+            .product({ suppliers: layer23, factory: () => 2408 })
         const $l24_9 = market
-            .offer("l24_9")
-            .asProduct({ suppliers: layer23, factory: () => 2409 })
+            .add("l24_9")
+            .product({ suppliers: layer23, factory: () => 2409 })
         const $l24_10 = market
-            .offer("l24_10")
-            .asProduct({ suppliers: layer23, factory: () => 2410 })
+            .add("l24_10")
+            .product({ suppliers: layer23, factory: () => 2410 })
         const $l24_11 = market
-            .offer("l24_11")
-            .asProduct({ suppliers: layer23, factory: () => 2411 })
+            .add("l24_11")
+            .product({ suppliers: layer23, factory: () => 2411 })
         const $l24_12 = market
-            .offer("l24_12")
-            .asProduct({ suppliers: layer23, factory: () => 2412 })
+            .add("l24_12")
+            .product({ suppliers: layer23, factory: () => 2412 })
         const $l24_13 = market
-            .offer("l24_13")
-            .asProduct({ suppliers: layer23, factory: () => 2413 })
+            .add("l24_13")
+            .product({ suppliers: layer23, factory: () => 2413 })
         const $l24_14 = market
-            .offer("l24_14")
-            .asProduct({ suppliers: layer23, factory: () => 2414 })
+            .add("l24_14")
+            .product({ suppliers: layer23, factory: () => 2414 })
         const $l24_15 = market
-            .offer("l24_15")
-            .asProduct({ suppliers: layer23, factory: () => 2415 })
+            .add("l24_15")
+            .product({ suppliers: layer23, factory: () => 2415 })
         const $l24_16 = market
-            .offer("l24_16")
-            .asProduct({ suppliers: layer23, factory: () => 2416 })
+            .add("l24_16")
+            .product({ suppliers: layer23, factory: () => 2416 })
         const $l24_17 = market
-            .offer("l24_17")
-            .asProduct({ suppliers: layer23, factory: () => 2417 })
+            .add("l24_17")
+            .product({ suppliers: layer23, factory: () => 2417 })
         const $l24_18 = market
-            .offer("l24_18")
-            .asProduct({ suppliers: layer23, factory: () => 2418 })
+            .add("l24_18")
+            .product({ suppliers: layer23, factory: () => 2418 })
         const $l24_19 = market
-            .offer("l24_19")
-            .asProduct({ suppliers: layer23, factory: () => 2419 })
+            .add("l24_19")
+            .product({ suppliers: layer23, factory: () => 2419 })
         const $l24_20 = market
-            .offer("l24_20")
-            .asProduct({ suppliers: layer23, factory: () => 2420 })
+            .add("l24_20")
+            .product({ suppliers: layer23, factory: () => 2420 })
         const layer24 = [
             $l24_1,
             $l24_2,
@@ -2304,65 +2304,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 25: depends on layer24 suppliers
         const $l25_1 = market
-            .offer("l25_1")
-            .asProduct({ suppliers: layer24, factory: () => 2501 })
+            .add("l25_1")
+            .product({ suppliers: layer24, factory: () => 2501 })
         const $l25_2 = market
-            .offer("l25_2")
-            .asProduct({ suppliers: layer24, factory: () => 2502 })
+            .add("l25_2")
+            .product({ suppliers: layer24, factory: () => 2502 })
         const $l25_3 = market
-            .offer("l25_3")
-            .asProduct({ suppliers: layer24, factory: () => 2503 })
+            .add("l25_3")
+            .product({ suppliers: layer24, factory: () => 2503 })
         const $l25_4 = market
-            .offer("l25_4")
-            .asProduct({ suppliers: layer24, factory: () => 2504 })
+            .add("l25_4")
+            .product({ suppliers: layer24, factory: () => 2504 })
         const $l25_5 = market
-            .offer("l25_5")
-            .asProduct({ suppliers: layer24, factory: () => 2505 })
+            .add("l25_5")
+            .product({ suppliers: layer24, factory: () => 2505 })
         const $l25_6 = market
-            .offer("l25_6")
-            .asProduct({ suppliers: layer24, factory: () => 2506 })
+            .add("l25_6")
+            .product({ suppliers: layer24, factory: () => 2506 })
         const $l25_7 = market
-            .offer("l25_7")
-            .asProduct({ suppliers: layer24, factory: () => 2507 })
+            .add("l25_7")
+            .product({ suppliers: layer24, factory: () => 2507 })
         const $l25_8 = market
-            .offer("l25_8")
-            .asProduct({ suppliers: layer24, factory: () => 2508 })
+            .add("l25_8")
+            .product({ suppliers: layer24, factory: () => 2508 })
         const $l25_9 = market
-            .offer("l25_9")
-            .asProduct({ suppliers: layer24, factory: () => 2509 })
+            .add("l25_9")
+            .product({ suppliers: layer24, factory: () => 2509 })
         const $l25_10 = market
-            .offer("l25_10")
-            .asProduct({ suppliers: layer24, factory: () => 2510 })
+            .add("l25_10")
+            .product({ suppliers: layer24, factory: () => 2510 })
         const $l25_11 = market
-            .offer("l25_11")
-            .asProduct({ suppliers: layer24, factory: () => 2511 })
+            .add("l25_11")
+            .product({ suppliers: layer24, factory: () => 2511 })
         const $l25_12 = market
-            .offer("l25_12")
-            .asProduct({ suppliers: layer24, factory: () => 2512 })
+            .add("l25_12")
+            .product({ suppliers: layer24, factory: () => 2512 })
         const $l25_13 = market
-            .offer("l25_13")
-            .asProduct({ suppliers: layer24, factory: () => 2513 })
+            .add("l25_13")
+            .product({ suppliers: layer24, factory: () => 2513 })
         const $l25_14 = market
-            .offer("l25_14")
-            .asProduct({ suppliers: layer24, factory: () => 2514 })
+            .add("l25_14")
+            .product({ suppliers: layer24, factory: () => 2514 })
         const $l25_15 = market
-            .offer("l25_15")
-            .asProduct({ suppliers: layer24, factory: () => 2515 })
+            .add("l25_15")
+            .product({ suppliers: layer24, factory: () => 2515 })
         const $l25_16 = market
-            .offer("l25_16")
-            .asProduct({ suppliers: layer24, factory: () => 2516 })
+            .add("l25_16")
+            .product({ suppliers: layer24, factory: () => 2516 })
         const $l25_17 = market
-            .offer("l25_17")
-            .asProduct({ suppliers: layer24, factory: () => 2517 })
+            .add("l25_17")
+            .product({ suppliers: layer24, factory: () => 2517 })
         const $l25_18 = market
-            .offer("l25_18")
-            .asProduct({ suppliers: layer24, factory: () => 2518 })
+            .add("l25_18")
+            .product({ suppliers: layer24, factory: () => 2518 })
         const $l25_19 = market
-            .offer("l25_19")
-            .asProduct({ suppliers: layer24, factory: () => 2519 })
+            .add("l25_19")
+            .product({ suppliers: layer24, factory: () => 2519 })
         const $l25_20 = market
-            .offer("l25_20")
-            .asProduct({ suppliers: layer24, factory: () => 2520 })
+            .add("l25_20")
+            .product({ suppliers: layer24, factory: () => 2520 })
         const layer25 = [
             $l25_1,
             $l25_2,
@@ -2388,65 +2388,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 26: depends on layer25 suppliers
         const $l26_1 = market
-            .offer("l26_1")
-            .asProduct({ suppliers: layer25, factory: () => 2601 })
+            .add("l26_1")
+            .product({ suppliers: layer25, factory: () => 2601 })
         const $l26_2 = market
-            .offer("l26_2")
-            .asProduct({ suppliers: layer25, factory: () => 2602 })
+            .add("l26_2")
+            .product({ suppliers: layer25, factory: () => 2602 })
         const $l26_3 = market
-            .offer("l26_3")
-            .asProduct({ suppliers: layer25, factory: () => 2603 })
+            .add("l26_3")
+            .product({ suppliers: layer25, factory: () => 2603 })
         const $l26_4 = market
-            .offer("l26_4")
-            .asProduct({ suppliers: layer25, factory: () => 2604 })
+            .add("l26_4")
+            .product({ suppliers: layer25, factory: () => 2604 })
         const $l26_5 = market
-            .offer("l26_5")
-            .asProduct({ suppliers: layer25, factory: () => 2605 })
+            .add("l26_5")
+            .product({ suppliers: layer25, factory: () => 2605 })
         const $l26_6 = market
-            .offer("l26_6")
-            .asProduct({ suppliers: layer25, factory: () => 2606 })
+            .add("l26_6")
+            .product({ suppliers: layer25, factory: () => 2606 })
         const $l26_7 = market
-            .offer("l26_7")
-            .asProduct({ suppliers: layer25, factory: () => 2607 })
+            .add("l26_7")
+            .product({ suppliers: layer25, factory: () => 2607 })
         const $l26_8 = market
-            .offer("l26_8")
-            .asProduct({ suppliers: layer25, factory: () => 2608 })
+            .add("l26_8")
+            .product({ suppliers: layer25, factory: () => 2608 })
         const $l26_9 = market
-            .offer("l26_9")
-            .asProduct({ suppliers: layer25, factory: () => 2609 })
+            .add("l26_9")
+            .product({ suppliers: layer25, factory: () => 2609 })
         const $l26_10 = market
-            .offer("l26_10")
-            .asProduct({ suppliers: layer25, factory: () => 2610 })
+            .add("l26_10")
+            .product({ suppliers: layer25, factory: () => 2610 })
         const $l26_11 = market
-            .offer("l26_11")
-            .asProduct({ suppliers: layer25, factory: () => 2611 })
+            .add("l26_11")
+            .product({ suppliers: layer25, factory: () => 2611 })
         const $l26_12 = market
-            .offer("l26_12")
-            .asProduct({ suppliers: layer25, factory: () => 2612 })
+            .add("l26_12")
+            .product({ suppliers: layer25, factory: () => 2612 })
         const $l26_13 = market
-            .offer("l26_13")
-            .asProduct({ suppliers: layer25, factory: () => 2613 })
+            .add("l26_13")
+            .product({ suppliers: layer25, factory: () => 2613 })
         const $l26_14 = market
-            .offer("l26_14")
-            .asProduct({ suppliers: layer25, factory: () => 2614 })
+            .add("l26_14")
+            .product({ suppliers: layer25, factory: () => 2614 })
         const $l26_15 = market
-            .offer("l26_15")
-            .asProduct({ suppliers: layer25, factory: () => 2615 })
+            .add("l26_15")
+            .product({ suppliers: layer25, factory: () => 2615 })
         const $l26_16 = market
-            .offer("l26_16")
-            .asProduct({ suppliers: layer25, factory: () => 2616 })
+            .add("l26_16")
+            .product({ suppliers: layer25, factory: () => 2616 })
         const $l26_17 = market
-            .offer("l26_17")
-            .asProduct({ suppliers: layer25, factory: () => 2617 })
+            .add("l26_17")
+            .product({ suppliers: layer25, factory: () => 2617 })
         const $l26_18 = market
-            .offer("l26_18")
-            .asProduct({ suppliers: layer25, factory: () => 2618 })
+            .add("l26_18")
+            .product({ suppliers: layer25, factory: () => 2618 })
         const $l26_19 = market
-            .offer("l26_19")
-            .asProduct({ suppliers: layer25, factory: () => 2619 })
+            .add("l26_19")
+            .product({ suppliers: layer25, factory: () => 2619 })
         const $l26_20 = market
-            .offer("l26_20")
-            .asProduct({ suppliers: layer25, factory: () => 2620 })
+            .add("l26_20")
+            .product({ suppliers: layer25, factory: () => 2620 })
         const layer26 = [
             $l26_1,
             $l26_2,
@@ -2472,65 +2472,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 27: depends on layer26 suppliers
         const $l27_1 = market
-            .offer("l27_1")
-            .asProduct({ suppliers: layer26, factory: () => 2701 })
+            .add("l27_1")
+            .product({ suppliers: layer26, factory: () => 2701 })
         const $l27_2 = market
-            .offer("l27_2")
-            .asProduct({ suppliers: layer26, factory: () => 2702 })
+            .add("l27_2")
+            .product({ suppliers: layer26, factory: () => 2702 })
         const $l27_3 = market
-            .offer("l27_3")
-            .asProduct({ suppliers: layer26, factory: () => 2703 })
+            .add("l27_3")
+            .product({ suppliers: layer26, factory: () => 2703 })
         const $l27_4 = market
-            .offer("l27_4")
-            .asProduct({ suppliers: layer26, factory: () => 2704 })
+            .add("l27_4")
+            .product({ suppliers: layer26, factory: () => 2704 })
         const $l27_5 = market
-            .offer("l27_5")
-            .asProduct({ suppliers: layer26, factory: () => 2705 })
+            .add("l27_5")
+            .product({ suppliers: layer26, factory: () => 2705 })
         const $l27_6 = market
-            .offer("l27_6")
-            .asProduct({ suppliers: layer26, factory: () => 2706 })
+            .add("l27_6")
+            .product({ suppliers: layer26, factory: () => 2706 })
         const $l27_7 = market
-            .offer("l27_7")
-            .asProduct({ suppliers: layer26, factory: () => 2707 })
+            .add("l27_7")
+            .product({ suppliers: layer26, factory: () => 2707 })
         const $l27_8 = market
-            .offer("l27_8")
-            .asProduct({ suppliers: layer26, factory: () => 2708 })
+            .add("l27_8")
+            .product({ suppliers: layer26, factory: () => 2708 })
         const $l27_9 = market
-            .offer("l27_9")
-            .asProduct({ suppliers: layer26, factory: () => 2709 })
+            .add("l27_9")
+            .product({ suppliers: layer26, factory: () => 2709 })
         const $l27_10 = market
-            .offer("l27_10")
-            .asProduct({ suppliers: layer26, factory: () => 2710 })
+            .add("l27_10")
+            .product({ suppliers: layer26, factory: () => 2710 })
         const $l27_11 = market
-            .offer("l27_11")
-            .asProduct({ suppliers: layer26, factory: () => 2711 })
+            .add("l27_11")
+            .product({ suppliers: layer26, factory: () => 2711 })
         const $l27_12 = market
-            .offer("l27_12")
-            .asProduct({ suppliers: layer26, factory: () => 2712 })
+            .add("l27_12")
+            .product({ suppliers: layer26, factory: () => 2712 })
         const $l27_13 = market
-            .offer("l27_13")
-            .asProduct({ suppliers: layer26, factory: () => 2713 })
+            .add("l27_13")
+            .product({ suppliers: layer26, factory: () => 2713 })
         const $l27_14 = market
-            .offer("l27_14")
-            .asProduct({ suppliers: layer26, factory: () => 2714 })
+            .add("l27_14")
+            .product({ suppliers: layer26, factory: () => 2714 })
         const $l27_15 = market
-            .offer("l27_15")
-            .asProduct({ suppliers: layer26, factory: () => 2715 })
+            .add("l27_15")
+            .product({ suppliers: layer26, factory: () => 2715 })
         const $l27_16 = market
-            .offer("l27_16")
-            .asProduct({ suppliers: layer26, factory: () => 2716 })
+            .add("l27_16")
+            .product({ suppliers: layer26, factory: () => 2716 })
         const $l27_17 = market
-            .offer("l27_17")
-            .asProduct({ suppliers: layer26, factory: () => 2717 })
+            .add("l27_17")
+            .product({ suppliers: layer26, factory: () => 2717 })
         const $l27_18 = market
-            .offer("l27_18")
-            .asProduct({ suppliers: layer26, factory: () => 2718 })
+            .add("l27_18")
+            .product({ suppliers: layer26, factory: () => 2718 })
         const $l27_19 = market
-            .offer("l27_19")
-            .asProduct({ suppliers: layer26, factory: () => 2719 })
+            .add("l27_19")
+            .product({ suppliers: layer26, factory: () => 2719 })
         const $l27_20 = market
-            .offer("l27_20")
-            .asProduct({ suppliers: layer26, factory: () => 2720 })
+            .add("l27_20")
+            .product({ suppliers: layer26, factory: () => 2720 })
         const layer27 = [
             $l27_1,
             $l27_2,
@@ -2556,65 +2556,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 28: depends on layer27 suppliers
         const $l28_1 = market
-            .offer("l28_1")
-            .asProduct({ suppliers: layer27, factory: () => 2801 })
+            .add("l28_1")
+            .product({ suppliers: layer27, factory: () => 2801 })
         const $l28_2 = market
-            .offer("l28_2")
-            .asProduct({ suppliers: layer27, factory: () => 2802 })
+            .add("l28_2")
+            .product({ suppliers: layer27, factory: () => 2802 })
         const $l28_3 = market
-            .offer("l28_3")
-            .asProduct({ suppliers: layer27, factory: () => 2803 })
+            .add("l28_3")
+            .product({ suppliers: layer27, factory: () => 2803 })
         const $l28_4 = market
-            .offer("l28_4")
-            .asProduct({ suppliers: layer27, factory: () => 2804 })
+            .add("l28_4")
+            .product({ suppliers: layer27, factory: () => 2804 })
         const $l28_5 = market
-            .offer("l28_5")
-            .asProduct({ suppliers: layer27, factory: () => 2805 })
+            .add("l28_5")
+            .product({ suppliers: layer27, factory: () => 2805 })
         const $l28_6 = market
-            .offer("l28_6")
-            .asProduct({ suppliers: layer27, factory: () => 2806 })
+            .add("l28_6")
+            .product({ suppliers: layer27, factory: () => 2806 })
         const $l28_7 = market
-            .offer("l28_7")
-            .asProduct({ suppliers: layer27, factory: () => 2807 })
+            .add("l28_7")
+            .product({ suppliers: layer27, factory: () => 2807 })
         const $l28_8 = market
-            .offer("l28_8")
-            .asProduct({ suppliers: layer27, factory: () => 2808 })
+            .add("l28_8")
+            .product({ suppliers: layer27, factory: () => 2808 })
         const $l28_9 = market
-            .offer("l28_9")
-            .asProduct({ suppliers: layer27, factory: () => 2809 })
+            .add("l28_9")
+            .product({ suppliers: layer27, factory: () => 2809 })
         const $l28_10 = market
-            .offer("l28_10")
-            .asProduct({ suppliers: layer27, factory: () => 2810 })
+            .add("l28_10")
+            .product({ suppliers: layer27, factory: () => 2810 })
         const $l28_11 = market
-            .offer("l28_11")
-            .asProduct({ suppliers: layer27, factory: () => 2811 })
+            .add("l28_11")
+            .product({ suppliers: layer27, factory: () => 2811 })
         const $l28_12 = market
-            .offer("l28_12")
-            .asProduct({ suppliers: layer27, factory: () => 2812 })
+            .add("l28_12")
+            .product({ suppliers: layer27, factory: () => 2812 })
         const $l28_13 = market
-            .offer("l28_13")
-            .asProduct({ suppliers: layer27, factory: () => 2813 })
+            .add("l28_13")
+            .product({ suppliers: layer27, factory: () => 2813 })
         const $l28_14 = market
-            .offer("l28_14")
-            .asProduct({ suppliers: layer27, factory: () => 2814 })
+            .add("l28_14")
+            .product({ suppliers: layer27, factory: () => 2814 })
         const $l28_15 = market
-            .offer("l28_15")
-            .asProduct({ suppliers: layer27, factory: () => 2815 })
+            .add("l28_15")
+            .product({ suppliers: layer27, factory: () => 2815 })
         const $l28_16 = market
-            .offer("l28_16")
-            .asProduct({ suppliers: layer27, factory: () => 2816 })
+            .add("l28_16")
+            .product({ suppliers: layer27, factory: () => 2816 })
         const $l28_17 = market
-            .offer("l28_17")
-            .asProduct({ suppliers: layer27, factory: () => 2817 })
+            .add("l28_17")
+            .product({ suppliers: layer27, factory: () => 2817 })
         const $l28_18 = market
-            .offer("l28_18")
-            .asProduct({ suppliers: layer27, factory: () => 2818 })
+            .add("l28_18")
+            .product({ suppliers: layer27, factory: () => 2818 })
         const $l28_19 = market
-            .offer("l28_19")
-            .asProduct({ suppliers: layer27, factory: () => 2819 })
+            .add("l28_19")
+            .product({ suppliers: layer27, factory: () => 2819 })
         const $l28_20 = market
-            .offer("l28_20")
-            .asProduct({ suppliers: layer27, factory: () => 2820 })
+            .add("l28_20")
+            .product({ suppliers: layer27, factory: () => 2820 })
         const layer28 = [
             $l28_1,
             $l28_2,
@@ -2640,65 +2640,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 29: depends on layer28 suppliers
         const $l29_1 = market
-            .offer("l29_1")
-            .asProduct({ suppliers: layer28, factory: () => 2901 })
+            .add("l29_1")
+            .product({ suppliers: layer28, factory: () => 2901 })
         const $l29_2 = market
-            .offer("l29_2")
-            .asProduct({ suppliers: layer28, factory: () => 2902 })
+            .add("l29_2")
+            .product({ suppliers: layer28, factory: () => 2902 })
         const $l29_3 = market
-            .offer("l29_3")
-            .asProduct({ suppliers: layer28, factory: () => 2903 })
+            .add("l29_3")
+            .product({ suppliers: layer28, factory: () => 2903 })
         const $l29_4 = market
-            .offer("l29_4")
-            .asProduct({ suppliers: layer28, factory: () => 2904 })
+            .add("l29_4")
+            .product({ suppliers: layer28, factory: () => 2904 })
         const $l29_5 = market
-            .offer("l29_5")
-            .asProduct({ suppliers: layer28, factory: () => 2905 })
+            .add("l29_5")
+            .product({ suppliers: layer28, factory: () => 2905 })
         const $l29_6 = market
-            .offer("l29_6")
-            .asProduct({ suppliers: layer28, factory: () => 2906 })
+            .add("l29_6")
+            .product({ suppliers: layer28, factory: () => 2906 })
         const $l29_7 = market
-            .offer("l29_7")
-            .asProduct({ suppliers: layer28, factory: () => 2907 })
+            .add("l29_7")
+            .product({ suppliers: layer28, factory: () => 2907 })
         const $l29_8 = market
-            .offer("l29_8")
-            .asProduct({ suppliers: layer28, factory: () => 2908 })
+            .add("l29_8")
+            .product({ suppliers: layer28, factory: () => 2908 })
         const $l29_9 = market
-            .offer("l29_9")
-            .asProduct({ suppliers: layer28, factory: () => 2909 })
+            .add("l29_9")
+            .product({ suppliers: layer28, factory: () => 2909 })
         const $l29_10 = market
-            .offer("l29_10")
-            .asProduct({ suppliers: layer28, factory: () => 2910 })
+            .add("l29_10")
+            .product({ suppliers: layer28, factory: () => 2910 })
         const $l29_11 = market
-            .offer("l29_11")
-            .asProduct({ suppliers: layer28, factory: () => 2911 })
+            .add("l29_11")
+            .product({ suppliers: layer28, factory: () => 2911 })
         const $l29_12 = market
-            .offer("l29_12")
-            .asProduct({ suppliers: layer28, factory: () => 2912 })
+            .add("l29_12")
+            .product({ suppliers: layer28, factory: () => 2912 })
         const $l29_13 = market
-            .offer("l29_13")
-            .asProduct({ suppliers: layer28, factory: () => 2913 })
+            .add("l29_13")
+            .product({ suppliers: layer28, factory: () => 2913 })
         const $l29_14 = market
-            .offer("l29_14")
-            .asProduct({ suppliers: layer28, factory: () => 2914 })
+            .add("l29_14")
+            .product({ suppliers: layer28, factory: () => 2914 })
         const $l29_15 = market
-            .offer("l29_15")
-            .asProduct({ suppliers: layer28, factory: () => 2915 })
+            .add("l29_15")
+            .product({ suppliers: layer28, factory: () => 2915 })
         const $l29_16 = market
-            .offer("l29_16")
-            .asProduct({ suppliers: layer28, factory: () => 2916 })
+            .add("l29_16")
+            .product({ suppliers: layer28, factory: () => 2916 })
         const $l29_17 = market
-            .offer("l29_17")
-            .asProduct({ suppliers: layer28, factory: () => 2917 })
+            .add("l29_17")
+            .product({ suppliers: layer28, factory: () => 2917 })
         const $l29_18 = market
-            .offer("l29_18")
-            .asProduct({ suppliers: layer28, factory: () => 2918 })
+            .add("l29_18")
+            .product({ suppliers: layer28, factory: () => 2918 })
         const $l29_19 = market
-            .offer("l29_19")
-            .asProduct({ suppliers: layer28, factory: () => 2919 })
+            .add("l29_19")
+            .product({ suppliers: layer28, factory: () => 2919 })
         const $l29_20 = market
-            .offer("l29_20")
-            .asProduct({ suppliers: layer28, factory: () => 2920 })
+            .add("l29_20")
+            .product({ suppliers: layer28, factory: () => 2920 })
         const layer29 = [
             $l29_1,
             $l29_2,
@@ -2724,65 +2724,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 30: depends on layer29 suppliers
         const $l30_1 = market
-            .offer("l30_1")
-            .asProduct({ suppliers: layer29, factory: () => 3001 })
+            .add("l30_1")
+            .product({ suppliers: layer29, factory: () => 3001 })
         const $l30_2 = market
-            .offer("l30_2")
-            .asProduct({ suppliers: layer29, factory: () => 3002 })
+            .add("l30_2")
+            .product({ suppliers: layer29, factory: () => 3002 })
         const $l30_3 = market
-            .offer("l30_3")
-            .asProduct({ suppliers: layer29, factory: () => 3003 })
+            .add("l30_3")
+            .product({ suppliers: layer29, factory: () => 3003 })
         const $l30_4 = market
-            .offer("l30_4")
-            .asProduct({ suppliers: layer29, factory: () => 3004 })
+            .add("l30_4")
+            .product({ suppliers: layer29, factory: () => 3004 })
         const $l30_5 = market
-            .offer("l30_5")
-            .asProduct({ suppliers: layer29, factory: () => 3005 })
+            .add("l30_5")
+            .product({ suppliers: layer29, factory: () => 3005 })
         const $l30_6 = market
-            .offer("l30_6")
-            .asProduct({ suppliers: layer29, factory: () => 3006 })
+            .add("l30_6")
+            .product({ suppliers: layer29, factory: () => 3006 })
         const $l30_7 = market
-            .offer("l30_7")
-            .asProduct({ suppliers: layer29, factory: () => 3007 })
+            .add("l30_7")
+            .product({ suppliers: layer29, factory: () => 3007 })
         const $l30_8 = market
-            .offer("l30_8")
-            .asProduct({ suppliers: layer29, factory: () => 3008 })
+            .add("l30_8")
+            .product({ suppliers: layer29, factory: () => 3008 })
         const $l30_9 = market
-            .offer("l30_9")
-            .asProduct({ suppliers: layer29, factory: () => 3009 })
+            .add("l30_9")
+            .product({ suppliers: layer29, factory: () => 3009 })
         const $l30_10 = market
-            .offer("l30_10")
-            .asProduct({ suppliers: layer29, factory: () => 3010 })
+            .add("l30_10")
+            .product({ suppliers: layer29, factory: () => 3010 })
         const $l30_11 = market
-            .offer("l30_11")
-            .asProduct({ suppliers: layer29, factory: () => 3011 })
+            .add("l30_11")
+            .product({ suppliers: layer29, factory: () => 3011 })
         const $l30_12 = market
-            .offer("l30_12")
-            .asProduct({ suppliers: layer29, factory: () => 3012 })
+            .add("l30_12")
+            .product({ suppliers: layer29, factory: () => 3012 })
         const $l30_13 = market
-            .offer("l30_13")
-            .asProduct({ suppliers: layer29, factory: () => 3013 })
+            .add("l30_13")
+            .product({ suppliers: layer29, factory: () => 3013 })
         const $l30_14 = market
-            .offer("l30_14")
-            .asProduct({ suppliers: layer29, factory: () => 3014 })
+            .add("l30_14")
+            .product({ suppliers: layer29, factory: () => 3014 })
         const $l30_15 = market
-            .offer("l30_15")
-            .asProduct({ suppliers: layer29, factory: () => 3015 })
+            .add("l30_15")
+            .product({ suppliers: layer29, factory: () => 3015 })
         const $l30_16 = market
-            .offer("l30_16")
-            .asProduct({ suppliers: layer29, factory: () => 3016 })
+            .add("l30_16")
+            .product({ suppliers: layer29, factory: () => 3016 })
         const $l30_17 = market
-            .offer("l30_17")
-            .asProduct({ suppliers: layer29, factory: () => 3017 })
+            .add("l30_17")
+            .product({ suppliers: layer29, factory: () => 3017 })
         const $l30_18 = market
-            .offer("l30_18")
-            .asProduct({ suppliers: layer29, factory: () => 3018 })
+            .add("l30_18")
+            .product({ suppliers: layer29, factory: () => 3018 })
         const $l30_19 = market
-            .offer("l30_19")
-            .asProduct({ suppliers: layer29, factory: () => 3019 })
+            .add("l30_19")
+            .product({ suppliers: layer29, factory: () => 3019 })
         const $l30_20 = market
-            .offer("l30_20")
-            .asProduct({ suppliers: layer29, factory: () => 3020 })
+            .add("l30_20")
+            .product({ suppliers: layer29, factory: () => 3020 })
         const layer30 = [
             $l30_1,
             $l30_2,
@@ -2808,65 +2808,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 31: depends on layer30 suppliers
         const $l31_1 = market
-            .offer("l31_1")
-            .asProduct({ suppliers: layer30, factory: () => 3101 })
+            .add("l31_1")
+            .product({ suppliers: layer30, factory: () => 3101 })
         const $l31_2 = market
-            .offer("l31_2")
-            .asProduct({ suppliers: layer30, factory: () => 3102 })
+            .add("l31_2")
+            .product({ suppliers: layer30, factory: () => 3102 })
         const $l31_3 = market
-            .offer("l31_3")
-            .asProduct({ suppliers: layer30, factory: () => 3103 })
+            .add("l31_3")
+            .product({ suppliers: layer30, factory: () => 3103 })
         const $l31_4 = market
-            .offer("l31_4")
-            .asProduct({ suppliers: layer30, factory: () => 3104 })
+            .add("l31_4")
+            .product({ suppliers: layer30, factory: () => 3104 })
         const $l31_5 = market
-            .offer("l31_5")
-            .asProduct({ suppliers: layer30, factory: () => 3105 })
+            .add("l31_5")
+            .product({ suppliers: layer30, factory: () => 3105 })
         const $l31_6 = market
-            .offer("l31_6")
-            .asProduct({ suppliers: layer30, factory: () => 3106 })
+            .add("l31_6")
+            .product({ suppliers: layer30, factory: () => 3106 })
         const $l31_7 = market
-            .offer("l31_7")
-            .asProduct({ suppliers: layer30, factory: () => 3107 })
+            .add("l31_7")
+            .product({ suppliers: layer30, factory: () => 3107 })
         const $l31_8 = market
-            .offer("l31_8")
-            .asProduct({ suppliers: layer30, factory: () => 3108 })
+            .add("l31_8")
+            .product({ suppliers: layer30, factory: () => 3108 })
         const $l31_9 = market
-            .offer("l31_9")
-            .asProduct({ suppliers: layer30, factory: () => 3109 })
+            .add("l31_9")
+            .product({ suppliers: layer30, factory: () => 3109 })
         const $l31_10 = market
-            .offer("l31_10")
-            .asProduct({ suppliers: layer30, factory: () => 3110 })
+            .add("l31_10")
+            .product({ suppliers: layer30, factory: () => 3110 })
         const $l31_11 = market
-            .offer("l31_11")
-            .asProduct({ suppliers: layer30, factory: () => 3111 })
+            .add("l31_11")
+            .product({ suppliers: layer30, factory: () => 3111 })
         const $l31_12 = market
-            .offer("l31_12")
-            .asProduct({ suppliers: layer30, factory: () => 3112 })
+            .add("l31_12")
+            .product({ suppliers: layer30, factory: () => 3112 })
         const $l31_13 = market
-            .offer("l31_13")
-            .asProduct({ suppliers: layer30, factory: () => 3113 })
+            .add("l31_13")
+            .product({ suppliers: layer30, factory: () => 3113 })
         const $l31_14 = market
-            .offer("l31_14")
-            .asProduct({ suppliers: layer30, factory: () => 3114 })
+            .add("l31_14")
+            .product({ suppliers: layer30, factory: () => 3114 })
         const $l31_15 = market
-            .offer("l31_15")
-            .asProduct({ suppliers: layer30, factory: () => 3115 })
+            .add("l31_15")
+            .product({ suppliers: layer30, factory: () => 3115 })
         const $l31_16 = market
-            .offer("l31_16")
-            .asProduct({ suppliers: layer30, factory: () => 3116 })
+            .add("l31_16")
+            .product({ suppliers: layer30, factory: () => 3116 })
         const $l31_17 = market
-            .offer("l31_17")
-            .asProduct({ suppliers: layer30, factory: () => 3117 })
+            .add("l31_17")
+            .product({ suppliers: layer30, factory: () => 3117 })
         const $l31_18 = market
-            .offer("l31_18")
-            .asProduct({ suppliers: layer30, factory: () => 3118 })
+            .add("l31_18")
+            .product({ suppliers: layer30, factory: () => 3118 })
         const $l31_19 = market
-            .offer("l31_19")
-            .asProduct({ suppliers: layer30, factory: () => 3119 })
+            .add("l31_19")
+            .product({ suppliers: layer30, factory: () => 3119 })
         const $l31_20 = market
-            .offer("l31_20")
-            .asProduct({ suppliers: layer30, factory: () => 3120 })
+            .add("l31_20")
+            .product({ suppliers: layer30, factory: () => 3120 })
         const layer31 = [
             $l31_1,
             $l31_2,
@@ -2892,65 +2892,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 32: depends on layer31 suppliers
         const $l32_1 = market
-            .offer("l32_1")
-            .asProduct({ suppliers: layer31, factory: () => 3201 })
+            .add("l32_1")
+            .product({ suppliers: layer31, factory: () => 3201 })
         const $l32_2 = market
-            .offer("l32_2")
-            .asProduct({ suppliers: layer31, factory: () => 3202 })
+            .add("l32_2")
+            .product({ suppliers: layer31, factory: () => 3202 })
         const $l32_3 = market
-            .offer("l32_3")
-            .asProduct({ suppliers: layer31, factory: () => 3203 })
+            .add("l32_3")
+            .product({ suppliers: layer31, factory: () => 3203 })
         const $l32_4 = market
-            .offer("l32_4")
-            .asProduct({ suppliers: layer31, factory: () => 3204 })
+            .add("l32_4")
+            .product({ suppliers: layer31, factory: () => 3204 })
         const $l32_5 = market
-            .offer("l32_5")
-            .asProduct({ suppliers: layer31, factory: () => 3205 })
+            .add("l32_5")
+            .product({ suppliers: layer31, factory: () => 3205 })
         const $l32_6 = market
-            .offer("l32_6")
-            .asProduct({ suppliers: layer31, factory: () => 3206 })
+            .add("l32_6")
+            .product({ suppliers: layer31, factory: () => 3206 })
         const $l32_7 = market
-            .offer("l32_7")
-            .asProduct({ suppliers: layer31, factory: () => 3207 })
+            .add("l32_7")
+            .product({ suppliers: layer31, factory: () => 3207 })
         const $l32_8 = market
-            .offer("l32_8")
-            .asProduct({ suppliers: layer31, factory: () => 3208 })
+            .add("l32_8")
+            .product({ suppliers: layer31, factory: () => 3208 })
         const $l32_9 = market
-            .offer("l32_9")
-            .asProduct({ suppliers: layer31, factory: () => 3209 })
+            .add("l32_9")
+            .product({ suppliers: layer31, factory: () => 3209 })
         const $l32_10 = market
-            .offer("l32_10")
-            .asProduct({ suppliers: layer31, factory: () => 3210 })
+            .add("l32_10")
+            .product({ suppliers: layer31, factory: () => 3210 })
         const $l32_11 = market
-            .offer("l32_11")
-            .asProduct({ suppliers: layer31, factory: () => 3211 })
+            .add("l32_11")
+            .product({ suppliers: layer31, factory: () => 3211 })
         const $l32_12 = market
-            .offer("l32_12")
-            .asProduct({ suppliers: layer31, factory: () => 3212 })
+            .add("l32_12")
+            .product({ suppliers: layer31, factory: () => 3212 })
         const $l32_13 = market
-            .offer("l32_13")
-            .asProduct({ suppliers: layer31, factory: () => 3213 })
+            .add("l32_13")
+            .product({ suppliers: layer31, factory: () => 3213 })
         const $l32_14 = market
-            .offer("l32_14")
-            .asProduct({ suppliers: layer31, factory: () => 3214 })
+            .add("l32_14")
+            .product({ suppliers: layer31, factory: () => 3214 })
         const $l32_15 = market
-            .offer("l32_15")
-            .asProduct({ suppliers: layer31, factory: () => 3215 })
+            .add("l32_15")
+            .product({ suppliers: layer31, factory: () => 3215 })
         const $l32_16 = market
-            .offer("l32_16")
-            .asProduct({ suppliers: layer31, factory: () => 3216 })
+            .add("l32_16")
+            .product({ suppliers: layer31, factory: () => 3216 })
         const $l32_17 = market
-            .offer("l32_17")
-            .asProduct({ suppliers: layer31, factory: () => 3217 })
+            .add("l32_17")
+            .product({ suppliers: layer31, factory: () => 3217 })
         const $l32_18 = market
-            .offer("l32_18")
-            .asProduct({ suppliers: layer31, factory: () => 3218 })
+            .add("l32_18")
+            .product({ suppliers: layer31, factory: () => 3218 })
         const $l32_19 = market
-            .offer("l32_19")
-            .asProduct({ suppliers: layer31, factory: () => 3219 })
+            .add("l32_19")
+            .product({ suppliers: layer31, factory: () => 3219 })
         const $l32_20 = market
-            .offer("l32_20")
-            .asProduct({ suppliers: layer31, factory: () => 3220 })
+            .add("l32_20")
+            .product({ suppliers: layer31, factory: () => 3220 })
         const layer32 = [
             $l32_1,
             $l32_2,
@@ -2976,65 +2976,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 33: depends on layer32 suppliers
         const $l33_1 = market
-            .offer("l33_1")
-            .asProduct({ suppliers: layer32, factory: () => 3301 })
+            .add("l33_1")
+            .product({ suppliers: layer32, factory: () => 3301 })
         const $l33_2 = market
-            .offer("l33_2")
-            .asProduct({ suppliers: layer32, factory: () => 3302 })
+            .add("l33_2")
+            .product({ suppliers: layer32, factory: () => 3302 })
         const $l33_3 = market
-            .offer("l33_3")
-            .asProduct({ suppliers: layer32, factory: () => 3303 })
+            .add("l33_3")
+            .product({ suppliers: layer32, factory: () => 3303 })
         const $l33_4 = market
-            .offer("l33_4")
-            .asProduct({ suppliers: layer32, factory: () => 3304 })
+            .add("l33_4")
+            .product({ suppliers: layer32, factory: () => 3304 })
         const $l33_5 = market
-            .offer("l33_5")
-            .asProduct({ suppliers: layer32, factory: () => 3305 })
+            .add("l33_5")
+            .product({ suppliers: layer32, factory: () => 3305 })
         const $l33_6 = market
-            .offer("l33_6")
-            .asProduct({ suppliers: layer32, factory: () => 3306 })
+            .add("l33_6")
+            .product({ suppliers: layer32, factory: () => 3306 })
         const $l33_7 = market
-            .offer("l33_7")
-            .asProduct({ suppliers: layer32, factory: () => 3307 })
+            .add("l33_7")
+            .product({ suppliers: layer32, factory: () => 3307 })
         const $l33_8 = market
-            .offer("l33_8")
-            .asProduct({ suppliers: layer32, factory: () => 3308 })
+            .add("l33_8")
+            .product({ suppliers: layer32, factory: () => 3308 })
         const $l33_9 = market
-            .offer("l33_9")
-            .asProduct({ suppliers: layer32, factory: () => 3309 })
+            .add("l33_9")
+            .product({ suppliers: layer32, factory: () => 3309 })
         const $l33_10 = market
-            .offer("l33_10")
-            .asProduct({ suppliers: layer32, factory: () => 3310 })
+            .add("l33_10")
+            .product({ suppliers: layer32, factory: () => 3310 })
         const $l33_11 = market
-            .offer("l33_11")
-            .asProduct({ suppliers: layer32, factory: () => 3311 })
+            .add("l33_11")
+            .product({ suppliers: layer32, factory: () => 3311 })
         const $l33_12 = market
-            .offer("l33_12")
-            .asProduct({ suppliers: layer32, factory: () => 3312 })
+            .add("l33_12")
+            .product({ suppliers: layer32, factory: () => 3312 })
         const $l33_13 = market
-            .offer("l33_13")
-            .asProduct({ suppliers: layer32, factory: () => 3313 })
+            .add("l33_13")
+            .product({ suppliers: layer32, factory: () => 3313 })
         const $l33_14 = market
-            .offer("l33_14")
-            .asProduct({ suppliers: layer32, factory: () => 3314 })
+            .add("l33_14")
+            .product({ suppliers: layer32, factory: () => 3314 })
         const $l33_15 = market
-            .offer("l33_15")
-            .asProduct({ suppliers: layer32, factory: () => 3315 })
+            .add("l33_15")
+            .product({ suppliers: layer32, factory: () => 3315 })
         const $l33_16 = market
-            .offer("l33_16")
-            .asProduct({ suppliers: layer32, factory: () => 3316 })
+            .add("l33_16")
+            .product({ suppliers: layer32, factory: () => 3316 })
         const $l33_17 = market
-            .offer("l33_17")
-            .asProduct({ suppliers: layer32, factory: () => 3317 })
+            .add("l33_17")
+            .product({ suppliers: layer32, factory: () => 3317 })
         const $l33_18 = market
-            .offer("l33_18")
-            .asProduct({ suppliers: layer32, factory: () => 3318 })
+            .add("l33_18")
+            .product({ suppliers: layer32, factory: () => 3318 })
         const $l33_19 = market
-            .offer("l33_19")
-            .asProduct({ suppliers: layer32, factory: () => 3319 })
+            .add("l33_19")
+            .product({ suppliers: layer32, factory: () => 3319 })
         const $l33_20 = market
-            .offer("l33_20")
-            .asProduct({ suppliers: layer32, factory: () => 3320 })
+            .add("l33_20")
+            .product({ suppliers: layer32, factory: () => 3320 })
         const layer33 = [
             $l33_1,
             $l33_2,
@@ -3060,65 +3060,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 34: depends on layer33 suppliers
         const $l34_1 = market
-            .offer("l34_1")
-            .asProduct({ suppliers: layer33, factory: () => 3401 })
+            .add("l34_1")
+            .product({ suppliers: layer33, factory: () => 3401 })
         const $l34_2 = market
-            .offer("l34_2")
-            .asProduct({ suppliers: layer33, factory: () => 3402 })
+            .add("l34_2")
+            .product({ suppliers: layer33, factory: () => 3402 })
         const $l34_3 = market
-            .offer("l34_3")
-            .asProduct({ suppliers: layer33, factory: () => 3403 })
+            .add("l34_3")
+            .product({ suppliers: layer33, factory: () => 3403 })
         const $l34_4 = market
-            .offer("l34_4")
-            .asProduct({ suppliers: layer33, factory: () => 3404 })
+            .add("l34_4")
+            .product({ suppliers: layer33, factory: () => 3404 })
         const $l34_5 = market
-            .offer("l34_5")
-            .asProduct({ suppliers: layer33, factory: () => 3405 })
+            .add("l34_5")
+            .product({ suppliers: layer33, factory: () => 3405 })
         const $l34_6 = market
-            .offer("l34_6")
-            .asProduct({ suppliers: layer33, factory: () => 3406 })
+            .add("l34_6")
+            .product({ suppliers: layer33, factory: () => 3406 })
         const $l34_7 = market
-            .offer("l34_7")
-            .asProduct({ suppliers: layer33, factory: () => 3407 })
+            .add("l34_7")
+            .product({ suppliers: layer33, factory: () => 3407 })
         const $l34_8 = market
-            .offer("l34_8")
-            .asProduct({ suppliers: layer33, factory: () => 3408 })
+            .add("l34_8")
+            .product({ suppliers: layer33, factory: () => 3408 })
         const $l34_9 = market
-            .offer("l34_9")
-            .asProduct({ suppliers: layer33, factory: () => 3409 })
+            .add("l34_9")
+            .product({ suppliers: layer33, factory: () => 3409 })
         const $l34_10 = market
-            .offer("l34_10")
-            .asProduct({ suppliers: layer33, factory: () => 3410 })
+            .add("l34_10")
+            .product({ suppliers: layer33, factory: () => 3410 })
         const $l34_11 = market
-            .offer("l34_11")
-            .asProduct({ suppliers: layer33, factory: () => 3411 })
+            .add("l34_11")
+            .product({ suppliers: layer33, factory: () => 3411 })
         const $l34_12 = market
-            .offer("l34_12")
-            .asProduct({ suppliers: layer33, factory: () => 3412 })
+            .add("l34_12")
+            .product({ suppliers: layer33, factory: () => 3412 })
         const $l34_13 = market
-            .offer("l34_13")
-            .asProduct({ suppliers: layer33, factory: () => 3413 })
+            .add("l34_13")
+            .product({ suppliers: layer33, factory: () => 3413 })
         const $l34_14 = market
-            .offer("l34_14")
-            .asProduct({ suppliers: layer33, factory: () => 3414 })
+            .add("l34_14")
+            .product({ suppliers: layer33, factory: () => 3414 })
         const $l34_15 = market
-            .offer("l34_15")
-            .asProduct({ suppliers: layer33, factory: () => 3415 })
+            .add("l34_15")
+            .product({ suppliers: layer33, factory: () => 3415 })
         const $l34_16 = market
-            .offer("l34_16")
-            .asProduct({ suppliers: layer33, factory: () => 3416 })
+            .add("l34_16")
+            .product({ suppliers: layer33, factory: () => 3416 })
         const $l34_17 = market
-            .offer("l34_17")
-            .asProduct({ suppliers: layer33, factory: () => 3417 })
+            .add("l34_17")
+            .product({ suppliers: layer33, factory: () => 3417 })
         const $l34_18 = market
-            .offer("l34_18")
-            .asProduct({ suppliers: layer33, factory: () => 3418 })
+            .add("l34_18")
+            .product({ suppliers: layer33, factory: () => 3418 })
         const $l34_19 = market
-            .offer("l34_19")
-            .asProduct({ suppliers: layer33, factory: () => 3419 })
+            .add("l34_19")
+            .product({ suppliers: layer33, factory: () => 3419 })
         const $l34_20 = market
-            .offer("l34_20")
-            .asProduct({ suppliers: layer33, factory: () => 3420 })
+            .add("l34_20")
+            .product({ suppliers: layer33, factory: () => 3420 })
         const layer34 = [
             $l34_1,
             $l34_2,
@@ -3144,65 +3144,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 35: depends on layer34 suppliers
         const $l35_1 = market
-            .offer("l35_1")
-            .asProduct({ suppliers: layer34, factory: () => 3501 })
+            .add("l35_1")
+            .product({ suppliers: layer34, factory: () => 3501 })
         const $l35_2 = market
-            .offer("l35_2")
-            .asProduct({ suppliers: layer34, factory: () => 3502 })
+            .add("l35_2")
+            .product({ suppliers: layer34, factory: () => 3502 })
         const $l35_3 = market
-            .offer("l35_3")
-            .asProduct({ suppliers: layer34, factory: () => 3503 })
+            .add("l35_3")
+            .product({ suppliers: layer34, factory: () => 3503 })
         const $l35_4 = market
-            .offer("l35_4")
-            .asProduct({ suppliers: layer34, factory: () => 3504 })
+            .add("l35_4")
+            .product({ suppliers: layer34, factory: () => 3504 })
         const $l35_5 = market
-            .offer("l35_5")
-            .asProduct({ suppliers: layer34, factory: () => 3505 })
+            .add("l35_5")
+            .product({ suppliers: layer34, factory: () => 3505 })
         const $l35_6 = market
-            .offer("l35_6")
-            .asProduct({ suppliers: layer34, factory: () => 3506 })
+            .add("l35_6")
+            .product({ suppliers: layer34, factory: () => 3506 })
         const $l35_7 = market
-            .offer("l35_7")
-            .asProduct({ suppliers: layer34, factory: () => 3507 })
+            .add("l35_7")
+            .product({ suppliers: layer34, factory: () => 3507 })
         const $l35_8 = market
-            .offer("l35_8")
-            .asProduct({ suppliers: layer34, factory: () => 3508 })
+            .add("l35_8")
+            .product({ suppliers: layer34, factory: () => 3508 })
         const $l35_9 = market
-            .offer("l35_9")
-            .asProduct({ suppliers: layer34, factory: () => 3509 })
+            .add("l35_9")
+            .product({ suppliers: layer34, factory: () => 3509 })
         const $l35_10 = market
-            .offer("l35_10")
-            .asProduct({ suppliers: layer34, factory: () => 3510 })
+            .add("l35_10")
+            .product({ suppliers: layer34, factory: () => 3510 })
         const $l35_11 = market
-            .offer("l35_11")
-            .asProduct({ suppliers: layer34, factory: () => 3511 })
+            .add("l35_11")
+            .product({ suppliers: layer34, factory: () => 3511 })
         const $l35_12 = market
-            .offer("l35_12")
-            .asProduct({ suppliers: layer34, factory: () => 3512 })
+            .add("l35_12")
+            .product({ suppliers: layer34, factory: () => 3512 })
         const $l35_13 = market
-            .offer("l35_13")
-            .asProduct({ suppliers: layer34, factory: () => 3513 })
+            .add("l35_13")
+            .product({ suppliers: layer34, factory: () => 3513 })
         const $l35_14 = market
-            .offer("l35_14")
-            .asProduct({ suppliers: layer34, factory: () => 3514 })
+            .add("l35_14")
+            .product({ suppliers: layer34, factory: () => 3514 })
         const $l35_15 = market
-            .offer("l35_15")
-            .asProduct({ suppliers: layer34, factory: () => 3515 })
+            .add("l35_15")
+            .product({ suppliers: layer34, factory: () => 3515 })
         const $l35_16 = market
-            .offer("l35_16")
-            .asProduct({ suppliers: layer34, factory: () => 3516 })
+            .add("l35_16")
+            .product({ suppliers: layer34, factory: () => 3516 })
         const $l35_17 = market
-            .offer("l35_17")
-            .asProduct({ suppliers: layer34, factory: () => 3517 })
+            .add("l35_17")
+            .product({ suppliers: layer34, factory: () => 3517 })
         const $l35_18 = market
-            .offer("l35_18")
-            .asProduct({ suppliers: layer34, factory: () => 3518 })
+            .add("l35_18")
+            .product({ suppliers: layer34, factory: () => 3518 })
         const $l35_19 = market
-            .offer("l35_19")
-            .asProduct({ suppliers: layer34, factory: () => 3519 })
+            .add("l35_19")
+            .product({ suppliers: layer34, factory: () => 3519 })
         const $l35_20 = market
-            .offer("l35_20")
-            .asProduct({ suppliers: layer34, factory: () => 3520 })
+            .add("l35_20")
+            .product({ suppliers: layer34, factory: () => 3520 })
         const layer35 = [
             $l35_1,
             $l35_2,
@@ -3228,65 +3228,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 36: depends on layer35 suppliers
         const $l36_1 = market
-            .offer("l36_1")
-            .asProduct({ suppliers: layer35, factory: () => 3601 })
+            .add("l36_1")
+            .product({ suppliers: layer35, factory: () => 3601 })
         const $l36_2 = market
-            .offer("l36_2")
-            .asProduct({ suppliers: layer35, factory: () => 3602 })
+            .add("l36_2")
+            .product({ suppliers: layer35, factory: () => 3602 })
         const $l36_3 = market
-            .offer("l36_3")
-            .asProduct({ suppliers: layer35, factory: () => 3603 })
+            .add("l36_3")
+            .product({ suppliers: layer35, factory: () => 3603 })
         const $l36_4 = market
-            .offer("l36_4")
-            .asProduct({ suppliers: layer35, factory: () => 3604 })
+            .add("l36_4")
+            .product({ suppliers: layer35, factory: () => 3604 })
         const $l36_5 = market
-            .offer("l36_5")
-            .asProduct({ suppliers: layer35, factory: () => 3605 })
+            .add("l36_5")
+            .product({ suppliers: layer35, factory: () => 3605 })
         const $l36_6 = market
-            .offer("l36_6")
-            .asProduct({ suppliers: layer35, factory: () => 3606 })
+            .add("l36_6")
+            .product({ suppliers: layer35, factory: () => 3606 })
         const $l36_7 = market
-            .offer("l36_7")
-            .asProduct({ suppliers: layer35, factory: () => 3607 })
+            .add("l36_7")
+            .product({ suppliers: layer35, factory: () => 3607 })
         const $l36_8 = market
-            .offer("l36_8")
-            .asProduct({ suppliers: layer35, factory: () => 3608 })
+            .add("l36_8")
+            .product({ suppliers: layer35, factory: () => 3608 })
         const $l36_9 = market
-            .offer("l36_9")
-            .asProduct({ suppliers: layer35, factory: () => 3609 })
+            .add("l36_9")
+            .product({ suppliers: layer35, factory: () => 3609 })
         const $l36_10 = market
-            .offer("l36_10")
-            .asProduct({ suppliers: layer35, factory: () => 3610 })
+            .add("l36_10")
+            .product({ suppliers: layer35, factory: () => 3610 })
         const $l36_11 = market
-            .offer("l36_11")
-            .asProduct({ suppliers: layer35, factory: () => 3611 })
+            .add("l36_11")
+            .product({ suppliers: layer35, factory: () => 3611 })
         const $l36_12 = market
-            .offer("l36_12")
-            .asProduct({ suppliers: layer35, factory: () => 3612 })
+            .add("l36_12")
+            .product({ suppliers: layer35, factory: () => 3612 })
         const $l36_13 = market
-            .offer("l36_13")
-            .asProduct({ suppliers: layer35, factory: () => 3613 })
+            .add("l36_13")
+            .product({ suppliers: layer35, factory: () => 3613 })
         const $l36_14 = market
-            .offer("l36_14")
-            .asProduct({ suppliers: layer35, factory: () => 3614 })
+            .add("l36_14")
+            .product({ suppliers: layer35, factory: () => 3614 })
         const $l36_15 = market
-            .offer("l36_15")
-            .asProduct({ suppliers: layer35, factory: () => 3615 })
+            .add("l36_15")
+            .product({ suppliers: layer35, factory: () => 3615 })
         const $l36_16 = market
-            .offer("l36_16")
-            .asProduct({ suppliers: layer35, factory: () => 3616 })
+            .add("l36_16")
+            .product({ suppliers: layer35, factory: () => 3616 })
         const $l36_17 = market
-            .offer("l36_17")
-            .asProduct({ suppliers: layer35, factory: () => 3617 })
+            .add("l36_17")
+            .product({ suppliers: layer35, factory: () => 3617 })
         const $l36_18 = market
-            .offer("l36_18")
-            .asProduct({ suppliers: layer35, factory: () => 3618 })
+            .add("l36_18")
+            .product({ suppliers: layer35, factory: () => 3618 })
         const $l36_19 = market
-            .offer("l36_19")
-            .asProduct({ suppliers: layer35, factory: () => 3619 })
+            .add("l36_19")
+            .product({ suppliers: layer35, factory: () => 3619 })
         const $l36_20 = market
-            .offer("l36_20")
-            .asProduct({ suppliers: layer35, factory: () => 3620 })
+            .add("l36_20")
+            .product({ suppliers: layer35, factory: () => 3620 })
         const layer36 = [
             $l36_1,
             $l36_2,
@@ -3312,65 +3312,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 37: depends on layer36 suppliers
         const $l37_1 = market
-            .offer("l37_1")
-            .asProduct({ suppliers: layer36, factory: () => 3701 })
+            .add("l37_1")
+            .product({ suppliers: layer36, factory: () => 3701 })
         const $l37_2 = market
-            .offer("l37_2")
-            .asProduct({ suppliers: layer36, factory: () => 3702 })
+            .add("l37_2")
+            .product({ suppliers: layer36, factory: () => 3702 })
         const $l37_3 = market
-            .offer("l37_3")
-            .asProduct({ suppliers: layer36, factory: () => 3703 })
+            .add("l37_3")
+            .product({ suppliers: layer36, factory: () => 3703 })
         const $l37_4 = market
-            .offer("l37_4")
-            .asProduct({ suppliers: layer36, factory: () => 3704 })
+            .add("l37_4")
+            .product({ suppliers: layer36, factory: () => 3704 })
         const $l37_5 = market
-            .offer("l37_5")
-            .asProduct({ suppliers: layer36, factory: () => 3705 })
+            .add("l37_5")
+            .product({ suppliers: layer36, factory: () => 3705 })
         const $l37_6 = market
-            .offer("l37_6")
-            .asProduct({ suppliers: layer36, factory: () => 3706 })
+            .add("l37_6")
+            .product({ suppliers: layer36, factory: () => 3706 })
         const $l37_7 = market
-            .offer("l37_7")
-            .asProduct({ suppliers: layer36, factory: () => 3707 })
+            .add("l37_7")
+            .product({ suppliers: layer36, factory: () => 3707 })
         const $l37_8 = market
-            .offer("l37_8")
-            .asProduct({ suppliers: layer36, factory: () => 3708 })
+            .add("l37_8")
+            .product({ suppliers: layer36, factory: () => 3708 })
         const $l37_9 = market
-            .offer("l37_9")
-            .asProduct({ suppliers: layer36, factory: () => 3709 })
+            .add("l37_9")
+            .product({ suppliers: layer36, factory: () => 3709 })
         const $l37_10 = market
-            .offer("l37_10")
-            .asProduct({ suppliers: layer36, factory: () => 3710 })
+            .add("l37_10")
+            .product({ suppliers: layer36, factory: () => 3710 })
         const $l37_11 = market
-            .offer("l37_11")
-            .asProduct({ suppliers: layer36, factory: () => 3711 })
+            .add("l37_11")
+            .product({ suppliers: layer36, factory: () => 3711 })
         const $l37_12 = market
-            .offer("l37_12")
-            .asProduct({ suppliers: layer36, factory: () => 3712 })
+            .add("l37_12")
+            .product({ suppliers: layer36, factory: () => 3712 })
         const $l37_13 = market
-            .offer("l37_13")
-            .asProduct({ suppliers: layer36, factory: () => 3713 })
+            .add("l37_13")
+            .product({ suppliers: layer36, factory: () => 3713 })
         const $l37_14 = market
-            .offer("l37_14")
-            .asProduct({ suppliers: layer36, factory: () => 3714 })
+            .add("l37_14")
+            .product({ suppliers: layer36, factory: () => 3714 })
         const $l37_15 = market
-            .offer("l37_15")
-            .asProduct({ suppliers: layer36, factory: () => 3715 })
+            .add("l37_15")
+            .product({ suppliers: layer36, factory: () => 3715 })
         const $l37_16 = market
-            .offer("l37_16")
-            .asProduct({ suppliers: layer36, factory: () => 3716 })
+            .add("l37_16")
+            .product({ suppliers: layer36, factory: () => 3716 })
         const $l37_17 = market
-            .offer("l37_17")
-            .asProduct({ suppliers: layer36, factory: () => 3717 })
+            .add("l37_17")
+            .product({ suppliers: layer36, factory: () => 3717 })
         const $l37_18 = market
-            .offer("l37_18")
-            .asProduct({ suppliers: layer36, factory: () => 3718 })
+            .add("l37_18")
+            .product({ suppliers: layer36, factory: () => 3718 })
         const $l37_19 = market
-            .offer("l37_19")
-            .asProduct({ suppliers: layer36, factory: () => 3719 })
+            .add("l37_19")
+            .product({ suppliers: layer36, factory: () => 3719 })
         const $l37_20 = market
-            .offer("l37_20")
-            .asProduct({ suppliers: layer36, factory: () => 3720 })
+            .add("l37_20")
+            .product({ suppliers: layer36, factory: () => 3720 })
         const layer37 = [
             $l37_1,
             $l37_2,
@@ -3396,65 +3396,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 38: depends on layer37 suppliers
         const $l38_1 = market
-            .offer("l38_1")
-            .asProduct({ suppliers: layer37, factory: () => 3801 })
+            .add("l38_1")
+            .product({ suppliers: layer37, factory: () => 3801 })
         const $l38_2 = market
-            .offer("l38_2")
-            .asProduct({ suppliers: layer37, factory: () => 3802 })
+            .add("l38_2")
+            .product({ suppliers: layer37, factory: () => 3802 })
         const $l38_3 = market
-            .offer("l38_3")
-            .asProduct({ suppliers: layer37, factory: () => 3803 })
+            .add("l38_3")
+            .product({ suppliers: layer37, factory: () => 3803 })
         const $l38_4 = market
-            .offer("l38_4")
-            .asProduct({ suppliers: layer37, factory: () => 3804 })
+            .add("l38_4")
+            .product({ suppliers: layer37, factory: () => 3804 })
         const $l38_5 = market
-            .offer("l38_5")
-            .asProduct({ suppliers: layer37, factory: () => 3805 })
+            .add("l38_5")
+            .product({ suppliers: layer37, factory: () => 3805 })
         const $l38_6 = market
-            .offer("l38_6")
-            .asProduct({ suppliers: layer37, factory: () => 3806 })
+            .add("l38_6")
+            .product({ suppliers: layer37, factory: () => 3806 })
         const $l38_7 = market
-            .offer("l38_7")
-            .asProduct({ suppliers: layer37, factory: () => 3807 })
+            .add("l38_7")
+            .product({ suppliers: layer37, factory: () => 3807 })
         const $l38_8 = market
-            .offer("l38_8")
-            .asProduct({ suppliers: layer37, factory: () => 3808 })
+            .add("l38_8")
+            .product({ suppliers: layer37, factory: () => 3808 })
         const $l38_9 = market
-            .offer("l38_9")
-            .asProduct({ suppliers: layer37, factory: () => 3809 })
+            .add("l38_9")
+            .product({ suppliers: layer37, factory: () => 3809 })
         const $l38_10 = market
-            .offer("l38_10")
-            .asProduct({ suppliers: layer37, factory: () => 3810 })
+            .add("l38_10")
+            .product({ suppliers: layer37, factory: () => 3810 })
         const $l38_11 = market
-            .offer("l38_11")
-            .asProduct({ suppliers: layer37, factory: () => 3811 })
+            .add("l38_11")
+            .product({ suppliers: layer37, factory: () => 3811 })
         const $l38_12 = market
-            .offer("l38_12")
-            .asProduct({ suppliers: layer37, factory: () => 3812 })
+            .add("l38_12")
+            .product({ suppliers: layer37, factory: () => 3812 })
         const $l38_13 = market
-            .offer("l38_13")
-            .asProduct({ suppliers: layer37, factory: () => 3813 })
+            .add("l38_13")
+            .product({ suppliers: layer37, factory: () => 3813 })
         const $l38_14 = market
-            .offer("l38_14")
-            .asProduct({ suppliers: layer37, factory: () => 3814 })
+            .add("l38_14")
+            .product({ suppliers: layer37, factory: () => 3814 })
         const $l38_15 = market
-            .offer("l38_15")
-            .asProduct({ suppliers: layer37, factory: () => 3815 })
+            .add("l38_15")
+            .product({ suppliers: layer37, factory: () => 3815 })
         const $l38_16 = market
-            .offer("l38_16")
-            .asProduct({ suppliers: layer37, factory: () => 3816 })
+            .add("l38_16")
+            .product({ suppliers: layer37, factory: () => 3816 })
         const $l38_17 = market
-            .offer("l38_17")
-            .asProduct({ suppliers: layer37, factory: () => 3817 })
+            .add("l38_17")
+            .product({ suppliers: layer37, factory: () => 3817 })
         const $l38_18 = market
-            .offer("l38_18")
-            .asProduct({ suppliers: layer37, factory: () => 3818 })
+            .add("l38_18")
+            .product({ suppliers: layer37, factory: () => 3818 })
         const $l38_19 = market
-            .offer("l38_19")
-            .asProduct({ suppliers: layer37, factory: () => 3819 })
+            .add("l38_19")
+            .product({ suppliers: layer37, factory: () => 3819 })
         const $l38_20 = market
-            .offer("l38_20")
-            .asProduct({ suppliers: layer37, factory: () => 3820 })
+            .add("l38_20")
+            .product({ suppliers: layer37, factory: () => 3820 })
         const layer38 = [
             $l38_1,
             $l38_2,
@@ -3480,65 +3480,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 39: depends on layer38 suppliers
         const $l39_1 = market
-            .offer("l39_1")
-            .asProduct({ suppliers: layer38, factory: () => 3901 })
+            .add("l39_1")
+            .product({ suppliers: layer38, factory: () => 3901 })
         const $l39_2 = market
-            .offer("l39_2")
-            .asProduct({ suppliers: layer38, factory: () => 3902 })
+            .add("l39_2")
+            .product({ suppliers: layer38, factory: () => 3902 })
         const $l39_3 = market
-            .offer("l39_3")
-            .asProduct({ suppliers: layer38, factory: () => 3903 })
+            .add("l39_3")
+            .product({ suppliers: layer38, factory: () => 3903 })
         const $l39_4 = market
-            .offer("l39_4")
-            .asProduct({ suppliers: layer38, factory: () => 3904 })
+            .add("l39_4")
+            .product({ suppliers: layer38, factory: () => 3904 })
         const $l39_5 = market
-            .offer("l39_5")
-            .asProduct({ suppliers: layer38, factory: () => 3905 })
+            .add("l39_5")
+            .product({ suppliers: layer38, factory: () => 3905 })
         const $l39_6 = market
-            .offer("l39_6")
-            .asProduct({ suppliers: layer38, factory: () => 3906 })
+            .add("l39_6")
+            .product({ suppliers: layer38, factory: () => 3906 })
         const $l39_7 = market
-            .offer("l39_7")
-            .asProduct({ suppliers: layer38, factory: () => 3907 })
+            .add("l39_7")
+            .product({ suppliers: layer38, factory: () => 3907 })
         const $l39_8 = market
-            .offer("l39_8")
-            .asProduct({ suppliers: layer38, factory: () => 3908 })
+            .add("l39_8")
+            .product({ suppliers: layer38, factory: () => 3908 })
         const $l39_9 = market
-            .offer("l39_9")
-            .asProduct({ suppliers: layer38, factory: () => 3909 })
+            .add("l39_9")
+            .product({ suppliers: layer38, factory: () => 3909 })
         const $l39_10 = market
-            .offer("l39_10")
-            .asProduct({ suppliers: layer38, factory: () => 3910 })
+            .add("l39_10")
+            .product({ suppliers: layer38, factory: () => 3910 })
         const $l39_11 = market
-            .offer("l39_11")
-            .asProduct({ suppliers: layer38, factory: () => 3911 })
+            .add("l39_11")
+            .product({ suppliers: layer38, factory: () => 3911 })
         const $l39_12 = market
-            .offer("l39_12")
-            .asProduct({ suppliers: layer38, factory: () => 3912 })
+            .add("l39_12")
+            .product({ suppliers: layer38, factory: () => 3912 })
         const $l39_13 = market
-            .offer("l39_13")
-            .asProduct({ suppliers: layer38, factory: () => 3913 })
+            .add("l39_13")
+            .product({ suppliers: layer38, factory: () => 3913 })
         const $l39_14 = market
-            .offer("l39_14")
-            .asProduct({ suppliers: layer38, factory: () => 3914 })
+            .add("l39_14")
+            .product({ suppliers: layer38, factory: () => 3914 })
         const $l39_15 = market
-            .offer("l39_15")
-            .asProduct({ suppliers: layer38, factory: () => 3915 })
+            .add("l39_15")
+            .product({ suppliers: layer38, factory: () => 3915 })
         const $l39_16 = market
-            .offer("l39_16")
-            .asProduct({ suppliers: layer38, factory: () => 3916 })
+            .add("l39_16")
+            .product({ suppliers: layer38, factory: () => 3916 })
         const $l39_17 = market
-            .offer("l39_17")
-            .asProduct({ suppliers: layer38, factory: () => 3917 })
+            .add("l39_17")
+            .product({ suppliers: layer38, factory: () => 3917 })
         const $l39_18 = market
-            .offer("l39_18")
-            .asProduct({ suppliers: layer38, factory: () => 3918 })
+            .add("l39_18")
+            .product({ suppliers: layer38, factory: () => 3918 })
         const $l39_19 = market
-            .offer("l39_19")
-            .asProduct({ suppliers: layer38, factory: () => 3919 })
+            .add("l39_19")
+            .product({ suppliers: layer38, factory: () => 3919 })
         const $l39_20 = market
-            .offer("l39_20")
-            .asProduct({ suppliers: layer38, factory: () => 3920 })
+            .add("l39_20")
+            .product({ suppliers: layer38, factory: () => 3920 })
         const layer39 = [
             $l39_1,
             $l39_2,
@@ -3564,65 +3564,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 40: depends on layer39 suppliers
         const $l40_1 = market
-            .offer("l40_1")
-            .asProduct({ suppliers: layer39, factory: () => 4001 })
+            .add("l40_1")
+            .product({ suppliers: layer39, factory: () => 4001 })
         const $l40_2 = market
-            .offer("l40_2")
-            .asProduct({ suppliers: layer39, factory: () => 4002 })
+            .add("l40_2")
+            .product({ suppliers: layer39, factory: () => 4002 })
         const $l40_3 = market
-            .offer("l40_3")
-            .asProduct({ suppliers: layer39, factory: () => 4003 })
+            .add("l40_3")
+            .product({ suppliers: layer39, factory: () => 4003 })
         const $l40_4 = market
-            .offer("l40_4")
-            .asProduct({ suppliers: layer39, factory: () => 4004 })
+            .add("l40_4")
+            .product({ suppliers: layer39, factory: () => 4004 })
         const $l40_5 = market
-            .offer("l40_5")
-            .asProduct({ suppliers: layer39, factory: () => 4005 })
+            .add("l40_5")
+            .product({ suppliers: layer39, factory: () => 4005 })
         const $l40_6 = market
-            .offer("l40_6")
-            .asProduct({ suppliers: layer39, factory: () => 4006 })
+            .add("l40_6")
+            .product({ suppliers: layer39, factory: () => 4006 })
         const $l40_7 = market
-            .offer("l40_7")
-            .asProduct({ suppliers: layer39, factory: () => 4007 })
+            .add("l40_7")
+            .product({ suppliers: layer39, factory: () => 4007 })
         const $l40_8 = market
-            .offer("l40_8")
-            .asProduct({ suppliers: layer39, factory: () => 4008 })
+            .add("l40_8")
+            .product({ suppliers: layer39, factory: () => 4008 })
         const $l40_9 = market
-            .offer("l40_9")
-            .asProduct({ suppliers: layer39, factory: () => 4009 })
+            .add("l40_9")
+            .product({ suppliers: layer39, factory: () => 4009 })
         const $l40_10 = market
-            .offer("l40_10")
-            .asProduct({ suppliers: layer39, factory: () => 4010 })
+            .add("l40_10")
+            .product({ suppliers: layer39, factory: () => 4010 })
         const $l40_11 = market
-            .offer("l40_11")
-            .asProduct({ suppliers: layer39, factory: () => 4011 })
+            .add("l40_11")
+            .product({ suppliers: layer39, factory: () => 4011 })
         const $l40_12 = market
-            .offer("l40_12")
-            .asProduct({ suppliers: layer39, factory: () => 4012 })
+            .add("l40_12")
+            .product({ suppliers: layer39, factory: () => 4012 })
         const $l40_13 = market
-            .offer("l40_13")
-            .asProduct({ suppliers: layer39, factory: () => 4013 })
+            .add("l40_13")
+            .product({ suppliers: layer39, factory: () => 4013 })
         const $l40_14 = market
-            .offer("l40_14")
-            .asProduct({ suppliers: layer39, factory: () => 4014 })
+            .add("l40_14")
+            .product({ suppliers: layer39, factory: () => 4014 })
         const $l40_15 = market
-            .offer("l40_15")
-            .asProduct({ suppliers: layer39, factory: () => 4015 })
+            .add("l40_15")
+            .product({ suppliers: layer39, factory: () => 4015 })
         const $l40_16 = market
-            .offer("l40_16")
-            .asProduct({ suppliers: layer39, factory: () => 4016 })
+            .add("l40_16")
+            .product({ suppliers: layer39, factory: () => 4016 })
         const $l40_17 = market
-            .offer("l40_17")
-            .asProduct({ suppliers: layer39, factory: () => 4017 })
+            .add("l40_17")
+            .product({ suppliers: layer39, factory: () => 4017 })
         const $l40_18 = market
-            .offer("l40_18")
-            .asProduct({ suppliers: layer39, factory: () => 4018 })
+            .add("l40_18")
+            .product({ suppliers: layer39, factory: () => 4018 })
         const $l40_19 = market
-            .offer("l40_19")
-            .asProduct({ suppliers: layer39, factory: () => 4019 })
+            .add("l40_19")
+            .product({ suppliers: layer39, factory: () => 4019 })
         const $l40_20 = market
-            .offer("l40_20")
-            .asProduct({ suppliers: layer39, factory: () => 4020 })
+            .add("l40_20")
+            .product({ suppliers: layer39, factory: () => 4020 })
         const layer40 = [
             $l40_1,
             $l40_2,
@@ -3648,65 +3648,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 41: depends on layer40 suppliers
         const $l41_1 = market
-            .offer("l41_1")
-            .asProduct({ suppliers: layer40, factory: () => 4101 })
+            .add("l41_1")
+            .product({ suppliers: layer40, factory: () => 4101 })
         const $l41_2 = market
-            .offer("l41_2")
-            .asProduct({ suppliers: layer40, factory: () => 4102 })
+            .add("l41_2")
+            .product({ suppliers: layer40, factory: () => 4102 })
         const $l41_3 = market
-            .offer("l41_3")
-            .asProduct({ suppliers: layer40, factory: () => 4103 })
+            .add("l41_3")
+            .product({ suppliers: layer40, factory: () => 4103 })
         const $l41_4 = market
-            .offer("l41_4")
-            .asProduct({ suppliers: layer40, factory: () => 4104 })
+            .add("l41_4")
+            .product({ suppliers: layer40, factory: () => 4104 })
         const $l41_5 = market
-            .offer("l41_5")
-            .asProduct({ suppliers: layer40, factory: () => 4105 })
+            .add("l41_5")
+            .product({ suppliers: layer40, factory: () => 4105 })
         const $l41_6 = market
-            .offer("l41_6")
-            .asProduct({ suppliers: layer40, factory: () => 4106 })
+            .add("l41_6")
+            .product({ suppliers: layer40, factory: () => 4106 })
         const $l41_7 = market
-            .offer("l41_7")
-            .asProduct({ suppliers: layer40, factory: () => 4107 })
+            .add("l41_7")
+            .product({ suppliers: layer40, factory: () => 4107 })
         const $l41_8 = market
-            .offer("l41_8")
-            .asProduct({ suppliers: layer40, factory: () => 4108 })
+            .add("l41_8")
+            .product({ suppliers: layer40, factory: () => 4108 })
         const $l41_9 = market
-            .offer("l41_9")
-            .asProduct({ suppliers: layer40, factory: () => 4109 })
+            .add("l41_9")
+            .product({ suppliers: layer40, factory: () => 4109 })
         const $l41_10 = market
-            .offer("l41_10")
-            .asProduct({ suppliers: layer40, factory: () => 4110 })
+            .add("l41_10")
+            .product({ suppliers: layer40, factory: () => 4110 })
         const $l41_11 = market
-            .offer("l41_11")
-            .asProduct({ suppliers: layer40, factory: () => 4111 })
+            .add("l41_11")
+            .product({ suppliers: layer40, factory: () => 4111 })
         const $l41_12 = market
-            .offer("l41_12")
-            .asProduct({ suppliers: layer40, factory: () => 4112 })
+            .add("l41_12")
+            .product({ suppliers: layer40, factory: () => 4112 })
         const $l41_13 = market
-            .offer("l41_13")
-            .asProduct({ suppliers: layer40, factory: () => 4113 })
+            .add("l41_13")
+            .product({ suppliers: layer40, factory: () => 4113 })
         const $l41_14 = market
-            .offer("l41_14")
-            .asProduct({ suppliers: layer40, factory: () => 4114 })
+            .add("l41_14")
+            .product({ suppliers: layer40, factory: () => 4114 })
         const $l41_15 = market
-            .offer("l41_15")
-            .asProduct({ suppliers: layer40, factory: () => 4115 })
+            .add("l41_15")
+            .product({ suppliers: layer40, factory: () => 4115 })
         const $l41_16 = market
-            .offer("l41_16")
-            .asProduct({ suppliers: layer40, factory: () => 4116 })
+            .add("l41_16")
+            .product({ suppliers: layer40, factory: () => 4116 })
         const $l41_17 = market
-            .offer("l41_17")
-            .asProduct({ suppliers: layer40, factory: () => 4117 })
+            .add("l41_17")
+            .product({ suppliers: layer40, factory: () => 4117 })
         const $l41_18 = market
-            .offer("l41_18")
-            .asProduct({ suppliers: layer40, factory: () => 4118 })
+            .add("l41_18")
+            .product({ suppliers: layer40, factory: () => 4118 })
         const $l41_19 = market
-            .offer("l41_19")
-            .asProduct({ suppliers: layer40, factory: () => 4119 })
+            .add("l41_19")
+            .product({ suppliers: layer40, factory: () => 4119 })
         const $l41_20 = market
-            .offer("l41_20")
-            .asProduct({ suppliers: layer40, factory: () => 4120 })
+            .add("l41_20")
+            .product({ suppliers: layer40, factory: () => 4120 })
         const layer41 = [
             $l41_1,
             $l41_2,
@@ -3732,65 +3732,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 42: depends on layer41 suppliers
         const $l42_1 = market
-            .offer("l42_1")
-            .asProduct({ suppliers: layer41, factory: () => 4201 })
+            .add("l42_1")
+            .product({ suppliers: layer41, factory: () => 4201 })
         const $l42_2 = market
-            .offer("l42_2")
-            .asProduct({ suppliers: layer41, factory: () => 4202 })
+            .add("l42_2")
+            .product({ suppliers: layer41, factory: () => 4202 })
         const $l42_3 = market
-            .offer("l42_3")
-            .asProduct({ suppliers: layer41, factory: () => 4203 })
+            .add("l42_3")
+            .product({ suppliers: layer41, factory: () => 4203 })
         const $l42_4 = market
-            .offer("l42_4")
-            .asProduct({ suppliers: layer41, factory: () => 4204 })
+            .add("l42_4")
+            .product({ suppliers: layer41, factory: () => 4204 })
         const $l42_5 = market
-            .offer("l42_5")
-            .asProduct({ suppliers: layer41, factory: () => 4205 })
+            .add("l42_5")
+            .product({ suppliers: layer41, factory: () => 4205 })
         const $l42_6 = market
-            .offer("l42_6")
-            .asProduct({ suppliers: layer41, factory: () => 4206 })
+            .add("l42_6")
+            .product({ suppliers: layer41, factory: () => 4206 })
         const $l42_7 = market
-            .offer("l42_7")
-            .asProduct({ suppliers: layer41, factory: () => 4207 })
+            .add("l42_7")
+            .product({ suppliers: layer41, factory: () => 4207 })
         const $l42_8 = market
-            .offer("l42_8")
-            .asProduct({ suppliers: layer41, factory: () => 4208 })
+            .add("l42_8")
+            .product({ suppliers: layer41, factory: () => 4208 })
         const $l42_9 = market
-            .offer("l42_9")
-            .asProduct({ suppliers: layer41, factory: () => 4209 })
+            .add("l42_9")
+            .product({ suppliers: layer41, factory: () => 4209 })
         const $l42_10 = market
-            .offer("l42_10")
-            .asProduct({ suppliers: layer41, factory: () => 4210 })
+            .add("l42_10")
+            .product({ suppliers: layer41, factory: () => 4210 })
         const $l42_11 = market
-            .offer("l42_11")
-            .asProduct({ suppliers: layer41, factory: () => 4211 })
+            .add("l42_11")
+            .product({ suppliers: layer41, factory: () => 4211 })
         const $l42_12 = market
-            .offer("l42_12")
-            .asProduct({ suppliers: layer41, factory: () => 4212 })
+            .add("l42_12")
+            .product({ suppliers: layer41, factory: () => 4212 })
         const $l42_13 = market
-            .offer("l42_13")
-            .asProduct({ suppliers: layer41, factory: () => 4213 })
+            .add("l42_13")
+            .product({ suppliers: layer41, factory: () => 4213 })
         const $l42_14 = market
-            .offer("l42_14")
-            .asProduct({ suppliers: layer41, factory: () => 4214 })
+            .add("l42_14")
+            .product({ suppliers: layer41, factory: () => 4214 })
         const $l42_15 = market
-            .offer("l42_15")
-            .asProduct({ suppliers: layer41, factory: () => 4215 })
+            .add("l42_15")
+            .product({ suppliers: layer41, factory: () => 4215 })
         const $l42_16 = market
-            .offer("l42_16")
-            .asProduct({ suppliers: layer41, factory: () => 4216 })
+            .add("l42_16")
+            .product({ suppliers: layer41, factory: () => 4216 })
         const $l42_17 = market
-            .offer("l42_17")
-            .asProduct({ suppliers: layer41, factory: () => 4217 })
+            .add("l42_17")
+            .product({ suppliers: layer41, factory: () => 4217 })
         const $l42_18 = market
-            .offer("l42_18")
-            .asProduct({ suppliers: layer41, factory: () => 4218 })
+            .add("l42_18")
+            .product({ suppliers: layer41, factory: () => 4218 })
         const $l42_19 = market
-            .offer("l42_19")
-            .asProduct({ suppliers: layer41, factory: () => 4219 })
+            .add("l42_19")
+            .product({ suppliers: layer41, factory: () => 4219 })
         const $l42_20 = market
-            .offer("l42_20")
-            .asProduct({ suppliers: layer41, factory: () => 4220 })
+            .add("l42_20")
+            .product({ suppliers: layer41, factory: () => 4220 })
         const layer42 = [
             $l42_1,
             $l42_2,
@@ -3816,65 +3816,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 43: depends on layer42 suppliers
         const $l43_1 = market
-            .offer("l43_1")
-            .asProduct({ suppliers: layer42, factory: () => 4301 })
+            .add("l43_1")
+            .product({ suppliers: layer42, factory: () => 4301 })
         const $l43_2 = market
-            .offer("l43_2")
-            .asProduct({ suppliers: layer42, factory: () => 4302 })
+            .add("l43_2")
+            .product({ suppliers: layer42, factory: () => 4302 })
         const $l43_3 = market
-            .offer("l43_3")
-            .asProduct({ suppliers: layer42, factory: () => 4303 })
+            .add("l43_3")
+            .product({ suppliers: layer42, factory: () => 4303 })
         const $l43_4 = market
-            .offer("l43_4")
-            .asProduct({ suppliers: layer42, factory: () => 4304 })
+            .add("l43_4")
+            .product({ suppliers: layer42, factory: () => 4304 })
         const $l43_5 = market
-            .offer("l43_5")
-            .asProduct({ suppliers: layer42, factory: () => 4305 })
+            .add("l43_5")
+            .product({ suppliers: layer42, factory: () => 4305 })
         const $l43_6 = market
-            .offer("l43_6")
-            .asProduct({ suppliers: layer42, factory: () => 4306 })
+            .add("l43_6")
+            .product({ suppliers: layer42, factory: () => 4306 })
         const $l43_7 = market
-            .offer("l43_7")
-            .asProduct({ suppliers: layer42, factory: () => 4307 })
+            .add("l43_7")
+            .product({ suppliers: layer42, factory: () => 4307 })
         const $l43_8 = market
-            .offer("l43_8")
-            .asProduct({ suppliers: layer42, factory: () => 4308 })
+            .add("l43_8")
+            .product({ suppliers: layer42, factory: () => 4308 })
         const $l43_9 = market
-            .offer("l43_9")
-            .asProduct({ suppliers: layer42, factory: () => 4309 })
+            .add("l43_9")
+            .product({ suppliers: layer42, factory: () => 4309 })
         const $l43_10 = market
-            .offer("l43_10")
-            .asProduct({ suppliers: layer42, factory: () => 4310 })
+            .add("l43_10")
+            .product({ suppliers: layer42, factory: () => 4310 })
         const $l43_11 = market
-            .offer("l43_11")
-            .asProduct({ suppliers: layer42, factory: () => 4311 })
+            .add("l43_11")
+            .product({ suppliers: layer42, factory: () => 4311 })
         const $l43_12 = market
-            .offer("l43_12")
-            .asProduct({ suppliers: layer42, factory: () => 4312 })
+            .add("l43_12")
+            .product({ suppliers: layer42, factory: () => 4312 })
         const $l43_13 = market
-            .offer("l43_13")
-            .asProduct({ suppliers: layer42, factory: () => 4313 })
+            .add("l43_13")
+            .product({ suppliers: layer42, factory: () => 4313 })
         const $l43_14 = market
-            .offer("l43_14")
-            .asProduct({ suppliers: layer42, factory: () => 4314 })
+            .add("l43_14")
+            .product({ suppliers: layer42, factory: () => 4314 })
         const $l43_15 = market
-            .offer("l43_15")
-            .asProduct({ suppliers: layer42, factory: () => 4315 })
+            .add("l43_15")
+            .product({ suppliers: layer42, factory: () => 4315 })
         const $l43_16 = market
-            .offer("l43_16")
-            .asProduct({ suppliers: layer42, factory: () => 4316 })
+            .add("l43_16")
+            .product({ suppliers: layer42, factory: () => 4316 })
         const $l43_17 = market
-            .offer("l43_17")
-            .asProduct({ suppliers: layer42, factory: () => 4317 })
+            .add("l43_17")
+            .product({ suppliers: layer42, factory: () => 4317 })
         const $l43_18 = market
-            .offer("l43_18")
-            .asProduct({ suppliers: layer42, factory: () => 4318 })
+            .add("l43_18")
+            .product({ suppliers: layer42, factory: () => 4318 })
         const $l43_19 = market
-            .offer("l43_19")
-            .asProduct({ suppliers: layer42, factory: () => 4319 })
+            .add("l43_19")
+            .product({ suppliers: layer42, factory: () => 4319 })
         const $l43_20 = market
-            .offer("l43_20")
-            .asProduct({ suppliers: layer42, factory: () => 4320 })
+            .add("l43_20")
+            .product({ suppliers: layer42, factory: () => 4320 })
         const layer43 = [
             $l43_1,
             $l43_2,
@@ -3900,65 +3900,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 44: depends on layer43 suppliers
         const $l44_1 = market
-            .offer("l44_1")
-            .asProduct({ suppliers: layer43, factory: () => 4401 })
+            .add("l44_1")
+            .product({ suppliers: layer43, factory: () => 4401 })
         const $l44_2 = market
-            .offer("l44_2")
-            .asProduct({ suppliers: layer43, factory: () => 4402 })
+            .add("l44_2")
+            .product({ suppliers: layer43, factory: () => 4402 })
         const $l44_3 = market
-            .offer("l44_3")
-            .asProduct({ suppliers: layer43, factory: () => 4403 })
+            .add("l44_3")
+            .product({ suppliers: layer43, factory: () => 4403 })
         const $l44_4 = market
-            .offer("l44_4")
-            .asProduct({ suppliers: layer43, factory: () => 4404 })
+            .add("l44_4")
+            .product({ suppliers: layer43, factory: () => 4404 })
         const $l44_5 = market
-            .offer("l44_5")
-            .asProduct({ suppliers: layer43, factory: () => 4405 })
+            .add("l44_5")
+            .product({ suppliers: layer43, factory: () => 4405 })
         const $l44_6 = market
-            .offer("l44_6")
-            .asProduct({ suppliers: layer43, factory: () => 4406 })
+            .add("l44_6")
+            .product({ suppliers: layer43, factory: () => 4406 })
         const $l44_7 = market
-            .offer("l44_7")
-            .asProduct({ suppliers: layer43, factory: () => 4407 })
+            .add("l44_7")
+            .product({ suppliers: layer43, factory: () => 4407 })
         const $l44_8 = market
-            .offer("l44_8")
-            .asProduct({ suppliers: layer43, factory: () => 4408 })
+            .add("l44_8")
+            .product({ suppliers: layer43, factory: () => 4408 })
         const $l44_9 = market
-            .offer("l44_9")
-            .asProduct({ suppliers: layer43, factory: () => 4409 })
+            .add("l44_9")
+            .product({ suppliers: layer43, factory: () => 4409 })
         const $l44_10 = market
-            .offer("l44_10")
-            .asProduct({ suppliers: layer43, factory: () => 4410 })
+            .add("l44_10")
+            .product({ suppliers: layer43, factory: () => 4410 })
         const $l44_11 = market
-            .offer("l44_11")
-            .asProduct({ suppliers: layer43, factory: () => 4411 })
+            .add("l44_11")
+            .product({ suppliers: layer43, factory: () => 4411 })
         const $l44_12 = market
-            .offer("l44_12")
-            .asProduct({ suppliers: layer43, factory: () => 4412 })
+            .add("l44_12")
+            .product({ suppliers: layer43, factory: () => 4412 })
         const $l44_13 = market
-            .offer("l44_13")
-            .asProduct({ suppliers: layer43, factory: () => 4413 })
+            .add("l44_13")
+            .product({ suppliers: layer43, factory: () => 4413 })
         const $l44_14 = market
-            .offer("l44_14")
-            .asProduct({ suppliers: layer43, factory: () => 4414 })
+            .add("l44_14")
+            .product({ suppliers: layer43, factory: () => 4414 })
         const $l44_15 = market
-            .offer("l44_15")
-            .asProduct({ suppliers: layer43, factory: () => 4415 })
+            .add("l44_15")
+            .product({ suppliers: layer43, factory: () => 4415 })
         const $l44_16 = market
-            .offer("l44_16")
-            .asProduct({ suppliers: layer43, factory: () => 4416 })
+            .add("l44_16")
+            .product({ suppliers: layer43, factory: () => 4416 })
         const $l44_17 = market
-            .offer("l44_17")
-            .asProduct({ suppliers: layer43, factory: () => 4417 })
+            .add("l44_17")
+            .product({ suppliers: layer43, factory: () => 4417 })
         const $l44_18 = market
-            .offer("l44_18")
-            .asProduct({ suppliers: layer43, factory: () => 4418 })
+            .add("l44_18")
+            .product({ suppliers: layer43, factory: () => 4418 })
         const $l44_19 = market
-            .offer("l44_19")
-            .asProduct({ suppliers: layer43, factory: () => 4419 })
+            .add("l44_19")
+            .product({ suppliers: layer43, factory: () => 4419 })
         const $l44_20 = market
-            .offer("l44_20")
-            .asProduct({ suppliers: layer43, factory: () => 4420 })
+            .add("l44_20")
+            .product({ suppliers: layer43, factory: () => 4420 })
         const layer44 = [
             $l44_1,
             $l44_2,
@@ -3984,65 +3984,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 45: depends on layer44 suppliers
         const $l45_1 = market
-            .offer("l45_1")
-            .asProduct({ suppliers: layer44, factory: () => 4501 })
+            .add("l45_1")
+            .product({ suppliers: layer44, factory: () => 4501 })
         const $l45_2 = market
-            .offer("l45_2")
-            .asProduct({ suppliers: layer44, factory: () => 4502 })
+            .add("l45_2")
+            .product({ suppliers: layer44, factory: () => 4502 })
         const $l45_3 = market
-            .offer("l45_3")
-            .asProduct({ suppliers: layer44, factory: () => 4503 })
+            .add("l45_3")
+            .product({ suppliers: layer44, factory: () => 4503 })
         const $l45_4 = market
-            .offer("l45_4")
-            .asProduct({ suppliers: layer44, factory: () => 4504 })
+            .add("l45_4")
+            .product({ suppliers: layer44, factory: () => 4504 })
         const $l45_5 = market
-            .offer("l45_5")
-            .asProduct({ suppliers: layer44, factory: () => 4505 })
+            .add("l45_5")
+            .product({ suppliers: layer44, factory: () => 4505 })
         const $l45_6 = market
-            .offer("l45_6")
-            .asProduct({ suppliers: layer44, factory: () => 4506 })
+            .add("l45_6")
+            .product({ suppliers: layer44, factory: () => 4506 })
         const $l45_7 = market
-            .offer("l45_7")
-            .asProduct({ suppliers: layer44, factory: () => 4507 })
+            .add("l45_7")
+            .product({ suppliers: layer44, factory: () => 4507 })
         const $l45_8 = market
-            .offer("l45_8")
-            .asProduct({ suppliers: layer44, factory: () => 4508 })
+            .add("l45_8")
+            .product({ suppliers: layer44, factory: () => 4508 })
         const $l45_9 = market
-            .offer("l45_9")
-            .asProduct({ suppliers: layer44, factory: () => 4509 })
+            .add("l45_9")
+            .product({ suppliers: layer44, factory: () => 4509 })
         const $l45_10 = market
-            .offer("l45_10")
-            .asProduct({ suppliers: layer44, factory: () => 4510 })
+            .add("l45_10")
+            .product({ suppliers: layer44, factory: () => 4510 })
         const $l45_11 = market
-            .offer("l45_11")
-            .asProduct({ suppliers: layer44, factory: () => 4511 })
+            .add("l45_11")
+            .product({ suppliers: layer44, factory: () => 4511 })
         const $l45_12 = market
-            .offer("l45_12")
-            .asProduct({ suppliers: layer44, factory: () => 4512 })
+            .add("l45_12")
+            .product({ suppliers: layer44, factory: () => 4512 })
         const $l45_13 = market
-            .offer("l45_13")
-            .asProduct({ suppliers: layer44, factory: () => 4513 })
+            .add("l45_13")
+            .product({ suppliers: layer44, factory: () => 4513 })
         const $l45_14 = market
-            .offer("l45_14")
-            .asProduct({ suppliers: layer44, factory: () => 4514 })
+            .add("l45_14")
+            .product({ suppliers: layer44, factory: () => 4514 })
         const $l45_15 = market
-            .offer("l45_15")
-            .asProduct({ suppliers: layer44, factory: () => 4515 })
+            .add("l45_15")
+            .product({ suppliers: layer44, factory: () => 4515 })
         const $l45_16 = market
-            .offer("l45_16")
-            .asProduct({ suppliers: layer44, factory: () => 4516 })
+            .add("l45_16")
+            .product({ suppliers: layer44, factory: () => 4516 })
         const $l45_17 = market
-            .offer("l45_17")
-            .asProduct({ suppliers: layer44, factory: () => 4517 })
+            .add("l45_17")
+            .product({ suppliers: layer44, factory: () => 4517 })
         const $l45_18 = market
-            .offer("l45_18")
-            .asProduct({ suppliers: layer44, factory: () => 4518 })
+            .add("l45_18")
+            .product({ suppliers: layer44, factory: () => 4518 })
         const $l45_19 = market
-            .offer("l45_19")
-            .asProduct({ suppliers: layer44, factory: () => 4519 })
+            .add("l45_19")
+            .product({ suppliers: layer44, factory: () => 4519 })
         const $l45_20 = market
-            .offer("l45_20")
-            .asProduct({ suppliers: layer44, factory: () => 4520 })
+            .add("l45_20")
+            .product({ suppliers: layer44, factory: () => 4520 })
         const layer45 = [
             $l45_1,
             $l45_2,
@@ -4068,65 +4068,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 46: depends on layer45 suppliers
         const $l46_1 = market
-            .offer("l46_1")
-            .asProduct({ suppliers: layer45, factory: () => 4601 })
+            .add("l46_1")
+            .product({ suppliers: layer45, factory: () => 4601 })
         const $l46_2 = market
-            .offer("l46_2")
-            .asProduct({ suppliers: layer45, factory: () => 4602 })
+            .add("l46_2")
+            .product({ suppliers: layer45, factory: () => 4602 })
         const $l46_3 = market
-            .offer("l46_3")
-            .asProduct({ suppliers: layer45, factory: () => 4603 })
+            .add("l46_3")
+            .product({ suppliers: layer45, factory: () => 4603 })
         const $l46_4 = market
-            .offer("l46_4")
-            .asProduct({ suppliers: layer45, factory: () => 4604 })
+            .add("l46_4")
+            .product({ suppliers: layer45, factory: () => 4604 })
         const $l46_5 = market
-            .offer("l46_5")
-            .asProduct({ suppliers: layer45, factory: () => 4605 })
+            .add("l46_5")
+            .product({ suppliers: layer45, factory: () => 4605 })
         const $l46_6 = market
-            .offer("l46_6")
-            .asProduct({ suppliers: layer45, factory: () => 4606 })
+            .add("l46_6")
+            .product({ suppliers: layer45, factory: () => 4606 })
         const $l46_7 = market
-            .offer("l46_7")
-            .asProduct({ suppliers: layer45, factory: () => 4607 })
+            .add("l46_7")
+            .product({ suppliers: layer45, factory: () => 4607 })
         const $l46_8 = market
-            .offer("l46_8")
-            .asProduct({ suppliers: layer45, factory: () => 4608 })
+            .add("l46_8")
+            .product({ suppliers: layer45, factory: () => 4608 })
         const $l46_9 = market
-            .offer("l46_9")
-            .asProduct({ suppliers: layer45, factory: () => 4609 })
+            .add("l46_9")
+            .product({ suppliers: layer45, factory: () => 4609 })
         const $l46_10 = market
-            .offer("l46_10")
-            .asProduct({ suppliers: layer45, factory: () => 4610 })
+            .add("l46_10")
+            .product({ suppliers: layer45, factory: () => 4610 })
         const $l46_11 = market
-            .offer("l46_11")
-            .asProduct({ suppliers: layer45, factory: () => 4611 })
+            .add("l46_11")
+            .product({ suppliers: layer45, factory: () => 4611 })
         const $l46_12 = market
-            .offer("l46_12")
-            .asProduct({ suppliers: layer45, factory: () => 4612 })
+            .add("l46_12")
+            .product({ suppliers: layer45, factory: () => 4612 })
         const $l46_13 = market
-            .offer("l46_13")
-            .asProduct({ suppliers: layer45, factory: () => 4613 })
+            .add("l46_13")
+            .product({ suppliers: layer45, factory: () => 4613 })
         const $l46_14 = market
-            .offer("l46_14")
-            .asProduct({ suppliers: layer45, factory: () => 4614 })
+            .add("l46_14")
+            .product({ suppliers: layer45, factory: () => 4614 })
         const $l46_15 = market
-            .offer("l46_15")
-            .asProduct({ suppliers: layer45, factory: () => 4615 })
+            .add("l46_15")
+            .product({ suppliers: layer45, factory: () => 4615 })
         const $l46_16 = market
-            .offer("l46_16")
-            .asProduct({ suppliers: layer45, factory: () => 4616 })
+            .add("l46_16")
+            .product({ suppliers: layer45, factory: () => 4616 })
         const $l46_17 = market
-            .offer("l46_17")
-            .asProduct({ suppliers: layer45, factory: () => 4617 })
+            .add("l46_17")
+            .product({ suppliers: layer45, factory: () => 4617 })
         const $l46_18 = market
-            .offer("l46_18")
-            .asProduct({ suppliers: layer45, factory: () => 4618 })
+            .add("l46_18")
+            .product({ suppliers: layer45, factory: () => 4618 })
         const $l46_19 = market
-            .offer("l46_19")
-            .asProduct({ suppliers: layer45, factory: () => 4619 })
+            .add("l46_19")
+            .product({ suppliers: layer45, factory: () => 4619 })
         const $l46_20 = market
-            .offer("l46_20")
-            .asProduct({ suppliers: layer45, factory: () => 4620 })
+            .add("l46_20")
+            .product({ suppliers: layer45, factory: () => 4620 })
         const layer46 = [
             $l46_1,
             $l46_2,
@@ -4152,65 +4152,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 47: depends on layer46 suppliers
         const $l47_1 = market
-            .offer("l47_1")
-            .asProduct({ suppliers: layer46, factory: () => 4701 })
+            .add("l47_1")
+            .product({ suppliers: layer46, factory: () => 4701 })
         const $l47_2 = market
-            .offer("l47_2")
-            .asProduct({ suppliers: layer46, factory: () => 4702 })
+            .add("l47_2")
+            .product({ suppliers: layer46, factory: () => 4702 })
         const $l47_3 = market
-            .offer("l47_3")
-            .asProduct({ suppliers: layer46, factory: () => 4703 })
+            .add("l47_3")
+            .product({ suppliers: layer46, factory: () => 4703 })
         const $l47_4 = market
-            .offer("l47_4")
-            .asProduct({ suppliers: layer46, factory: () => 4704 })
+            .add("l47_4")
+            .product({ suppliers: layer46, factory: () => 4704 })
         const $l47_5 = market
-            .offer("l47_5")
-            .asProduct({ suppliers: layer46, factory: () => 4705 })
+            .add("l47_5")
+            .product({ suppliers: layer46, factory: () => 4705 })
         const $l47_6 = market
-            .offer("l47_6")
-            .asProduct({ suppliers: layer46, factory: () => 4706 })
+            .add("l47_6")
+            .product({ suppliers: layer46, factory: () => 4706 })
         const $l47_7 = market
-            .offer("l47_7")
-            .asProduct({ suppliers: layer46, factory: () => 4707 })
+            .add("l47_7")
+            .product({ suppliers: layer46, factory: () => 4707 })
         const $l47_8 = market
-            .offer("l47_8")
-            .asProduct({ suppliers: layer46, factory: () => 4708 })
+            .add("l47_8")
+            .product({ suppliers: layer46, factory: () => 4708 })
         const $l47_9 = market
-            .offer("l47_9")
-            .asProduct({ suppliers: layer46, factory: () => 4709 })
+            .add("l47_9")
+            .product({ suppliers: layer46, factory: () => 4709 })
         const $l47_10 = market
-            .offer("l47_10")
-            .asProduct({ suppliers: layer46, factory: () => 4710 })
+            .add("l47_10")
+            .product({ suppliers: layer46, factory: () => 4710 })
         const $l47_11 = market
-            .offer("l47_11")
-            .asProduct({ suppliers: layer46, factory: () => 4711 })
+            .add("l47_11")
+            .product({ suppliers: layer46, factory: () => 4711 })
         const $l47_12 = market
-            .offer("l47_12")
-            .asProduct({ suppliers: layer46, factory: () => 4712 })
+            .add("l47_12")
+            .product({ suppliers: layer46, factory: () => 4712 })
         const $l47_13 = market
-            .offer("l47_13")
-            .asProduct({ suppliers: layer46, factory: () => 4713 })
+            .add("l47_13")
+            .product({ suppliers: layer46, factory: () => 4713 })
         const $l47_14 = market
-            .offer("l47_14")
-            .asProduct({ suppliers: layer46, factory: () => 4714 })
+            .add("l47_14")
+            .product({ suppliers: layer46, factory: () => 4714 })
         const $l47_15 = market
-            .offer("l47_15")
-            .asProduct({ suppliers: layer46, factory: () => 4715 })
+            .add("l47_15")
+            .product({ suppliers: layer46, factory: () => 4715 })
         const $l47_16 = market
-            .offer("l47_16")
-            .asProduct({ suppliers: layer46, factory: () => 4716 })
+            .add("l47_16")
+            .product({ suppliers: layer46, factory: () => 4716 })
         const $l47_17 = market
-            .offer("l47_17")
-            .asProduct({ suppliers: layer46, factory: () => 4717 })
+            .add("l47_17")
+            .product({ suppliers: layer46, factory: () => 4717 })
         const $l47_18 = market
-            .offer("l47_18")
-            .asProduct({ suppliers: layer46, factory: () => 4718 })
+            .add("l47_18")
+            .product({ suppliers: layer46, factory: () => 4718 })
         const $l47_19 = market
-            .offer("l47_19")
-            .asProduct({ suppliers: layer46, factory: () => 4719 })
+            .add("l47_19")
+            .product({ suppliers: layer46, factory: () => 4719 })
         const $l47_20 = market
-            .offer("l47_20")
-            .asProduct({ suppliers: layer46, factory: () => 4720 })
+            .add("l47_20")
+            .product({ suppliers: layer46, factory: () => 4720 })
         const layer47 = [
             $l47_1,
             $l47_2,
@@ -4236,65 +4236,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 48: depends on layer47 suppliers
         const $l48_1 = market
-            .offer("l48_1")
-            .asProduct({ suppliers: layer47, factory: () => 4801 })
+            .add("l48_1")
+            .product({ suppliers: layer47, factory: () => 4801 })
         const $l48_2 = market
-            .offer("l48_2")
-            .asProduct({ suppliers: layer47, factory: () => 4802 })
+            .add("l48_2")
+            .product({ suppliers: layer47, factory: () => 4802 })
         const $l48_3 = market
-            .offer("l48_3")
-            .asProduct({ suppliers: layer47, factory: () => 4803 })
+            .add("l48_3")
+            .product({ suppliers: layer47, factory: () => 4803 })
         const $l48_4 = market
-            .offer("l48_4")
-            .asProduct({ suppliers: layer47, factory: () => 4804 })
+            .add("l48_4")
+            .product({ suppliers: layer47, factory: () => 4804 })
         const $l48_5 = market
-            .offer("l48_5")
-            .asProduct({ suppliers: layer47, factory: () => 4805 })
+            .add("l48_5")
+            .product({ suppliers: layer47, factory: () => 4805 })
         const $l48_6 = market
-            .offer("l48_6")
-            .asProduct({ suppliers: layer47, factory: () => 4806 })
+            .add("l48_6")
+            .product({ suppliers: layer47, factory: () => 4806 })
         const $l48_7 = market
-            .offer("l48_7")
-            .asProduct({ suppliers: layer47, factory: () => 4807 })
+            .add("l48_7")
+            .product({ suppliers: layer47, factory: () => 4807 })
         const $l48_8 = market
-            .offer("l48_8")
-            .asProduct({ suppliers: layer47, factory: () => 4808 })
+            .add("l48_8")
+            .product({ suppliers: layer47, factory: () => 4808 })
         const $l48_9 = market
-            .offer("l48_9")
-            .asProduct({ suppliers: layer47, factory: () => 4809 })
+            .add("l48_9")
+            .product({ suppliers: layer47, factory: () => 4809 })
         const $l48_10 = market
-            .offer("l48_10")
-            .asProduct({ suppliers: layer47, factory: () => 4810 })
+            .add("l48_10")
+            .product({ suppliers: layer47, factory: () => 4810 })
         const $l48_11 = market
-            .offer("l48_11")
-            .asProduct({ suppliers: layer47, factory: () => 4811 })
+            .add("l48_11")
+            .product({ suppliers: layer47, factory: () => 4811 })
         const $l48_12 = market
-            .offer("l48_12")
-            .asProduct({ suppliers: layer47, factory: () => 4812 })
+            .add("l48_12")
+            .product({ suppliers: layer47, factory: () => 4812 })
         const $l48_13 = market
-            .offer("l48_13")
-            .asProduct({ suppliers: layer47, factory: () => 4813 })
+            .add("l48_13")
+            .product({ suppliers: layer47, factory: () => 4813 })
         const $l48_14 = market
-            .offer("l48_14")
-            .asProduct({ suppliers: layer47, factory: () => 4814 })
+            .add("l48_14")
+            .product({ suppliers: layer47, factory: () => 4814 })
         const $l48_15 = market
-            .offer("l48_15")
-            .asProduct({ suppliers: layer47, factory: () => 4815 })
+            .add("l48_15")
+            .product({ suppliers: layer47, factory: () => 4815 })
         const $l48_16 = market
-            .offer("l48_16")
-            .asProduct({ suppliers: layer47, factory: () => 4816 })
+            .add("l48_16")
+            .product({ suppliers: layer47, factory: () => 4816 })
         const $l48_17 = market
-            .offer("l48_17")
-            .asProduct({ suppliers: layer47, factory: () => 4817 })
+            .add("l48_17")
+            .product({ suppliers: layer47, factory: () => 4817 })
         const $l48_18 = market
-            .offer("l48_18")
-            .asProduct({ suppliers: layer47, factory: () => 4818 })
+            .add("l48_18")
+            .product({ suppliers: layer47, factory: () => 4818 })
         const $l48_19 = market
-            .offer("l48_19")
-            .asProduct({ suppliers: layer47, factory: () => 4819 })
+            .add("l48_19")
+            .product({ suppliers: layer47, factory: () => 4819 })
         const $l48_20 = market
-            .offer("l48_20")
-            .asProduct({ suppliers: layer47, factory: () => 4820 })
+            .add("l48_20")
+            .product({ suppliers: layer47, factory: () => 4820 })
         const layer48 = [
             $l48_1,
             $l48_2,
@@ -4320,65 +4320,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 49: depends on layer48 suppliers
         const $l49_1 = market
-            .offer("l49_1")
-            .asProduct({ suppliers: layer48, factory: () => 4901 })
+            .add("l49_1")
+            .product({ suppliers: layer48, factory: () => 4901 })
         const $l49_2 = market
-            .offer("l49_2")
-            .asProduct({ suppliers: layer48, factory: () => 4902 })
+            .add("l49_2")
+            .product({ suppliers: layer48, factory: () => 4902 })
         const $l49_3 = market
-            .offer("l49_3")
-            .asProduct({ suppliers: layer48, factory: () => 4903 })
+            .add("l49_3")
+            .product({ suppliers: layer48, factory: () => 4903 })
         const $l49_4 = market
-            .offer("l49_4")
-            .asProduct({ suppliers: layer48, factory: () => 4904 })
+            .add("l49_4")
+            .product({ suppliers: layer48, factory: () => 4904 })
         const $l49_5 = market
-            .offer("l49_5")
-            .asProduct({ suppliers: layer48, factory: () => 4905 })
+            .add("l49_5")
+            .product({ suppliers: layer48, factory: () => 4905 })
         const $l49_6 = market
-            .offer("l49_6")
-            .asProduct({ suppliers: layer48, factory: () => 4906 })
+            .add("l49_6")
+            .product({ suppliers: layer48, factory: () => 4906 })
         const $l49_7 = market
-            .offer("l49_7")
-            .asProduct({ suppliers: layer48, factory: () => 4907 })
+            .add("l49_7")
+            .product({ suppliers: layer48, factory: () => 4907 })
         const $l49_8 = market
-            .offer("l49_8")
-            .asProduct({ suppliers: layer48, factory: () => 4908 })
+            .add("l49_8")
+            .product({ suppliers: layer48, factory: () => 4908 })
         const $l49_9 = market
-            .offer("l49_9")
-            .asProduct({ suppliers: layer48, factory: () => 4909 })
+            .add("l49_9")
+            .product({ suppliers: layer48, factory: () => 4909 })
         const $l49_10 = market
-            .offer("l49_10")
-            .asProduct({ suppliers: layer48, factory: () => 4910 })
+            .add("l49_10")
+            .product({ suppliers: layer48, factory: () => 4910 })
         const $l49_11 = market
-            .offer("l49_11")
-            .asProduct({ suppliers: layer48, factory: () => 4911 })
+            .add("l49_11")
+            .product({ suppliers: layer48, factory: () => 4911 })
         const $l49_12 = market
-            .offer("l49_12")
-            .asProduct({ suppliers: layer48, factory: () => 4912 })
+            .add("l49_12")
+            .product({ suppliers: layer48, factory: () => 4912 })
         const $l49_13 = market
-            .offer("l49_13")
-            .asProduct({ suppliers: layer48, factory: () => 4913 })
+            .add("l49_13")
+            .product({ suppliers: layer48, factory: () => 4913 })
         const $l49_14 = market
-            .offer("l49_14")
-            .asProduct({ suppliers: layer48, factory: () => 4914 })
+            .add("l49_14")
+            .product({ suppliers: layer48, factory: () => 4914 })
         const $l49_15 = market
-            .offer("l49_15")
-            .asProduct({ suppliers: layer48, factory: () => 4915 })
+            .add("l49_15")
+            .product({ suppliers: layer48, factory: () => 4915 })
         const $l49_16 = market
-            .offer("l49_16")
-            .asProduct({ suppliers: layer48, factory: () => 4916 })
+            .add("l49_16")
+            .product({ suppliers: layer48, factory: () => 4916 })
         const $l49_17 = market
-            .offer("l49_17")
-            .asProduct({ suppliers: layer48, factory: () => 4917 })
+            .add("l49_17")
+            .product({ suppliers: layer48, factory: () => 4917 })
         const $l49_18 = market
-            .offer("l49_18")
-            .asProduct({ suppliers: layer48, factory: () => 4918 })
+            .add("l49_18")
+            .product({ suppliers: layer48, factory: () => 4918 })
         const $l49_19 = market
-            .offer("l49_19")
-            .asProduct({ suppliers: layer48, factory: () => 4919 })
+            .add("l49_19")
+            .product({ suppliers: layer48, factory: () => 4919 })
         const $l49_20 = market
-            .offer("l49_20")
-            .asProduct({ suppliers: layer48, factory: () => 4920 })
+            .add("l49_20")
+            .product({ suppliers: layer48, factory: () => 4920 })
         const layer49 = [
             $l49_1,
             $l49_2,
@@ -4404,65 +4404,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 50: depends on layer49 suppliers
         const $l50_1 = market
-            .offer("l50_1")
-            .asProduct({ suppliers: layer49, factory: () => 5001 })
+            .add("l50_1")
+            .product({ suppliers: layer49, factory: () => 5001 })
         const $l50_2 = market
-            .offer("l50_2")
-            .asProduct({ suppliers: layer49, factory: () => 5002 })
+            .add("l50_2")
+            .product({ suppliers: layer49, factory: () => 5002 })
         const $l50_3 = market
-            .offer("l50_3")
-            .asProduct({ suppliers: layer49, factory: () => 5003 })
+            .add("l50_3")
+            .product({ suppliers: layer49, factory: () => 5003 })
         const $l50_4 = market
-            .offer("l50_4")
-            .asProduct({ suppliers: layer49, factory: () => 5004 })
+            .add("l50_4")
+            .product({ suppliers: layer49, factory: () => 5004 })
         const $l50_5 = market
-            .offer("l50_5")
-            .asProduct({ suppliers: layer49, factory: () => 5005 })
+            .add("l50_5")
+            .product({ suppliers: layer49, factory: () => 5005 })
         const $l50_6 = market
-            .offer("l50_6")
-            .asProduct({ suppliers: layer49, factory: () => 5006 })
+            .add("l50_6")
+            .product({ suppliers: layer49, factory: () => 5006 })
         const $l50_7 = market
-            .offer("l50_7")
-            .asProduct({ suppliers: layer49, factory: () => 5007 })
+            .add("l50_7")
+            .product({ suppliers: layer49, factory: () => 5007 })
         const $l50_8 = market
-            .offer("l50_8")
-            .asProduct({ suppliers: layer49, factory: () => 5008 })
+            .add("l50_8")
+            .product({ suppliers: layer49, factory: () => 5008 })
         const $l50_9 = market
-            .offer("l50_9")
-            .asProduct({ suppliers: layer49, factory: () => 5009 })
+            .add("l50_9")
+            .product({ suppliers: layer49, factory: () => 5009 })
         const $l50_10 = market
-            .offer("l50_10")
-            .asProduct({ suppliers: layer49, factory: () => 5010 })
+            .add("l50_10")
+            .product({ suppliers: layer49, factory: () => 5010 })
         const $l50_11 = market
-            .offer("l50_11")
-            .asProduct({ suppliers: layer49, factory: () => 5011 })
+            .add("l50_11")
+            .product({ suppliers: layer49, factory: () => 5011 })
         const $l50_12 = market
-            .offer("l50_12")
-            .asProduct({ suppliers: layer49, factory: () => 5012 })
+            .add("l50_12")
+            .product({ suppliers: layer49, factory: () => 5012 })
         const $l50_13 = market
-            .offer("l50_13")
-            .asProduct({ suppliers: layer49, factory: () => 5013 })
+            .add("l50_13")
+            .product({ suppliers: layer49, factory: () => 5013 })
         const $l50_14 = market
-            .offer("l50_14")
-            .asProduct({ suppliers: layer49, factory: () => 5014 })
+            .add("l50_14")
+            .product({ suppliers: layer49, factory: () => 5014 })
         const $l50_15 = market
-            .offer("l50_15")
-            .asProduct({ suppliers: layer49, factory: () => 5015 })
+            .add("l50_15")
+            .product({ suppliers: layer49, factory: () => 5015 })
         const $l50_16 = market
-            .offer("l50_16")
-            .asProduct({ suppliers: layer49, factory: () => 5016 })
+            .add("l50_16")
+            .product({ suppliers: layer49, factory: () => 5016 })
         const $l50_17 = market
-            .offer("l50_17")
-            .asProduct({ suppliers: layer49, factory: () => 5017 })
+            .add("l50_17")
+            .product({ suppliers: layer49, factory: () => 5017 })
         const $l50_18 = market
-            .offer("l50_18")
-            .asProduct({ suppliers: layer49, factory: () => 5018 })
+            .add("l50_18")
+            .product({ suppliers: layer49, factory: () => 5018 })
         const $l50_19 = market
-            .offer("l50_19")
-            .asProduct({ suppliers: layer49, factory: () => 5019 })
+            .add("l50_19")
+            .product({ suppliers: layer49, factory: () => 5019 })
         const $l50_20 = market
-            .offer("l50_20")
-            .asProduct({ suppliers: layer49, factory: () => 5020 })
+            .add("l50_20")
+            .product({ suppliers: layer49, factory: () => 5020 })
         const layer50 = [
             $l50_1,
             $l50_2,
@@ -4488,65 +4488,65 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 51: depends on layer50 suppliers
         const $l51_1 = market
-            .offer("l51_1")
-            .asProduct({ suppliers: layer50, factory: () => 5101 })
+            .add("l51_1")
+            .product({ suppliers: layer50, factory: () => 5101 })
         const $l51_2 = market
-            .offer("l51_2")
-            .asProduct({ suppliers: layer50, factory: () => 5102 })
+            .add("l51_2")
+            .product({ suppliers: layer50, factory: () => 5102 })
         const $l51_3 = market
-            .offer("l51_3")
-            .asProduct({ suppliers: layer50, factory: () => 5103 })
+            .add("l51_3")
+            .product({ suppliers: layer50, factory: () => 5103 })
         const $l51_4 = market
-            .offer("l51_4")
-            .asProduct({ suppliers: layer50, factory: () => 5104 })
+            .add("l51_4")
+            .product({ suppliers: layer50, factory: () => 5104 })
         const $l51_5 = market
-            .offer("l51_5")
-            .asProduct({ suppliers: layer50, factory: () => 5105 })
+            .add("l51_5")
+            .product({ suppliers: layer50, factory: () => 5105 })
         const $l51_6 = market
-            .offer("l51_6")
-            .asProduct({ suppliers: layer50, factory: () => 5106 })
+            .add("l51_6")
+            .product({ suppliers: layer50, factory: () => 5106 })
         const $l51_7 = market
-            .offer("l51_7")
-            .asProduct({ suppliers: layer50, factory: () => 5107 })
+            .add("l51_7")
+            .product({ suppliers: layer50, factory: () => 5107 })
         const $l51_8 = market
-            .offer("l51_8")
-            .asProduct({ suppliers: layer50, factory: () => 5108 })
+            .add("l51_8")
+            .product({ suppliers: layer50, factory: () => 5108 })
         const $l51_9 = market
-            .offer("l51_9")
-            .asProduct({ suppliers: layer50, factory: () => 5109 })
+            .add("l51_9")
+            .product({ suppliers: layer50, factory: () => 5109 })
         const $l51_10 = market
-            .offer("l51_10")
-            .asProduct({ suppliers: layer50, factory: () => 5110 })
+            .add("l51_10")
+            .product({ suppliers: layer50, factory: () => 5110 })
         const $l51_11 = market
-            .offer("l51_11")
-            .asProduct({ suppliers: layer50, factory: () => 5111 })
+            .add("l51_11")
+            .product({ suppliers: layer50, factory: () => 5111 })
         const $l51_12 = market
-            .offer("l51_12")
-            .asProduct({ suppliers: layer50, factory: () => 5112 })
+            .add("l51_12")
+            .product({ suppliers: layer50, factory: () => 5112 })
         const $l51_13 = market
-            .offer("l51_13")
-            .asProduct({ suppliers: layer50, factory: () => 5113 })
+            .add("l51_13")
+            .product({ suppliers: layer50, factory: () => 5113 })
         const $l51_14 = market
-            .offer("l51_14")
-            .asProduct({ suppliers: layer50, factory: () => 5114 })
+            .add("l51_14")
+            .product({ suppliers: layer50, factory: () => 5114 })
         const $l51_15 = market
-            .offer("l51_15")
-            .asProduct({ suppliers: layer50, factory: () => 5115 })
+            .add("l51_15")
+            .product({ suppliers: layer50, factory: () => 5115 })
         const $l51_16 = market
-            .offer("l51_16")
-            .asProduct({ suppliers: layer50, factory: () => 5116 })
+            .add("l51_16")
+            .product({ suppliers: layer50, factory: () => 5116 })
         const $l51_17 = market
-            .offer("l51_17")
-            .asProduct({ suppliers: layer50, factory: () => 5117 })
+            .add("l51_17")
+            .product({ suppliers: layer50, factory: () => 5117 })
         const $l51_18 = market
-            .offer("l51_18")
-            .asProduct({ suppliers: layer50, factory: () => 5118 })
+            .add("l51_18")
+            .product({ suppliers: layer50, factory: () => 5118 })
         const $l51_19 = market
-            .offer("l51_19")
-            .asProduct({ suppliers: layer50, factory: () => 5119 })
+            .add("l51_19")
+            .product({ suppliers: layer50, factory: () => 5119 })
         const $l51_20 = market
-            .offer("l51_20")
-            .asProduct({ suppliers: layer50, factory: () => 5120 })
+            .add("l51_20")
+            .product({ suppliers: layer50, factory: () => 5120 })
         const layer51 = [
             $l51_1,
             $l51_2,
@@ -4572,8 +4572,8 @@ describe("Deep Recursion Type Tests", () => {
 
         // Layer 52: depends on layer51 suppliers
         const $l52_1 = market
-            .offer("l52_1")
-            .asProduct({ suppliers: layer51, factory: () => 5201 })
+            .add("l52_1")
+            .product({ suppliers: layer51, factory: () => 5201 })
 
         // Try to assemble a product from layer52
         // If this compiles, we've successfully processed:
@@ -4585,7 +4585,7 @@ describe("Deep Recursion Type Tests", () => {
         const resultProduct = $l52_1.assemble({})
 
         // Verify the type is correct
-        expectTypeOf(resultProduct).toExtend<Product<number, ProductSupplier>>()
+        expectTypeOf(resultProduct).toExtend<Supply<number, ProductSupplier>>()
         expectTypeOf(resultProduct.unpack).toBeFunction()
 
         // Runtime check to ensure it works

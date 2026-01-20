@@ -6,7 +6,7 @@ The purpose of this library is mainly as a proof-of-concept that dependency inje
 
 ## Features
 
-- **Dependency Injection for React**: Define components as `typectx` products and inject dependencies (resources or other components).
+- **Dependency Injection for React**: Define components as `typectx` products and inject dependencies (request data or other components).
 - **Referential Integrity**: Components assembled via `useAssembleComponent` maintain referential equality across re-renders, preventing unnecessary React tree updates.
 - **Efficient Updates**: Uses `useSyncExternalStore` and an internal event store to propagate updates only to components that actually depend on changed resources, similar to how React Context works.
 
@@ -26,25 +26,25 @@ Initializes a connection between a React component or hook with @typectx/react's
 function MyComponentFactory(initDeps, ctx) {
     return function MyComponent() {
         // Initialize the scope and destructure dependencies
-        const {myResource} = useDeps(initDeps);
-        return <div>{myResource}</div>;
+        const {myCtx, MyComponent} = useDeps(initDeps);
+        return <div>{myCtx, MyComponent}</div>;
     }
 }
 ```
 
 ### `useAssembleComponent` (alias `useAssembleHook`)
 
-Assembles a child component (or hook) with specific resources. This hook ensures that the assembled component reference (and all its transitive component or hook dependencies) remains stable, even if the supplied resources change (updates are handled internally via the store). So React always renders the same component, but the deps of that component update in a reactive way, preserving all React's optimizations, and preserving other pieces of state, across rerenders.
+Assembles a child component (or hook) with specific data. This hook ensures that the assembled component reference (and all its transitive component or hook dependencies) remains stable, even if the supplied pieces of context change (updates are handled internally via the store). So React always renders the same component, but the deps of that component update in a reactive way, preserving all React's optimizations, and preserving other pieces of state, across rerenders.
 
 Usage:
 
 ```typescript
 const Component = useAssembleComponent(
     // The supplier to assemble
-    $($Component).hire($Dependency),
-    // The resources to supply
+    ctx($Component).hire($Dependency),
+    // The pieces of context to supply
     index(
-        $resourceSupplier.pack(value)
+        $ctxSupplier.pack(value)
     )
 ).unpack();
 
@@ -53,33 +53,33 @@ return <Component />;
 
 ## Usage Example
 
-### 1. Define Resources (Context)
+### 1. Define Request Suppliers
 
-Define your resources using `market.offer().asResource()`.
+Define your request data using `market.add().request()`.
 
 ```typescript
-// context.ts
+// req.ts
 import { market } from "typectx"
 
-export const resources = {
-    $theme: market.offer("theme").asResource<"light" | "dark">(),
-    $user: market.offer("user").asResource<{ name: string } | null>()
+export const req = {
+    $theme: market.add("theme").request<"light" | "dark">(),
+    $user: market.add("user").request<{ name: string } | null>()
 }
 ```
 
 ### 2. Define Components
 
-Define your components as products using `market.offer().asProduct()`.
+Define your components as products using `market.add().product()`.
 
 ```typescript
 // components.ts
 import { market, index } from "typectx";
 import { useDeps, useAssembleComponent } from "@typectx/react";
-import { resources } from "./context";
+import { req } from "./req";
 
 // A child component that consumes 'theme'
-export const $Button = market.offer("Button").asProduct({
-    suppliers: [resources.$theme],
+export const $Button = market.add("Button").product({
+    suppliers: [contexts.$theme],
     // Name the function component so you can understand your component tree in React DevTools
     factory: (initDeps) => function Button({ children }) {
         const { theme } = useDeps(initDeps);
@@ -94,14 +94,14 @@ export const $Button = market.offer("Button").asProduct({
 
 // A parent component that assembles the child
 // No call to useDeps since it has no dependencies in this example
-export const $App = market.offer("App").asProduct({
+export const $App = market.add("App").product({
     assemblers: [$Button],
     factory: (initDeps, ctx) => function App() {
         // Assemble the Button component with the current theme
         const Button = useAssembleComponent(
             ctx($Button),
             index(
-                resources.$theme.pack("dark") // Supplying 'dark' theme
+                req.$theme.pack("dark") // Supplying 'dark' theme
             )
         ).unpack();
 
@@ -137,7 +137,7 @@ root.render(<App />);
 
 1.  **Store & Subscription**: The library maintains a `WeakMap`-based store that links their initial state object (`initDeps`) to their current state (deps). `useInitDeps`subscribes the React component to this store using`useSyncExternalStore`.
 
-2.  **Stable Assembly**: `useAssembleComponent` creates the component only once to preserve its referential stability. When supplied resources change, it checks if the assembled component or its transitive component dependencies depend directly on the changed resources. The rerendering listeners of only those components get triggered.
+2.  **Stable Assembly**: `useAssembleComponent` creates the component only once to preserve its referential stability. When supplied data changes, it checks if the assembled component or its transitive component dependencies depend directly on the changed data. The rerendering listeners of only those components get triggered.
 
 # Usage tips
 
@@ -156,16 +156,16 @@ root.render(<App />);
 ```
 
 - **React Context alternative** - All you can achieve with React Context can be achieved using @typectx/react's API:
-    - `createContext()` → equivalent to defining a new resource with `asResource()`
-    - `useContext()` → equivalent to useDeps(initDeps).someResource
-    - `<Provider >` → equivalent to useAssembleComponent() with a new value for the supplied resources.
+    - `createContext()` → equivalent to defining a new piece of data with `.request()` or `.product()`
+    - `useContext()` → equivalent to useDeps(initDeps).someData
+    - `<Provider >` → equivalent to useAssembleComponent() with a new value for the supplied context.
 
     For a full showcase of this, head over to the [example](https://typectx.github.io/typectx/examples/react-client), which displays complex context propagation in a deeply nested component tree. See [Assemblers](https://typectx.github.io/typectx/docs/guides/assemblers) for full documentation.
 
 - **Preload pattern** - All factories are eagerly prerun in parallel by default, so preloading is very easy. To preload data, look at file src/api.ts in the demo to see how data prefetching has been achieved with react-query to avoid waterfall loading. The following example shows how to use the preload pattern with @typectx/react.
 
 ```tsx
-market.offer("Component").asProduct({
+market.add("Component").product({
     factory: (initDeps, ctx) =>
         React.memo((props) => {
             // return jsx

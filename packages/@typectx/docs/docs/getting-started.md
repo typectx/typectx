@@ -35,17 +35,19 @@ const market = createMarket()
 
 ### 3. Define Suppliers
 
-Suppliers create your app's dependencies. **Resources** hold data (like config or user sessions), while **Products** are services that can depend on other suppliers.
+Suppliers create your app's dependencies. **Request suppliers** hold data from the user's request (request params, cookies, etc.), which cannot be derived from other suppliers, while **Product Suppliers** are your application's services, components or features. They are factory functions that depend on request data or other products. Factories can return anything: simple values, promises or other functions.
+
+Names given to market.add("") can **only** contain digits, letters, underscores or `$` signs and cannot start with a digit, just like any Javascript identifier. This way, they can be destructured easily to js variables once injected.
 
 ```typescript
-// A Resource supplier for the user session
-const $session = market.offer("session").asResource<{ userId: string }>()
+// A Request supplier for the user session
+const $session = market.add("session").request<{ userId: string }>()
 
 // A Product supplier that depends on the session
-const $userService = market.offer("userService").asProduct({
+const $userService = market.add("userService").product({
     suppliers: [$session],
     // Access the session by destructuring the factory's 1st argument.
-    // The property name is the name passed to market.offer() during supplier creation.
+    // The property name is the name passed to market.add() during supplier creation.
     factory: ({ session }) => {
         return {
             id: session.userId,
@@ -57,7 +59,7 @@ const $userService = market.offer("userService").asProduct({
 
 ### 4. Assemble at Your Entry Point
 
-At your application's entry point, `assemble` your main product, providing any required resources. The `index()` utility simplifies this process.
+At your application's entry point, `assemble` your main product, providing any required request data. The `index()` utility simplifies this process.
 
 ```typescript
 import { index } from "typectx"

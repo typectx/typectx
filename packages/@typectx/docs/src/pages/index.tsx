@@ -14,8 +14,8 @@ const heroCode = `import { createMarket, index } from "typectx"
 
 // Create market and define suppliers
 const market = createMarket()
-const $session = market.offer("session").asResource<{ userId: string }>()
-const $api = market.offer("api").asProduct({
+const $session = market.add("session").request<{ userId: string }>()
+const $api = market.add("api").product({
     suppliers: [$session],
     factory: ({ session }) => new ApiClient(session.userId)
 })
@@ -28,29 +28,30 @@ const api = $api
 // Use it!
 const users = await api.getUsers()`
 
-const typeExample = `const $config = market.offer("config").asResource<{
-    api: { baseUrl: string };
+const typeExample = `const $flags = market.add("flags").request<{
+    darkMode: boolean;
 }>();
 
-const $db = market.offer("db").asProduct({
+const $db = market.add("db").product({
     factory: () => new DatabaseClient() // Returns a DatabaseClient instance
 });
 
-const $userService = market.offer("userService").asProduct({
-    suppliers: [$config, $db],
-    factory: ({ config, db }) => {
+const $userService = market.add("userService").product({
+    suppliers: [$flags, $db],
+    factory: ({ flags, db }) => {
         // No explicit types needed! They are all inferred.
-        // config: { api: { baseUrl: string } } (Inferred from the .asResource<T>() definition)
+        // flags: { darkMode: boolean } (Inferred from the .request<T>() definition)
         // db: DatabaseClient (Inferred from the $db's factory return type)
 
         return {
-            getUser: (id: string) => db.fetchUser(id, config.api.baseUrl)
+            getUser: (id: string) => db.fetchUser(id),
+            wantsDarkMode: flags.darkMode
         };
     }
 });`
 
 const performanceExample = `// An expensive service, lazy-loaded for on-demand performance.
-const $reportGenerator = market.offer("reportGenerator").asProduct({
+const $reportGenerator = market.add("reportGenerator").product({
     factory: () => {
         // This expensive logic runs only ONCE, the first time it's needed.
         console.log("🚀 Initializing Report Generator...");
@@ -59,7 +60,7 @@ const $reportGenerator = market.offer("reportGenerator").asProduct({
     lazy: true
 });
 
-const $app = market.offer("app").asProduct({
+const $app = market.add("app").product({
     suppliers: [$reportGenerator],
     factory: (deps) => (userAction: "view_dashboard" | "generate_report") => {
         if (userAction === "generate_report") {
@@ -72,8 +73,8 @@ const $app = market.offer("app").asProduct({
     }
 });`
 
-const testingExample = `// A product that depends on a real database.
-const $userProfile = market.offer("userProfile").asProduct({
+const testingExample = `// A product supplier that depends on a real database.
+const $userProfile = market.add("userProfile").product({
     suppliers: [$db],
     factory: ({ db }) => ({
         bio: db.fetchBio()
@@ -89,7 +90,7 @@ const mockUserProfile = $userProfile.mock({
 });
 
 // The component we want to test.
-const $app = market.offer("app").asProduct({
+const $app = market.add("app").product({
     suppliers: [$userProfile],
     factory: ({ userProfile }) => \`<div>\${userProfile.bio}</div>\`
 });
@@ -320,7 +321,7 @@ function WhySection() {
                         </div>
                         <h3>Intuitive Terminology</h3>
                         <p>
-                            A supply chain metaphor (Market, Product, Resource)
+                            A supply chain metaphor (Market, Supplier, Supply, Product)
                             that makes dependency injection feel natural and
                             easier to understand.
                         </p>

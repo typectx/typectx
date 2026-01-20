@@ -1,14 +1,13 @@
 ---
 title: "API Reference"
-description: "Detailed API reference for typectx. Learn about createMarket, offer, asResource, asProduct, and other core functions for type-safe dependency injection in TypeScript."
+description: "Detailed API reference for typectx. Learn about createMarket, add().request(), add().product(), and other core functions for type-safe dependency injection in TypeScript."
 keywords:
     - api
     - reference
     - typectx
     - createMarket
-    - offer
-    - asResource
-    - asProduct
+    - product
+    - request
     - assemble
     - dependency injection
     - typescript
@@ -26,33 +25,33 @@ Creates a new dependency injection scope.
 const market = createMarket()
 ```
 
-### `market.offer(name)`
+### `market.add("name")`
 
-Creates a new supplier with the given name.
-
-```ts
-const $supplier = market.offer("name")
-```
-
-### `offer.asResource<T>()`
-
-Creates a resource supplier for data/configuration.
+Creates a new supplier with the given name. The name must be a valid Javascript identifier, e.g. it must only contain digits, letters, `$` or `_`, and cannot start with a digit.
 
 ```ts
-const $resource = market.offer("config").asResource<Config>()
+const $supplier = market.add("name")
 ```
 
-### `offer.asProduct(options)`
+### `add().request<T>()`
+
+Creates a supplier for a value from the user's request (request params, cookies, etc.) with type T.
+
+```ts
+const $session = market.add("session").request<Session>()
+```
+
+### `add().product(options)`
 
 Creates a product supplier.
 
 ```ts
-const $product = market.offer("product").asProduct({
+const $product = market.add("product").product({
     suppliers: [$supplier1, $supplier2], // Suppliers
     assemblers: [$assembler1, $assembler2], // Assemblers
     lazy: boolean, // Eager (false) or lazy (true)
-    init: (value, deps)=>void // Run a function right after construction
-    factory: (depx, ctx) => {
+    init: (value, deps) => void // Run a function right after construction
+    factory: (deps, ctx) => {
         // Factory function
         // deps = dependencies received, can be destructured
         // ctx = Function to contextualize suppliers and assemblers used in the factory
@@ -63,10 +62,10 @@ const $product = market.offer("product").asProduct({
 
 ### `$supplier.pack(value)`
 
-Provides a concrete value for a resource or product, bypassing the factory in the case of products.
+Provides a concrete value for a supplier, bypassing the factory in the case of products.
 
 ```ts
-const resource = $resource.pack(value)
+const requestData = $request.pack(value)
 const mockProduct = $product.pack(mockValue) // For testing
 ```
 
@@ -75,8 +74,8 @@ const mockProduct = $product.pack(mockValue) // For testing
 Resolves all dependencies and creates the product.
 
 ```ts
-const product = $product.assemble(suppliesObject)
-const value = product.unpack()
+const supply = $product.assemble(suppliesObject)
+const value = supply.unpack()
 ```
 
 ### `$supplier.mock(options)`
@@ -86,7 +85,7 @@ Creates an alternative implementation.
 ```ts
 const $alternative = $originalSupplier.mock({
     suppliers: [$differentDeps],
-    factory: (deps) => {
+    factory: (deps, ctx) => {
         /*... alternativeImplementationBody*/
     }
 })
@@ -104,11 +103,11 @@ const $modified = $originalSupplier.hire($mockSupplier)
 You can also pass originals to hiredSuppliers to batch assemble multiple products together. You access other products via `product.deps.otherSupplier`
 
 ```ts
-const AProduct = $A.hire($B, $C).assemble({})
-// All assembled products will be available in $A's supplies() (see below)
-const A = AProduct.unpack()
-const B = AProduct.deps.B
-const C = AProduct.deps.C
+const ASupply = $A.hire($B, $C).assemble({})
+// All assembled products will be available in $A's deps (see below)
+const A = ASupply.unpack()
+const B = ASupply.deps.B
+const C = ASupply.deps.C
 ```
 
 ### `product.deps`

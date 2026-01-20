@@ -21,7 +21,7 @@ src/
 │   ├── reply.tsx     # Reply component
 │   └── session.tsx   # Session management component
 ├── api.ts            # API service definitions and data fetching
-├── resources.ts      # Data and configuration used globally
+├── req.ts            # Request data used globally
 ├── index.css         # Global styles
 ├── main.tsx          # Application entry point
 ├── market.ts         # Main market with resources and products
@@ -31,7 +31,7 @@ src/
 ## 📚 Learning Path
 
 1. **Explore `src/api.ts`** - See how to integrate react-query for data loading and preloading
-2. **Check `src/context.ts`** - See how to aggregate resource definitions in a ctx to replace React Context.
+2. **Check `src/contexts.ts`** - See how to aggregate ctx definitions in a context to replace React Context.
 3. **Review `src/components/`** - Understand how to create components as products with JSX
 4. **Examine `src/main.tsx`** - See how everything is assembled and used
 5. **Experiment with the live demo** - Notice the absence of waterfall loading

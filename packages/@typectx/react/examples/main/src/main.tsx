@@ -6,13 +6,13 @@ import { QueryClientProvider } from "@tanstack/react-query"
 import { queryClient } from "@/query"
 import { $postsQuery, $usersQuery } from "@/api"
 import { index } from "typectx"
-import { resources } from "./resources"
+import { req } from "@/req"
 
 queryClient.prefetchQuery($usersQuery.assemble({}).unpack())
 queryClient.prefetchQuery($postsQuery.assemble({}).unpack())
 
 const root = createRoot(document.getElementById("root") as HTMLElement)
-const App = $App.assemble(index(resources.$defaultUser.pack("userA"))).unpack()
+const App = $App.assemble(index(req.$defaultUser.pack("userA"))).unpack()
 root.render(
     <StrictMode>
         <QueryClientProvider client={queryClient}>

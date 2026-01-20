@@ -1,4 +1,4 @@
-import { Product, ProductSupplier, Supplier } from "#types"
+import { ProductSupplier, Supplier } from "#types"
 
 /**
  * Minimal once implementation for memoizing function results.
@@ -10,9 +10,9 @@ import { Product, ProductSupplier, Supplier } from "#types"
  * @returns A memoized version of the function that caches both results and errors
  * @internal
  */
-export function once<T extends (...args: any[]) => any>(func: T) {
+export function once<F extends (...args: any[]) => any>(func: F): F {
     let called = false
-    let result: ReturnType<T>
+    let result: ReturnType<F>
     let error: Error | undefined
 
     return function () {
@@ -29,16 +29,16 @@ export function once<T extends (...args: any[]) => any>(func: T) {
             throw error
         }
         return result
-    }
+    } as F
 }
 
 /**
- * Transforms an array of products/resources into a map keyed by supplier names.
- * This provides type-safe access to assembled products by their supplier names.
+ * Transforms an array of supplies into a map keyed by supplier names.
+ * This provides type-safe access to assembled supplies by their supplier names.
  *
  * @typeParam LIST - An array type where each element has a `supplier` property with a `name`
- * @param list - Array of products/resources to index
- * @returns A map where keys are supplier names and values are the products/resources
+ * @param list - Array of supplies to index
+ * @returns A map where keys are supplier names and values are the supplies
  * @public
  */
 export function index<LIST extends { supplier: { name: string } }[]>(
@@ -91,10 +91,7 @@ export function sleep(ms: number) {
  */
 export function team(name: string, suppliers: Supplier[]) {
     const team = suppliers
-        .flatMap((supplier): Supplier[] => {
-            if (!("team" in supplier)) return [supplier]
-            return [supplier, ...supplier.team]
-        })
+        .flatMap((supplier): Supplier[] =>  [supplier, ...supplier.team])
         .filter((supplier) => supplier !== undefined)
         .map((supplier) => {
             if (supplier.name === name)
@@ -114,23 +111,9 @@ export function dedupe(suppliers: Supplier[]) {
 }
 
 /**
- * Type guard to check if a supply is a Product.
- * @param supply - The supply to check
- * @returns True if the supply is a Product, false otherwise
- * @internal
- */
-export function isProduct(supply: any): supply is Product {
-    return (
-        "_" in supply.supplier &&
-        "product" in supply.supplier._ &&
-        supply.supplier._.product === true
-    )
-}
-
-/**
  * Type guard to check if a supplier is a ProductSupplier.
  * @param supplier - The supplier to check
- * @returns True if the supplier is a ProductSupplier, false if it's a ResourceSupplier
+ * @returns True if the supplier is a ProductSupplier, false if it's a RequestSupplier
  * @internal
  */
 export function isProductSupplier(supplier: any): supplier is ProductSupplier {

@@ -4,7 +4,7 @@
  * @internal
  */
 
-import { ProductSupplier, ResourceSupplier, Supplier } from "#types"
+import { Supplier, type ProductSupplier, type RequestSupplier } from "#types"
 
 /**
  * Validates that a value is a non-empty string.
@@ -22,6 +22,31 @@ export function assertString(
     }
 }
 
+/**
+ * Validates that a value is a valid JavaScript identifier name
+ * (suitable for use as a variable name or object property name).
+ * @param name - The parameter name for error messages
+ * @param value - The value to validate
+ * @internal
+ * @throws TypeError if the value is not a valid identifier
+ */
+export function assertName(
+    value: string
+) {
+    // JavaScript identifier must start with letter, underscore, or dollar sign
+    // and can contain letters, digits, underscores, and dollar signs
+    const identifierPattern = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/
+    
+    if (value === "") {
+        throw new TypeError(`name must not be empty`)
+    }
+    
+    if (!identifierPattern.test(value)) {
+        throw new TypeError(
+            `${value} contains invalid characters for a JavaScript identifier, or doesn't start with a letter, underscore, or dollar sign`
+        )
+    }
+}
 /**
  * Validates that a value is a plain object (not null, array, or other special object).
  * @param name - The parameter name for error messages
@@ -72,7 +97,7 @@ export function assertFunction(
 }
 
 /**
- * Validates the configuration object for product supplier.
+ * Validates the configuration object for product suppliers.
  * @param config - The configuration object to validate
  * @internal
  * @throws TypeError if the configuration is invalid
@@ -100,7 +125,7 @@ export function assertProductConfig(
     const hiredAssemblers = config.hiredAssemblers ?? []
 
     assertSuppliers(name, suppliers)
-    assertResourceSuppliers(name, optionals)
+    assertRequestSuppliers(name, optionals)
     assertProductSuppliers(name, assemblers, true)
     assertSuppliers(name, hiredSuppliers, true)
     assertProductSuppliers(name, hiredAssemblers, true)
@@ -116,13 +141,13 @@ export function assertProductConfig(
     }
 }
 
-export function assertResourceSupplier(
+export function assertRequestSupplier(
     supplier: unknown
-): asserts supplier is ResourceSupplier {
+): asserts supplier is RequestSupplier {
     assertHasProperty("noname", supplier, "name")
     assertString("noname", supplier.name)
     assertHasProperty(supplier.name, supplier, "_")
-    assertHasProperty(supplier.name, supplier._, "resource")
+    assertHasProperty(supplier.name, supplier._, "request")
 }
 
 export function assertProductSupplier(
@@ -133,7 +158,7 @@ export function assertProductSupplier(
     assertString("noname", supplier.name)
     assertHasProperty(supplier.name, supplier, "_")
     assertHasProperty(supplier.name, supplier._, "product")
-    assertHasProperty(supplier.name, supplier._, "isMock")
+    assertHasProperty(supplier.name, supplier._, "mock")
 
     if (
         !allowMocks &&
@@ -157,7 +182,7 @@ export function assertProductSupplier(
         )
     }
 
-    if (!allowMocks && supplier._.isMock) {
+    if (!allowMocks && supplier._.mock) {
         throw new TypeError(`Cannot depend on ${supplier.name} mock supplier`)
     }
 }
@@ -181,7 +206,7 @@ export function assertSuppliers(
 
     suppliers.forEach((supplier) => {
         try {
-            assertResourceSupplier(supplier)
+            assertRequestSupplier(supplier)
             return
         } catch (e) {
             assertProductSupplier(supplier, allowMocks)
@@ -189,15 +214,15 @@ export function assertSuppliers(
     })
 }
 
-export function assertResourceSuppliers(
+export function assertRequestSuppliers(
     name: string,
     suppliers: unknown
-): asserts suppliers is ResourceSupplier[] {
+): asserts suppliers is RequestSupplier[] {
     if (!Array.isArray(suppliers)) {
         throw new TypeError(`${name} must be an array`)
     }
     suppliers.forEach((supplier) => {
-        assertResourceSupplier(supplier)
+        assertRequestSupplier(supplier)
     })
 }
 

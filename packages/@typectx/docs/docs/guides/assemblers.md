@@ -17,72 +17,70 @@ keywords:
 Assemblers are the flagship feature that transform typectx DI containers into Context Containers. You can picture assemblers as a streamlined way to create nested DI containers, dividing monolithic apps into a tree of different sub-contexts.
 :::
 
-Not all products in your supply chain can be assembled at the entry point of the application. Sometimes, a product depends on a resource that is not yet known at the entry point, but only computed later on in a product's factory. In these situations, you need assemblers.
+## The mental model
 
-Let's start with a simple example: an `AdminPanel`. An `AdminPanel` can't be built until the current session has been validated as having an "admin" role, which doesn't need to be known when the application starts. You might want to compute it lazily, only if the user requests to see the `AdminPanel`. Here's how to do it with assemblers:
+We often picture an application as receiving one request, and producing one response in return. But complex apps can be seen differently. For example, a list of posts on a social media feed can be modeled as receiving one request per post (with the postId as request data), and producing a different response (with the post content) for every post request. Each post thus behaves like a sub-application within a parent application.
+
+This architecture is what React Context achieves. Each Post component can run as a sub-application in its own context, and `use` the postId context to determine what to display to the user for that post. This avoids having to "prop-drill" the postId to every post subcomponent that needs it, since it is available globally in the Context.
+
+Assemblers in typectx achieve something similar, but within a full DI paradigm.
 
 ```tsx
-type Session = { user: User; now: Date }
-type AdminSession = Session & { user: User & { role: "admin" } }
+const $session = market.add("session").request<Session>()
+const $postId = market.add("postId").request<string>()
 
-// Session resource can hold any object of type Session
-const $session = market.offer("session").asResource<Session>()
+const $db = connectDb(/*...*/))
 
-// Values of different types should be given different resources,
-// even if in the end they might hold the same value.
-const $adminSession = market
-    .offer("adminSession")
-    .asResource<AdminSession>()
-
-const $adminPanel = market.offer("adminDashboard").asProduct({
-    suppliers: [$adminSession], // Depends on an admin session
-    factory: ({ adminSession }) => {
-        // Non-admin users already guarded out at this point,
-        // no need for a runtime guard here.
-        return <div>Admin Panel</div>
+const $Post = market.add("Post").product({
+    suppliers: [$db, $postId, $session],
+    factory: async ({db, postId, session}) => {
+        const post = await db.getPost(postid)
+        return (<div>
+            <h1>{post.title}</h1>
+            <p>{post.body}</p>
+            <p>Thanks for reading, {session.name}!</p>
+        </div>)
     }
 })
 
-//PascalCase convention for React component
-const $App = market.offer("App").asProduct({
-    suppliers: [$session],
+const $Feed = market.add("Feed").product({
+    suppliers: [$db, $session],
     // Put in assemblers[] all product suppliers depending
-    // on new context (resources) computed in this factory
-    assemblers: [$adminPanel]
+    // on new context data computed in this factory
+    assemblers: [$Post],
     // Factories receive a ctx() function allowing to access
     // contextualized versions of suppliers or assemblers
-    factory: ({ session }, ctx) => () => {
-        const role = session.user.role
-        if (role === "admin") {
-            //Assemblers are not yet assembled, you need to
-            // assemble them with the new context.
-            return ctx($adminPanel).assemble(
-                index(
-                    //No need to call ctx() or resource suppliers.
-                    // You can, but it'll just be a no-op
-                    $adminSession.pack(session as AdminSession)
+    factory: ({db}, ctx) => {
+        const postIds = db.getPostIds()
 
-                    // Or, even better than a type assertion, rebuild the session for full
-                    // type-safety now that role has been type guarded.
-
-                    // ctx($adminSession).pack({
-                    //     ...session,
-                    //     user: {
-                    //         ...session.user,
-                    //         role
-                    //     }
-                    // })
-                )
-            )
+        <h1>Good morning, {session.name}!</h1>
+        for (postId of postIds) {
+            // Assemblers are not yet assembled, you need to assemble them with 
+            // 1. The old Feed context by wrapping the assembler with ctx()
+            //          |-> Here, this will propagate the session value, since session is a supplier of Feed.
+            // 2. the new context (postId) computed in this factory
+            const Post = ctx($Post).assemble(index($postId.pack(postId))).unpack() // Typescript doesn't complain session is missing, because propagated via ctx().
+            return <Post />
         }
-
-        return <h1>User Panel - {session.user.name}</h1>
     }
 })
 
-const session = ...//read session
-const App = $App.assemble(index($session.pack(session))).unpack()
+const $App = market.add("App").product({
+    suppliers: [$Feed],
+    factory: ({Feed}) => {
+        return <Feed /> // The app is just the feed for now
+    }
+})
+
+const App = $app.assemble(
+    // Typescript doesn't complain here that postId is missing, because it is not in the `suppliers` chain!
+    // The chain is $App -> $Feed -> ($db, $session), it misses $Post as it is listed as an assembler, not a supplier.
+    // Thus it also misses $postId.
+    index($session.pack({userId: "some-user", timestamp: new Date()}))
+).unpack()
+return <App />
 ```
+
 
 > **Analogy with React Context**
 >
@@ -92,25 +90,25 @@ const App = $App.assemble(index($session.pack(session))).unpack()
 
 ## Why `ctx(...)` ?
 
-You might wonder why the 2nd argument of the factory is even needed. In the example, why not call `$adminPanel.assemble(...)` instead of `ctx($adminPanel).assemble(...)`? The `$adminPanel` is available via closure, no?
+You might wonder why the 2nd argument of the factory is even needed. In the example, why not call `$Post.assemble(...)` instead of `ctx($Post).assemble(...)`? The `$Post` is available via closure, no?
 
 Well, not really. ctx(...) provides access to `contextualized` product suppliers. It doesn't return the same object as the module-scope supplier. Two main differences:
 
 1. If you `hired` a `mock` at the entry-point, `ctx(...)` will return the mock, not the module-scope supplier.
-2. `ctx(...)` knows about the current dependencies. Meaning if you call `ctx(...).assemble()`, Typescript will only require you to provide resources that are not already present in the 1st argument (deps) of the factory. If you call assemble on the module-scope supplier, however, you'd need to reprovide resource you already provided at the entry point.
+2. `ctx(...)` knows about the current dependencies. Meaning if you call `ctx(...).assemble()`, Typescript will only require you to provide request data that have not already been provided higher in the call stack. If you call assemble on the module-scope supplier, however, you'd need to reprovide request data you already provided at the entry point.
 
-However, using ctx($resourceSupplier) works, but does nothing, it's a no-op.
+ctx() can only wrap $productSuppliers. Using ctx($requestSupplier) works, but does nothing, it's a no-op that just returns $requestSupplier.
 
 In summary, never use product suppliers from module-scope closures in factories. Respect the DI spirit! Product suppliers you use in your factory should come from the factory's arguments (deps or ctx).
 
 ## Reassembling suppliers
 
-Sometimes, you don't need to build a new product from scratch based on new context, like in the `AdminPanel` example. Instead, you may just need to rebuild an _already assembled_ product with a different context. I call this `reassembling`. And you can achieve it simply by calling `ctx(...).assemble()` on a `$supplier` from the suppliers list, not the assemblers list.
+Sometimes, you don't need to build a new product from scratch based on new context, like in the `Feed` example. Instead, you may just need to rebuild an _already assembled_ product with a different context. I call this `reassembling`. And you can achieve it simply by calling `ctx(...).assemble()` on a `$supplier` from the suppliers list, not the assemblers list.
 
 Here is a classic problem reassembling solves: how can a user safely send money to another user when the sender does not have access to the receiver's account, without having to bypass the receiver's access control layer? Just impersonate the receiver with `ctx($supplier)`!
 
 ```typescript
-const $sendMoney = market.offer("sendMoney").asProduct({
+const $sendMoney = market.add("sendMoney").product({
     suppliers: [$addWalletEntry, $session],
     factory: ({ addWalletEntry, session }) => {
         return (toUserId: string, amount: number) => {
@@ -119,10 +117,10 @@ const $sendMoney = market.offer("sendMoney").asProduct({
 
             // 2. Reassemble the dependency with a new session context
             const addTargetWalletEntry = ctx($addWalletEntry)
-                // You'll never get missing resource errors here from Typescript,
+                // You'll never get missing data errors here from Typescript,
                 // since you have already assembled this product at the entry-point,
-                // with the resources it required.
-                // You are however free to overwrite or add resources as you please
+                // with the request data it required.
+                // You are however free to overwrite or add request data as you please
                 // in a type-safe way.
                 .assemble(index($session.pack({ userId: toUserId })))
                 .unpack()
@@ -136,87 +134,74 @@ const $sendMoney = market.offer("sendMoney").asProduct({
 
 > **Analogy with React Context**
 >
-> Continuing the React analogy, `ctx($assembler).assemble()` is like calling `<ContextProvider />` a second time
+> Continuing the React analogy, `ctx($supplier).assemble()` is like calling `<ContextProvider />` a second time
 > on the same context with a new value deeper in the call stack.
 
 ## Performance: Assembling Multiple Assemblers with `.hire()` and `.deps`
 
-Let's say you have multiple admin-only components to render in React (server components) now that you know the user is an admin.
+Let's say you have multiple components to assemble in the Feed once you know the postId:
 
 ```tsx
-const $App = market.offer("App").asProduct({
-    suppliers: [$session],
-    assemblers: [$adminPanel, $adminDashboard, $adminProfile],
-    factory:
-        ({ session }, ctx) =>
-        () => {
-            const role = session.user.role
-            if (role === "admin") {
-                const newSupplies = index(
-                    $adminSession.pack(session as AdminSession)
-                )
+const $Feed = market.add("Feed").product({
+    suppliers: [$db, $session],
+    assemblers: [$PostAISummary, $Post, $PostTopComments],
+    factory: ({db}, ctx) => {
+        const postIds = db.getPostIds()
 
-                const Panel = ctx($adminPanel).assemble(newSupplies).unpack()
-                const Dashboard = ctx($adminDashboard)
-                    .assemble(newSupplies)
-                    .unpack()
-                const Profile = ctx($adminProfile)
-                    .assemble(newSupplies)
-                    .unpack()
+        <h1>Good morning, {session.name}!</h1>
 
-                return (
-                    <>
-                        <Panel />
-                        <Dashboard />
-                        <Profile />
-                    </>
-                )
-            }
+        for (postId of postIds) {
+            const newSupplies = index($postId.pack(postId))
+            const PostAISummary = ctx($PostAISummary).assemble(newSupplies).unpack() 
+            const Post = ctx($Post).assemble(newSupplies).unpack() 
+            const PostTopComments = ctx($PostTopComments).assemble(newSupplies).unpack()
 
-            return <h1>User Panel - {session.user.name}</h1>
+            return <div>
+                <PostAISummary/>
+                <Post />
+                <PostTopComments/>
+            </div>
         }
+    }
 })
 ```
 
 This is not efficient, as the assemble() context needs to be built three times independently. A better way is to use `hire()`
 
 ```tsx
-const $App = market.offer("App").asProduct({
-    suppliers: [$session],
-    assemblers: [$adminPanel, $adminDashboard, $adminProfile],
-    factory: ({session}, ctx) => () => {
-        const role = session.user.role
-        if (role === "admin") {
-            const PanelProduct = ctx($adminPanel)
+const $Feed = market.add("Feed").product({
+    suppliers: [$db, $session],
+    assemblers: [$PostAISummary, $Post, $PostTopComments],
+    factory: ({db}, ctx) => {
+        const postIds = db.getPostIds()
+
+        <h1>Good morning, {session.name}!</h1>
+
+        for (postId of postIds) {
+            const PostSupply = ctx($Post)
                 //No need to wrap suppliers in ctx here, since the hire method itself is contextualized
                 //But it won't break if you do.
-                .hire([$adminDashboard, $adminProfile])
-                .assemble(
-                    index(
-                        $adminSession.pack(session as AdminSession)
-                        // + Other supplies required by any of the suppliers in the list.
-                        // The assemble() call is type-safe and will ensure all necessary
-                        // dependencies for all listed assemblers are provided.
-                    )
-                })
+                .hire($PostAISummary, $PostTopComments)
+                .assemble(index(
+                    $postId.pack(postId)
+                    // + Other supplies required by any of the suppliers in the hired list.
+                    // The assemble() call is type-safe and will ensure all necessary
+                    // dependencies for all listed assemblers are provided.
+                )).unpack()
 
-            const Panel = PanelProduct.unpack()
-            // Since they were assembled together, Dashboard and Profile
-            // are available in Panel's dependencies even
-            // if Panel does not need them in their factory.
-            const Dashboard = PanelProduct.deps.adminDashboard
-            const Profile = PanelProduct.deps.adminProfile
+            const Post = PostSupply.unpack()
+            // Since they were assembled together, PostAISummary and PostTopComments
+            // are available in Post's dependencies even
+            // if Post does not need them in their factory.
+            const PostAISummary = PostSupply.deps.PostAISummary
+            const PostTopComments = PostSupply.deps.PostTopComments
 
-            return (
-                <>
-                    <Panel />
-                    <Dashboard />
-                    <Profile />
-                </>
-            )
+            return <div>
+                <PostAISummary/>
+                <Post />
+                <PostTopComments/>
+            </div>
         }
-
-        return <h1>User Panel - {session.user.name}</h1>
     }
 })
 ```
