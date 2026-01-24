@@ -55,11 +55,11 @@ export const createMarket = () => {
             function request<CONSTRAINT = any>() {
                 return {
                     name,
-                    suppliers: [] ,
+                    suppliers: [],
                     optionals: [],
-                    assemblers: [] ,
-                    hired: [] ,
-                    team: [] ,
+                    assemblers: [],
+                    hired: [],
+                    team: [],
                     pack<THIS, VALUE extends CONSTRAINT>(
                         this: THIS,
                         value: VALUE
@@ -76,7 +76,7 @@ export const createMarket = () => {
                         }
                     },
                     _: {
-                        constraint: null as unknown as CONSTRAINT,       
+                        constraint: null as unknown as CONSTRAINT,
                         request: true as const,
                         mock: false as const
                     },
@@ -106,7 +106,7 @@ export const createMarket = () => {
                  * @public
                  */
                 product<
-                    CONSTRAINT=any,
+                    CONSTRAINT = any,
                     LAZY extends boolean = false,
                     SUPPLIERS extends MainSupplier[] = [],
                     OPTIONALS extends MainRequestSupplier[] = [],
@@ -179,7 +179,7 @@ export const createMarket = () => {
                             factory,
                             init,
 
-                            
+
                             assemble<
                                 THIS,
                                 HIRE,
@@ -192,10 +192,10 @@ export const createMarket = () => {
                                 this: THIS & {
                                     team: TEAM
                                     hire: HIRE &
-                                        ((...hired: ProductSupplier[]) => {
-                                            assemble: ASSEMBLE &
-                                                ((...args: any[]) => any)
-                                        })
+                                    ((...hired: ProductSupplier[]) => {
+                                        assemble: ASSEMBLE &
+                                        ((...args: any[]) => any)
+                                    })
                                     suppliers: SUPPLIERS
                                     optionals: OPTIONALS
                                     hired: HIRED
@@ -231,10 +231,10 @@ export const createMarket = () => {
                                     thisSupplier: THIS & {
                                         team: TEAM
                                         hire: HIRE &
-                                            ((...hired: ProductSupplier[]) => {
-                                                assemble: ASSEMBLE &
-                                                    ((...args: any[]) => any)
-                                            })
+                                        ((...hired: ProductSupplier[]) => {
+                                            assemble: ASSEMBLE &
+                                            ((...args: any[]) => any)
+                                        })
                                         suppliers: SUPPLIERS
                                         optionals: OPTIONALS
                                         hired: HIRED
@@ -284,16 +284,16 @@ export const createMarket = () => {
                                     HIRE,
                                     ASSEMBLE,
                                     SUPPLIES extends
-                                        SuppliesRecord<ProductSupplier>
+                                    SuppliesRecord<ProductSupplier>
                                 >(
                                     thisSupplier: THIS & {
                                         team: TEAM
                                         optionals: OPTIONALS
                                         hire: HIRE &
-                                            ((...hired: ProductSupplier[]) => {
-                                                assemble: ASSEMBLE &
-                                                    ((...args: any[]) => any)
-                                            })
+                                        ((...hired: ProductSupplier[]) => {
+                                            assemble: ASSEMBLE &
+                                            ((...args: any[]) => any)
+                                        })
                                     },
                                     supplies: SUPPLIES
                                 ) => {
@@ -314,7 +314,7 @@ export const createMarket = () => {
                                         )
                                     )
 
-                                    const {deps, resolved} = Object.keys(supplies).reduce(
+                                    const { deps, resolved } = Object.keys(supplies).reduce(
                                         (acc, name) => {
                                             if (
                                                 !thisSupplier.team.some(
@@ -418,8 +418,8 @@ export const createMarket = () => {
                                                                     assembler.name ===
                                                                     hired.name
                                                             ) as
-                                                                | ProductSupplier
-                                                                | undefined
+                                                            | ProductSupplier
+                                                            | undefined
                                                         if (!actual) {
                                                             throw new Error(
                                                                 `Hired assembler ${hired.name} not found`
@@ -657,12 +657,12 @@ export const createMarket = () => {
 
                     return supplier as CircularDependencyGuard<typeof supplier>
                 }
-            } 
+            }
         }
     }
-    
+
     return market
 }
 
-export { index, sleep } from "#utils"
+export { index, sleep, once } from "#utils"
 export * from "#types"
