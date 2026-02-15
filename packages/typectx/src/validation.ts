@@ -4,7 +4,7 @@
  * @internal
  */
 
-import { Supplier, type ProductSupplier, type RequestSupplier } from "#types"
+import { Supplier, type AnyProductSupplier, type RequestSupplier } from "#types"
 
 /**
  * Validates that a value is a non-empty string.
@@ -30,17 +30,15 @@ export function assertString(
  * @internal
  * @throws TypeError if the value is not a valid identifier
  */
-export function assertName(
-    value: string
-) {
+export function assertName(value: string) {
     // JavaScript identifier must start with letter, underscore, or dollar sign
     // and can contain letters, digits, underscores, and dollar signs
     const identifierPattern = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/
-    
+
     if (value === "") {
         throw new TypeError(`name must not be empty`)
     }
-    
+
     if (!identifierPattern.test(value)) {
         throw new TypeError(
             `${value} contains invalid characters for a JavaScript identifier, or doesn't start with a letter, underscore, or dollar sign`
@@ -153,7 +151,7 @@ export function assertRequestSupplier(
 export function assertProductSupplier(
     supplier: unknown,
     allowMocks: boolean = false
-): asserts supplier is ProductSupplier {
+): asserts supplier is AnyProductSupplier {
     assertHasProperty("noname", supplier, "name")
     assertString("noname", supplier.name)
     assertHasProperty(supplier.name, supplier, "_")
@@ -230,7 +228,7 @@ export function assertProductSuppliers(
     name: string,
     suppliers: unknown,
     allowMocks: boolean = false
-): asserts suppliers is ProductSupplier[] {
+): asserts suppliers is AnyProductSupplier[] {
     if (!Array.isArray(suppliers)) {
         throw new TypeError(`${name} must be an array`)
     }

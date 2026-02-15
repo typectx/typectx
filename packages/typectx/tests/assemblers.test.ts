@@ -51,12 +51,11 @@ describe("Assemblers Feature", () => {
         })
 
         const $extended = $base.hire($assembler2)
+        const test = $extended.team
 
         // @ts-expect-error - hired request supplies must be supplied also
         $extended.assemble({})
-        const result = $extended
-            .assemble(index($input.pack("unused")))
-            .unpack()
+        const result = $extended.assemble(index($input.pack("unused"))).unpack()
         expect(result).toBe("A1: test")
     })
 
@@ -334,12 +333,16 @@ describe("Assemblers Feature", () => {
             suppliers: [$number, $username],
             assemblers: [$greeter],
             factory: (deps, ctx) => {
-                const assembled = ctx($greeter).assemble({[$username.name]: undefined}).unpack()
+                const assembled = ctx($greeter)
+                    .assemble({ [$username.name]: undefined })
+                    .unpack()
                 return assembled
             }
         })
 
-        const result = $main.assemble(index($number.pack(10), $username.pack("Ted-10"))).unpack()
+        const result = $main
+            .assemble(index($number.pack(10), $username.pack("Ted-10")))
+            .unpack()
         expect(result).toEqual("Hello, John-10!")
     })
 
@@ -602,11 +605,17 @@ describe("Assemblers Feature", () => {
                         .hire($assembler2)
                         .assemble({})
 
-                    expectTypeOf(supply.supplies.assembler2).not.toEqualTypeOf<any>()
+                    expectTypeOf(
+                        supply.supplies.assembler2
+                    ).not.toEqualTypeOf<any>()
                     expectTypeOf(supply.supplies.assembler2).toExtend<Supply>()
-                    expect(supply.supplies.assembler2.unpack()).toBe("assembler2-value")
+                    expect(supply.supplies.assembler2.unpack()).toBe(
+                        "assembler2-value"
+                    )
 
-                    expectTypeOf(supply.deps.assembler2).not.toEqualTypeOf<any>()
+                    expectTypeOf(
+                        supply.deps.assembler2
+                    ).not.toEqualTypeOf<any>()
                     expectTypeOf(supply.deps.assembler2).toExtend<string>()
                 }
             })

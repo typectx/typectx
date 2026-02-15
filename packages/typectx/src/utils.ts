@@ -1,4 +1,4 @@
-import { ProductSupplier, Supplier } from "#types"
+import { AnyProductSupplier, Supplier } from "#types"
 
 /**
  * Minimal once implementation for memoizing function results.
@@ -59,15 +59,14 @@ export function index<LIST extends { supplier: { name: string } }[]>(
  * @public
  */
 export type MapFromList<LIST extends { supplier: { name: string } }[]> =
-    LIST extends []
-        ? Record<string, never>
-        : Merge<
-              {
-                  [K in keyof LIST]: {
-                      [NAME in LIST[K]["supplier"]["name"]]: LIST[K]
-                  }
-              }[number]
-          >
+    LIST extends [] ? Record<string, never>
+    :   Merge<
+            {
+                [K in keyof LIST]: {
+                    [NAME in LIST[K]["supplier"]["name"]]: LIST[K]
+                }
+            }[number]
+        >
 
 /**
  * @param ms - Number of milliseconds to wait
@@ -91,7 +90,7 @@ export function sleep(ms: number) {
  */
 export function team(name: string, suppliers: Supplier[]) {
     const team = suppliers
-        .flatMap((supplier): Supplier[] =>  [supplier, ...supplier.team])
+        .flatMap((supplier): Supplier[] => [supplier, ...supplier.team])
         .filter((supplier) => supplier !== undefined)
         .map((supplier) => {
             if (supplier.name === name)
@@ -116,7 +115,9 @@ export function dedupe(suppliers: Supplier[]) {
  * @returns True if the supplier is a ProductSupplier, false if it's a RequestSupplier
  * @internal
  */
-export function isProductSupplier(supplier: any): supplier is ProductSupplier {
+export function isProductSupplier(
+    supplier: any
+): supplier is AnyProductSupplier {
     return (
         "_" in supplier &&
         "product" in supplier._ &&
@@ -136,8 +137,6 @@ export function isPacked(supply: any) {
  * @public
  */
 
-export type Merge<U> = (U extends any ? (k: U) => void : never) extends (
-    k: infer I
-) => void
-    ? I
-    : never
+export type Merge<U> =
+    (U extends any ? (k: U) => void : never) extends (k: infer I) => void ? I
+    :   never
