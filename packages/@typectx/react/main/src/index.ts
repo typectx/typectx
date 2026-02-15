@@ -5,7 +5,7 @@ import type {
     Supply,
     Deps,
     RequestSupplier,
-    ProductSupplier
+    AnyProductSupplier
 } from "typectx"
 
 export function useDeps<INIT_DEPS extends Deps<Supplier[], RequestSupplier[]>>(
@@ -35,7 +35,7 @@ export function useAssembleComponent<
     supplier: {
         assemble: (
             supplied: TOSUPPLY & Record<string, Supply | undefined>
-        ) => Supply<CONSTRAINT, ProductSupplier, DEPS, RESOLVED>
+        ) => Supply<CONSTRAINT, AnyProductSupplier, DEPS, RESOLVED>
     },
     supplied: SUPPLIED
 ) {
@@ -45,8 +45,8 @@ export function useAssembleComponent<
     const [first] = useState(() => supplier.assemble(supplied))
 
     const components = Object.entries(first.supplies).reduce(
-        (acc: Record<string, Supply<any, ProductSupplier>>, [key, supply]) => {
-            return store.has(supply.deps)  ? { ...acc, [key]: supply as Supply<any, ProductSupplier> } : acc
+        (acc: Record<string, Supply<any, AnyProductSupplier>>, [key, supply]) => {
+            return store.has(supply.deps)  ? { ...acc, [key]: supply as Supply<any, AnyProductSupplier> } : acc
         },
         (store.has(first.deps) ? { [first.supplier.name]: first } : {})
     )
