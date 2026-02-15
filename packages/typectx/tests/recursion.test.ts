@@ -1,6 +1,6 @@
 import { describe, it, expectTypeOf, expect } from "vitest"
 import { createMarket } from "#index"
-import type { Supply, ProductSupplier } from "#types"
+import type { Supply, AnyProductSupplier } from "#types"
 
 describe("Deep Recursion Type Tests", () => {
     it("should handle deep linear dependency chains without type errors", () => {
@@ -215,7 +215,9 @@ describe("Deep Recursion Type Tests", () => {
         const resultProduct = $s51.assemble({})
 
         // Verify the type is correct
-        expectTypeOf(resultProduct).toExtend<Supply<number, ProductSupplier>>()
+        expectTypeOf(resultProduct).toExtend<
+            Supply<number, AnyProductSupplier>
+        >()
         expectTypeOf(resultProduct.unpack).toBeFunction()
 
         // Runtime check to ensure it works
@@ -4585,7 +4587,9 @@ describe("Deep Recursion Type Tests", () => {
         const resultProduct = $l52_1.assemble({})
 
         // Verify the type is correct
-        expectTypeOf(resultProduct).toExtend<Supply<number, ProductSupplier>>()
+        expectTypeOf(resultProduct).toExtend<
+            Supply<number, AnyProductSupplier>
+        >()
         expectTypeOf(resultProduct.unpack).toBeFunction()
 
         // Runtime check to ensure it works
