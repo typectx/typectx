@@ -59,7 +59,7 @@ const $addTodo = market.add("addTodo").product({
         (todo: string) => {
             const userTodos = todosDb.get(session.userId) || []
             todosDb.set(session.userId, [...userTodos, todo])
-            return db.get(session.userId)
+            return todosDb.get(session.userId)
         }
 })
 
@@ -76,16 +76,16 @@ console.log(addTodo("Build app")) // ["Learn typectx", "Build app"]
 
 typectx uses an intuitive supply chain metaphor to make dependency injection easier to understand. You create fully-decoupled, hyper-specialized **suppliers** that exchange **supplies** in a free-market fashion to assemble new, more complex products.
 
-| Term                 | Classical DI Equivalent | Description       |
-| -------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------- |
-| **`createMarket()`** | `createContainer()`     | A namespace/scope for all your suppliers.                     |
-| **Supplier**         |  Service                | Provides dependencies to other suppliers. Node in your dependency graph.    |
-| **Request Supplier**|  Value Service           | Supplier for a value from the user's request (request params, cookies, etc.)  |
-| **Product Supplier** |  Factory Service        | Supplier for a value derived from other product or request suppliers via a factory function                |
-| **Supply or Pack**   |         Proxy           | Value wrapper for type-checking and transport across suppliers                                             |
-| **Supplies**         | Container / Context     | The collection of resolved dependencies, but still within their supply or pack wrapper.                    |
-| **`assemble()`**     | `resolve()`             | Gathers all required request supplies (product supplies are auto-wired) and injects them in product supplier factories.|
-| **Deps**             | Values                  | The collection of resolved unpacked dependencies a factory receives                                        |
+| Term                 | Classical DI Equivalent | Description                                                                                                             |
+| -------------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| **`createMarket()`** | `createContainer()`     | A namespace/scope for all your suppliers.                                                                               |
+| **Supplier**         | Service                 | Provides dependencies to other suppliers. Node in your dependency graph.                                                |
+| **Request Supplier** | Value Service           | Supplier for a value from the user's request (request params, cookies, etc.)                                            |
+| **Product Supplier** | Factory Service         | Supplier for a value derived from other product or request suppliers via a factory function                             |
+| **Supply or Pack**   | Proxy                   | Value wrapper for type-checking and transport across suppliers                                                          |
+| **Supplies**         | Container / Context     | The collection of resolved dependencies, but still within their supply or pack wrapper.                                 |
+| **`assemble()`**     | `resolve()`             | Gathers all required request supplies (product supplies are auto-wired) and injects them in product supplier factories. |
+| **Deps**             | Values                  | The collection of resolved unpacked dependencies a factory receives                                                     |
 
 ## Full features list
 
@@ -117,13 +117,13 @@ typectx uses an intuitive supply chain metaphor to make dependency injection eas
 
 🧪 Testing and Packing
 
-- You can mock any product using pack(), which will use the provided value directly, bypassing the supplier's factory.
+- You can override any supplier with `pack()`, which uses the provided value directly and bypasses the supplier factory.
 - For more complex mocks which would benefit from a factory, see mock() below.
 
 🚀 Mocking and A/B testing
 
 - Use `mock()` to create alternative implementations of a product supplier, that may depend on different suppliers than the original.
-- Mocks' factories must return products of the same type than the original product's factory.
+- Mock factories must return products of the same type as the original product factory.
 - Define mock suppliers or assemblers to `hire()` at the entry-point of your app
 - For example, you can easily hire different versions of a UI component for A/B testing.
 
@@ -267,14 +267,16 @@ To simplify the assemble() call, you should use the index() utility, which just 
 ```tsx
 import { index } from "typectx"
 
-const app = $app.assemble(
-    index(
-        $session.pack({
-            userId: req.userId
-        }),
-        $db.pack(db)
+const app = $app
+    .assemble(
+        index(
+            $session.pack({
+                userId: req.userId
+            }),
+            $db.pack(db)
+        )
     )
-).unpack()
+    .unpack()
 ```
 
 ## Optionals
@@ -335,13 +337,13 @@ For more complete alternative implementations, with complex dependency needs, yo
 const $profile = market.add("profile").product({
     suppliers: [$user],
     factory: ({ user }) => {
-        return <h1>Profile of user.name}</h1>
+        return <h1>Profile of {user.name}</h1>
     }
 })
 
 const $user = market.add("user").product({
     suppliers: [$db, $session],
-    factory: ({db, session}) => {
+    factory: ({ db, session }) => {
         return db.findUserById(session.userId)
     }
 })
@@ -352,7 +354,7 @@ const $userMock = $user.mock({
 })
 
 //You no longer need to pass some value for $db and $session, since $userMock removes them from the supply chain.
-const profile = $profile.hire($userMock).assemble()
+const profile = $profile.hire($userMock).assemble({}).unpack()
 
 profile === <h1>Profile of John Doe</h1>
 ```

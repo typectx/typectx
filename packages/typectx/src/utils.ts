@@ -1,4 +1,11 @@
-import { AnyProductSupplier, Supplier } from "#types"
+import {
+    Supplier,
+    type CircularDependencyGuard,
+    type MainSupplier,
+    type RequestSupplier,
+    type Supply,
+    type UnknownProductSupplier
+} from "#types"
 
 /**
  * Minimal once implementation for memoizing function results.
@@ -15,11 +22,11 @@ export function once<F extends (...args: any[]) => any>(func: F): F {
     let result: ReturnType<F>
     let error: Error | undefined
 
-    return function () {
+    return function (this: ThisType<F>, ...args: Parameters<F>) {
         if (!called) {
             called = true
             try {
-                result = func()
+                result = func.apply(this, args)
             } catch (e) {
                 error = e as Error
                 throw e
@@ -77,30 +84,6 @@ export function sleep(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-/**
- * Builds the transitive team of suppliers by recursively collecting all dependencies.
- * This centralizes recursion through the dependency graph, flattening the tree into
- * a deduped array. It also detects circular dependencies at runtime.
- *
- * @param name - The name of the supplier being built (for circular dependency detection)
- * @param suppliers - The array of direct suppliers to build a team from
- * @returns A flattened, deduplicated array of all transitive suppliers
- * @throws Error if a circular dependency is detected
- * @internal
- */
-export function team(name: string, suppliers: Supplier[]) {
-    const team = suppliers
-        .flatMap((supplier): Supplier[] => [supplier, ...supplier.team])
-        .filter((supplier) => supplier !== undefined)
-        .map((supplier) => {
-            if (supplier.name === name)
-                throw new Error("Circular dependency detected")
-            return supplier
-        })
-
-    return dedupe(team)
-}
-
 export function dedupe(suppliers: Supplier[]) {
     const deduped: Record<string, Supplier> = {}
     for (const supplier of suppliers) {
@@ -115,18 +98,14 @@ export function dedupe(suppliers: Supplier[]) {
  * @returns True if the supplier is a ProductSupplier, false if it's a RequestSupplier
  * @internal
  */
-export function isProductSupplier(
-    supplier: any
-): supplier is AnyProductSupplier {
-    return (
-        "_" in supplier &&
-        "product" in supplier._ &&
-        supplier._.product === true
-    )
+export function isProductSupplier<SUPPLIER extends UnknownProductSupplier>(
+    supplier: SUPPLIER | Supplier
+): supplier is SUPPLIER {
+    return "_product" in supplier && supplier._product === true
 }
 
-export function isPacked(supply: any) {
-    return "_" in supply && "packed" in supply._ && supply._.packed
+export function isPacked(supply: Supply) {
+    return "_packed" in supply && supply._packed === true
 }
 
 /**

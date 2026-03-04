@@ -5,13 +5,19 @@
         }
     ],
     "settings": {
+        "terminal.integrated.automationProfile.linux": {
+            "path": "/bin/bash",
+            "args": []
+        },
         "terminal.integrated.confirmOnExit": "hasChildProcesses",
         "editor.formatOnSave": true,
         "editor.defaultFormatter": "esbenp.prettier-vscode",
         "editor.tabSize": 4,
         "workbench.activityBar.location": "default",
         "workbench.secondarySideBar.showLabels": true,
-        "files.associations": { "*.json": "jsonc" }
+        "files.associations": {
+            "*.json": "jsonc"
+        }
     },
     "tasks": {
         "version": "2.0.0",

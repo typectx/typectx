@@ -19,14 +19,13 @@ export const $App = market.add("App").product({
             const [session, setSession] = useState<User | undefined>(undefined)
             const assertStableFeed = useAssertStable()
             const assertStableSelectSession = useAssertStable()
+            const contextualFeed = ctx($Feed)
+            const hiredFeed = contextualFeed.hire($SelectSession)
 
             const FeedProduct = useAssembleComponent(
-                ctx($Feed).hire($SelectSession),
+                hiredFeed,
                 index(
-                    req.$session.pack([
-                        session ?? defaultSession,
-                        setSession
-                    ])
+                    req.$session.pack([session ?? defaultSession, setSession])
                 )
             )
 

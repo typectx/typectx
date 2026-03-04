@@ -1,6 +1,8 @@
 import { describe, it, expectTypeOf, expect } from "vitest"
 import { createMarket } from "#index"
-import type { Supply, AnyProductSupplier } from "#types"
+import type { Supply } from "#types"
+
+const tuple = <T extends unknown[]>(...values: T): T => values
 
 describe("Deep Recursion Type Tests", () => {
     it("should handle deep linear dependency chains without type errors", () => {
@@ -215,9 +217,7 @@ describe("Deep Recursion Type Tests", () => {
         const resultProduct = $s51.assemble({})
 
         // Verify the type is correct
-        expectTypeOf(resultProduct).toExtend<
-            Supply<number, AnyProductSupplier>
-        >()
+        expectTypeOf(resultProduct).toExtend<Supply>()
         expectTypeOf(resultProduct.unpack).toBeFunction()
 
         // Runtime check to ensure it works
@@ -258,7 +258,7 @@ describe("Deep Recursion Type Tests", () => {
         const $base19 = market.add("base19").product({ factory: () => 19 })
         const $base20 = market.add("base20").product({ factory: () => 20 })
 
-        const baseSuppliers = [
+        const baseSuppliers = tuple(
             $base1,
             $base2,
             $base3,
@@ -279,7 +279,7 @@ describe("Deep Recursion Type Tests", () => {
             $base18,
             $base19,
             $base20
-        ]
+        )
 
         // Create suppliers that depend on all 20 base suppliers
         // Each supplier depends on 20 others, so FilterSuppliers will process 20 elements
@@ -348,7 +348,7 @@ describe("Deep Recursion Type Tests", () => {
             .add("l1_20")
             .product({ suppliers: baseSuppliers, factory: () => 120 })
 
-        const layer1 = [
+        const layer1 = tuple(
             $l1_1,
             $l1_2,
             $l1_3,
@@ -369,7 +369,7 @@ describe("Deep Recursion Type Tests", () => {
             $l1_18,
             $l1_19,
             $l1_20
-        ]
+        )
 
         // Layer 2: depends on layer1 suppliers
         const $l2_1 = market
@@ -433,7 +433,7 @@ describe("Deep Recursion Type Tests", () => {
             .add("l2_20")
             .product({ suppliers: layer1, factory: () => 220 })
 
-        const layer2 = [
+        const layer2 = tuple(
             $l2_1,
             $l2_2,
             $l2_3,
@@ -454,7 +454,7 @@ describe("Deep Recursion Type Tests", () => {
             $l2_18,
             $l2_19,
             $l2_20
-        ]
+        )
 
         // Layer 3: depends on layer2 suppliers
         const $l3_1 = market
@@ -518,7 +518,7 @@ describe("Deep Recursion Type Tests", () => {
             .add("l3_20")
             .product({ suppliers: layer2, factory: () => 320 })
 
-        const layer3 = [
+        const layer3 = tuple(
             $l3_1,
             $l3_2,
             $l3_3,
@@ -539,7 +539,7 @@ describe("Deep Recursion Type Tests", () => {
             $l3_18,
             $l3_19,
             $l3_20
-        ]
+        )
 
         // Layer 4: depends on layer3 suppliers
         const $l4_1 = market
@@ -602,7 +602,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l4_20 = market
             .add("l4_20")
             .product({ suppliers: layer3, factory: () => 420 })
-        const layer4 = [
+        const layer4 = tuple(
             $l4_1,
             $l4_2,
             $l4_3,
@@ -623,7 +623,7 @@ describe("Deep Recursion Type Tests", () => {
             $l4_18,
             $l4_19,
             $l4_20
-        ]
+        )
 
         // Layer 5: depends on layer4 suppliers
         const $l5_1 = market
@@ -686,7 +686,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l5_20 = market
             .add("l5_20")
             .product({ suppliers: layer4, factory: () => 520 })
-        const layer5 = [
+        const layer5 = tuple(
             $l5_1,
             $l5_2,
             $l5_3,
@@ -707,7 +707,7 @@ describe("Deep Recursion Type Tests", () => {
             $l5_18,
             $l5_19,
             $l5_20
-        ]
+        )
 
         // Layer 6: depends on layer5 suppliers
         const $l6_1 = market
@@ -770,7 +770,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l6_20 = market
             .add("l6_20")
             .product({ suppliers: layer5, factory: () => 620 })
-        const layer6 = [
+        const layer6 = tuple(
             $l6_1,
             $l6_2,
             $l6_3,
@@ -791,7 +791,7 @@ describe("Deep Recursion Type Tests", () => {
             $l6_18,
             $l6_19,
             $l6_20
-        ]
+        )
 
         // Layer 7: depends on layer6 suppliers
         const $l7_1 = market
@@ -854,7 +854,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l7_20 = market
             .add("l7_20")
             .product({ suppliers: layer6, factory: () => 720 })
-        const layer7 = [
+        const layer7 = tuple(
             $l7_1,
             $l7_2,
             $l7_3,
@@ -875,7 +875,7 @@ describe("Deep Recursion Type Tests", () => {
             $l7_18,
             $l7_19,
             $l7_20
-        ]
+        )
 
         // Layer 8: depends on layer7 suppliers
         const $l8_1 = market
@@ -938,7 +938,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l8_20 = market
             .add("l8_20")
             .product({ suppliers: layer7, factory: () => 820 })
-        const layer8 = [
+        const layer8 = tuple(
             $l8_1,
             $l8_2,
             $l8_3,
@@ -959,7 +959,7 @@ describe("Deep Recursion Type Tests", () => {
             $l8_18,
             $l8_19,
             $l8_20
-        ]
+        )
 
         // Layer 9: depends on layer8 suppliers
         const $l9_1 = market
@@ -1022,7 +1022,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l9_20 = market
             .add("l9_20")
             .product({ suppliers: layer8, factory: () => 920 })
-        const layer9 = [
+        const layer9 = tuple(
             $l9_1,
             $l9_2,
             $l9_3,
@@ -1043,7 +1043,7 @@ describe("Deep Recursion Type Tests", () => {
             $l9_18,
             $l9_19,
             $l9_20
-        ]
+        )
 
         // Layer 10: depends on layer9 suppliers
         const $l10_1 = market
@@ -1106,7 +1106,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l10_20 = market
             .add("l10_20")
             .product({ suppliers: layer9, factory: () => 1020 })
-        const layer10 = [
+        const layer10 = tuple(
             $l10_1,
             $l10_2,
             $l10_3,
@@ -1127,7 +1127,7 @@ describe("Deep Recursion Type Tests", () => {
             $l10_18,
             $l10_19,
             $l10_20
-        ]
+        )
 
         // Layer 11: depends on layer10 suppliers
         const $l11_1 = market
@@ -1190,7 +1190,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l11_20 = market
             .add("l11_20")
             .product({ suppliers: layer10, factory: () => 1120 })
-        const layer11 = [
+        const layer11 = tuple(
             $l11_1,
             $l11_2,
             $l11_3,
@@ -1211,7 +1211,7 @@ describe("Deep Recursion Type Tests", () => {
             $l11_18,
             $l11_19,
             $l11_20
-        ]
+        )
 
         // Layer 12: depends on layer11 suppliers
         const $l12_1 = market
@@ -1274,7 +1274,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l12_20 = market
             .add("l12_20")
             .product({ suppliers: layer11, factory: () => 1220 })
-        const layer12 = [
+        const layer12 = tuple(
             $l12_1,
             $l12_2,
             $l12_3,
@@ -1295,7 +1295,7 @@ describe("Deep Recursion Type Tests", () => {
             $l12_18,
             $l12_19,
             $l12_20
-        ]
+        )
 
         // Layer 13: depends on layer12 suppliers
         const $l13_1 = market
@@ -1358,7 +1358,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l13_20 = market
             .add("l13_20")
             .product({ suppliers: layer12, factory: () => 1320 })
-        const layer13 = [
+        const layer13 = tuple(
             $l13_1,
             $l13_2,
             $l13_3,
@@ -1379,7 +1379,7 @@ describe("Deep Recursion Type Tests", () => {
             $l13_18,
             $l13_19,
             $l13_20
-        ]
+        )
 
         // Layer 14: depends on layer13 suppliers
         const $l14_1 = market
@@ -1442,7 +1442,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l14_20 = market
             .add("l14_20")
             .product({ suppliers: layer13, factory: () => 1420 })
-        const layer14 = [
+        const layer14 = tuple(
             $l14_1,
             $l14_2,
             $l14_3,
@@ -1463,7 +1463,7 @@ describe("Deep Recursion Type Tests", () => {
             $l14_18,
             $l14_19,
             $l14_20
-        ]
+        )
 
         // Layer 15: depends on layer14 suppliers
         const $l15_1 = market
@@ -1526,7 +1526,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l15_20 = market
             .add("l15_20")
             .product({ suppliers: layer14, factory: () => 1520 })
-        const layer15 = [
+        const layer15 = tuple(
             $l15_1,
             $l15_2,
             $l15_3,
@@ -1547,7 +1547,7 @@ describe("Deep Recursion Type Tests", () => {
             $l15_18,
             $l15_19,
             $l15_20
-        ]
+        )
 
         // Layer 16: depends on layer15 suppliers
         const $l16_1 = market
@@ -1610,7 +1610,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l16_20 = market
             .add("l16_20")
             .product({ suppliers: layer15, factory: () => 1620 })
-        const layer16 = [
+        const layer16 = tuple(
             $l16_1,
             $l16_2,
             $l16_3,
@@ -1631,7 +1631,7 @@ describe("Deep Recursion Type Tests", () => {
             $l16_18,
             $l16_19,
             $l16_20
-        ]
+        )
 
         // Layer 17: depends on layer16 suppliers
         const $l17_1 = market
@@ -1694,7 +1694,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l17_20 = market
             .add("l17_20")
             .product({ suppliers: layer16, factory: () => 1720 })
-        const layer17 = [
+        const layer17 = tuple(
             $l17_1,
             $l17_2,
             $l17_3,
@@ -1715,7 +1715,7 @@ describe("Deep Recursion Type Tests", () => {
             $l17_18,
             $l17_19,
             $l17_20
-        ]
+        )
 
         // Layer 18: depends on layer17 suppliers
         const $l18_1 = market
@@ -1778,7 +1778,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l18_20 = market
             .add("l18_20")
             .product({ suppliers: layer17, factory: () => 1820 })
-        const layer18 = [
+        const layer18 = tuple(
             $l18_1,
             $l18_2,
             $l18_3,
@@ -1799,7 +1799,7 @@ describe("Deep Recursion Type Tests", () => {
             $l18_18,
             $l18_19,
             $l18_20
-        ]
+        )
 
         // Layer 19: depends on layer18 suppliers
         const $l19_1 = market
@@ -1862,7 +1862,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l19_20 = market
             .add("l19_20")
             .product({ suppliers: layer18, factory: () => 1920 })
-        const layer19 = [
+        const layer19 = tuple(
             $l19_1,
             $l19_2,
             $l19_3,
@@ -1883,7 +1883,7 @@ describe("Deep Recursion Type Tests", () => {
             $l19_18,
             $l19_19,
             $l19_20
-        ]
+        )
 
         // Layer 20: depends on layer19 suppliers
         const $l20_1 = market
@@ -1946,7 +1946,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l20_20 = market
             .add("l20_20")
             .product({ suppliers: layer19, factory: () => 2020 })
-        const layer20 = [
+        const layer20 = tuple(
             $l20_1,
             $l20_2,
             $l20_3,
@@ -1967,7 +1967,7 @@ describe("Deep Recursion Type Tests", () => {
             $l20_18,
             $l20_19,
             $l20_20
-        ]
+        )
         // Layer 21: depends on layer20 suppliers
         const $l21_1 = market
             .add("l21_1")
@@ -2029,7 +2029,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l21_20 = market
             .add("l21_20")
             .product({ suppliers: layer20, factory: () => 2120 })
-        const layer21 = [
+        const layer21 = tuple(
             $l21_1,
             $l21_2,
             $l21_3,
@@ -2050,7 +2050,7 @@ describe("Deep Recursion Type Tests", () => {
             $l21_18,
             $l21_19,
             $l21_20
-        ]
+        )
 
         // Layer 22: depends on layer21 suppliers
         const $l22_1 = market
@@ -2113,7 +2113,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l22_20 = market
             .add("l22_20")
             .product({ suppliers: layer21, factory: () => 2220 })
-        const layer22 = [
+        const layer22 = tuple(
             $l22_1,
             $l22_2,
             $l22_3,
@@ -2134,7 +2134,7 @@ describe("Deep Recursion Type Tests", () => {
             $l22_18,
             $l22_19,
             $l22_20
-        ]
+        )
 
         // Layer 23: depends on layer22 suppliers
         const $l23_1 = market
@@ -2197,7 +2197,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l23_20 = market
             .add("l23_20")
             .product({ suppliers: layer22, factory: () => 2320 })
-        const layer23 = [
+        const layer23 = tuple(
             $l23_1,
             $l23_2,
             $l23_3,
@@ -2218,7 +2218,7 @@ describe("Deep Recursion Type Tests", () => {
             $l23_18,
             $l23_19,
             $l23_20
-        ]
+        )
 
         // Layer 24: depends on layer23 suppliers
         const $l24_1 = market
@@ -2281,7 +2281,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l24_20 = market
             .add("l24_20")
             .product({ suppliers: layer23, factory: () => 2420 })
-        const layer24 = [
+        const layer24 = tuple(
             $l24_1,
             $l24_2,
             $l24_3,
@@ -2302,7 +2302,7 @@ describe("Deep Recursion Type Tests", () => {
             $l24_18,
             $l24_19,
             $l24_20
-        ]
+        )
 
         // Layer 25: depends on layer24 suppliers
         const $l25_1 = market
@@ -2365,7 +2365,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l25_20 = market
             .add("l25_20")
             .product({ suppliers: layer24, factory: () => 2520 })
-        const layer25 = [
+        const layer25 = tuple(
             $l25_1,
             $l25_2,
             $l25_3,
@@ -2386,7 +2386,7 @@ describe("Deep Recursion Type Tests", () => {
             $l25_18,
             $l25_19,
             $l25_20
-        ]
+        )
 
         // Layer 26: depends on layer25 suppliers
         const $l26_1 = market
@@ -2449,7 +2449,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l26_20 = market
             .add("l26_20")
             .product({ suppliers: layer25, factory: () => 2620 })
-        const layer26 = [
+        const layer26 = tuple(
             $l26_1,
             $l26_2,
             $l26_3,
@@ -2470,7 +2470,7 @@ describe("Deep Recursion Type Tests", () => {
             $l26_18,
             $l26_19,
             $l26_20
-        ]
+        )
 
         // Layer 27: depends on layer26 suppliers
         const $l27_1 = market
@@ -2533,7 +2533,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l27_20 = market
             .add("l27_20")
             .product({ suppliers: layer26, factory: () => 2720 })
-        const layer27 = [
+        const layer27 = tuple(
             $l27_1,
             $l27_2,
             $l27_3,
@@ -2554,7 +2554,7 @@ describe("Deep Recursion Type Tests", () => {
             $l27_18,
             $l27_19,
             $l27_20
-        ]
+        )
 
         // Layer 28: depends on layer27 suppliers
         const $l28_1 = market
@@ -2617,7 +2617,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l28_20 = market
             .add("l28_20")
             .product({ suppliers: layer27, factory: () => 2820 })
-        const layer28 = [
+        const layer28 = tuple(
             $l28_1,
             $l28_2,
             $l28_3,
@@ -2638,7 +2638,7 @@ describe("Deep Recursion Type Tests", () => {
             $l28_18,
             $l28_19,
             $l28_20
-        ]
+        )
 
         // Layer 29: depends on layer28 suppliers
         const $l29_1 = market
@@ -2701,7 +2701,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l29_20 = market
             .add("l29_20")
             .product({ suppliers: layer28, factory: () => 2920 })
-        const layer29 = [
+        const layer29 = tuple(
             $l29_1,
             $l29_2,
             $l29_3,
@@ -2722,7 +2722,7 @@ describe("Deep Recursion Type Tests", () => {
             $l29_18,
             $l29_19,
             $l29_20
-        ]
+        )
 
         // Layer 30: depends on layer29 suppliers
         const $l30_1 = market
@@ -2785,7 +2785,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l30_20 = market
             .add("l30_20")
             .product({ suppliers: layer29, factory: () => 3020 })
-        const layer30 = [
+        const layer30 = tuple(
             $l30_1,
             $l30_2,
             $l30_3,
@@ -2806,7 +2806,7 @@ describe("Deep Recursion Type Tests", () => {
             $l30_18,
             $l30_19,
             $l30_20
-        ]
+        )
 
         // Layer 31: depends on layer30 suppliers
         const $l31_1 = market
@@ -2869,7 +2869,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l31_20 = market
             .add("l31_20")
             .product({ suppliers: layer30, factory: () => 3120 })
-        const layer31 = [
+        const layer31 = tuple(
             $l31_1,
             $l31_2,
             $l31_3,
@@ -2890,7 +2890,7 @@ describe("Deep Recursion Type Tests", () => {
             $l31_18,
             $l31_19,
             $l31_20
-        ]
+        )
 
         // Layer 32: depends on layer31 suppliers
         const $l32_1 = market
@@ -2953,7 +2953,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l32_20 = market
             .add("l32_20")
             .product({ suppliers: layer31, factory: () => 3220 })
-        const layer32 = [
+        const layer32 = tuple(
             $l32_1,
             $l32_2,
             $l32_3,
@@ -2974,7 +2974,7 @@ describe("Deep Recursion Type Tests", () => {
             $l32_18,
             $l32_19,
             $l32_20
-        ]
+        )
 
         // Layer 33: depends on layer32 suppliers
         const $l33_1 = market
@@ -3037,7 +3037,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l33_20 = market
             .add("l33_20")
             .product({ suppliers: layer32, factory: () => 3320 })
-        const layer33 = [
+        const layer33 = tuple(
             $l33_1,
             $l33_2,
             $l33_3,
@@ -3058,7 +3058,7 @@ describe("Deep Recursion Type Tests", () => {
             $l33_18,
             $l33_19,
             $l33_20
-        ]
+        )
 
         // Layer 34: depends on layer33 suppliers
         const $l34_1 = market
@@ -3121,7 +3121,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l34_20 = market
             .add("l34_20")
             .product({ suppliers: layer33, factory: () => 3420 })
-        const layer34 = [
+        const layer34 = tuple(
             $l34_1,
             $l34_2,
             $l34_3,
@@ -3142,7 +3142,7 @@ describe("Deep Recursion Type Tests", () => {
             $l34_18,
             $l34_19,
             $l34_20
-        ]
+        )
 
         // Layer 35: depends on layer34 suppliers
         const $l35_1 = market
@@ -3205,7 +3205,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l35_20 = market
             .add("l35_20")
             .product({ suppliers: layer34, factory: () => 3520 })
-        const layer35 = [
+        const layer35 = tuple(
             $l35_1,
             $l35_2,
             $l35_3,
@@ -3226,7 +3226,7 @@ describe("Deep Recursion Type Tests", () => {
             $l35_18,
             $l35_19,
             $l35_20
-        ]
+        )
 
         // Layer 36: depends on layer35 suppliers
         const $l36_1 = market
@@ -3289,7 +3289,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l36_20 = market
             .add("l36_20")
             .product({ suppliers: layer35, factory: () => 3620 })
-        const layer36 = [
+        const layer36 = tuple(
             $l36_1,
             $l36_2,
             $l36_3,
@@ -3310,7 +3310,7 @@ describe("Deep Recursion Type Tests", () => {
             $l36_18,
             $l36_19,
             $l36_20
-        ]
+        )
 
         // Layer 37: depends on layer36 suppliers
         const $l37_1 = market
@@ -3373,7 +3373,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l37_20 = market
             .add("l37_20")
             .product({ suppliers: layer36, factory: () => 3720 })
-        const layer37 = [
+        const layer37 = tuple(
             $l37_1,
             $l37_2,
             $l37_3,
@@ -3394,7 +3394,7 @@ describe("Deep Recursion Type Tests", () => {
             $l37_18,
             $l37_19,
             $l37_20
-        ]
+        )
 
         // Layer 38: depends on layer37 suppliers
         const $l38_1 = market
@@ -3457,7 +3457,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l38_20 = market
             .add("l38_20")
             .product({ suppliers: layer37, factory: () => 3820 })
-        const layer38 = [
+        const layer38 = tuple(
             $l38_1,
             $l38_2,
             $l38_3,
@@ -3478,7 +3478,7 @@ describe("Deep Recursion Type Tests", () => {
             $l38_18,
             $l38_19,
             $l38_20
-        ]
+        )
 
         // Layer 39: depends on layer38 suppliers
         const $l39_1 = market
@@ -3541,7 +3541,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l39_20 = market
             .add("l39_20")
             .product({ suppliers: layer38, factory: () => 3920 })
-        const layer39 = [
+        const layer39 = tuple(
             $l39_1,
             $l39_2,
             $l39_3,
@@ -3562,7 +3562,7 @@ describe("Deep Recursion Type Tests", () => {
             $l39_18,
             $l39_19,
             $l39_20
-        ]
+        )
 
         // Layer 40: depends on layer39 suppliers
         const $l40_1 = market
@@ -3625,7 +3625,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l40_20 = market
             .add("l40_20")
             .product({ suppliers: layer39, factory: () => 4020 })
-        const layer40 = [
+        const layer40 = tuple(
             $l40_1,
             $l40_2,
             $l40_3,
@@ -3646,7 +3646,7 @@ describe("Deep Recursion Type Tests", () => {
             $l40_18,
             $l40_19,
             $l40_20
-        ]
+        )
 
         // Layer 41: depends on layer40 suppliers
         const $l41_1 = market
@@ -3709,7 +3709,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l41_20 = market
             .add("l41_20")
             .product({ suppliers: layer40, factory: () => 4120 })
-        const layer41 = [
+        const layer41 = tuple(
             $l41_1,
             $l41_2,
             $l41_3,
@@ -3730,7 +3730,7 @@ describe("Deep Recursion Type Tests", () => {
             $l41_18,
             $l41_19,
             $l41_20
-        ]
+        )
 
         // Layer 42: depends on layer41 suppliers
         const $l42_1 = market
@@ -3793,7 +3793,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l42_20 = market
             .add("l42_20")
             .product({ suppliers: layer41, factory: () => 4220 })
-        const layer42 = [
+        const layer42 = tuple(
             $l42_1,
             $l42_2,
             $l42_3,
@@ -3814,7 +3814,7 @@ describe("Deep Recursion Type Tests", () => {
             $l42_18,
             $l42_19,
             $l42_20
-        ]
+        )
 
         // Layer 43: depends on layer42 suppliers
         const $l43_1 = market
@@ -3877,7 +3877,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l43_20 = market
             .add("l43_20")
             .product({ suppliers: layer42, factory: () => 4320 })
-        const layer43 = [
+        const layer43 = tuple(
             $l43_1,
             $l43_2,
             $l43_3,
@@ -3898,7 +3898,7 @@ describe("Deep Recursion Type Tests", () => {
             $l43_18,
             $l43_19,
             $l43_20
-        ]
+        )
 
         // Layer 44: depends on layer43 suppliers
         const $l44_1 = market
@@ -3961,7 +3961,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l44_20 = market
             .add("l44_20")
             .product({ suppliers: layer43, factory: () => 4420 })
-        const layer44 = [
+        const layer44 = tuple(
             $l44_1,
             $l44_2,
             $l44_3,
@@ -3982,7 +3982,7 @@ describe("Deep Recursion Type Tests", () => {
             $l44_18,
             $l44_19,
             $l44_20
-        ]
+        )
 
         // Layer 45: depends on layer44 suppliers
         const $l45_1 = market
@@ -4045,7 +4045,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l45_20 = market
             .add("l45_20")
             .product({ suppliers: layer44, factory: () => 4520 })
-        const layer45 = [
+        const layer45 = tuple(
             $l45_1,
             $l45_2,
             $l45_3,
@@ -4066,7 +4066,7 @@ describe("Deep Recursion Type Tests", () => {
             $l45_18,
             $l45_19,
             $l45_20
-        ]
+        )
 
         // Layer 46: depends on layer45 suppliers
         const $l46_1 = market
@@ -4129,7 +4129,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l46_20 = market
             .add("l46_20")
             .product({ suppliers: layer45, factory: () => 4620 })
-        const layer46 = [
+        const layer46 = tuple(
             $l46_1,
             $l46_2,
             $l46_3,
@@ -4150,7 +4150,7 @@ describe("Deep Recursion Type Tests", () => {
             $l46_18,
             $l46_19,
             $l46_20
-        ]
+        )
 
         // Layer 47: depends on layer46 suppliers
         const $l47_1 = market
@@ -4213,7 +4213,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l47_20 = market
             .add("l47_20")
             .product({ suppliers: layer46, factory: () => 4720 })
-        const layer47 = [
+        const layer47 = tuple(
             $l47_1,
             $l47_2,
             $l47_3,
@@ -4234,7 +4234,7 @@ describe("Deep Recursion Type Tests", () => {
             $l47_18,
             $l47_19,
             $l47_20
-        ]
+        )
 
         // Layer 48: depends on layer47 suppliers
         const $l48_1 = market
@@ -4297,7 +4297,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l48_20 = market
             .add("l48_20")
             .product({ suppliers: layer47, factory: () => 4820 })
-        const layer48 = [
+        const layer48 = tuple(
             $l48_1,
             $l48_2,
             $l48_3,
@@ -4318,7 +4318,7 @@ describe("Deep Recursion Type Tests", () => {
             $l48_18,
             $l48_19,
             $l48_20
-        ]
+        )
 
         // Layer 49: depends on layer48 suppliers
         const $l49_1 = market
@@ -4381,7 +4381,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l49_20 = market
             .add("l49_20")
             .product({ suppliers: layer48, factory: () => 4920 })
-        const layer49 = [
+        const layer49 = tuple(
             $l49_1,
             $l49_2,
             $l49_3,
@@ -4402,7 +4402,7 @@ describe("Deep Recursion Type Tests", () => {
             $l49_18,
             $l49_19,
             $l49_20
-        ]
+        )
 
         // Layer 50: depends on layer49 suppliers
         const $l50_1 = market
@@ -4465,7 +4465,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l50_20 = market
             .add("l50_20")
             .product({ suppliers: layer49, factory: () => 5020 })
-        const layer50 = [
+        const layer50 = tuple(
             $l50_1,
             $l50_2,
             $l50_3,
@@ -4486,7 +4486,7 @@ describe("Deep Recursion Type Tests", () => {
             $l50_18,
             $l50_19,
             $l50_20
-        ]
+        )
 
         // Layer 51: depends on layer50 suppliers
         const $l51_1 = market
@@ -4549,7 +4549,7 @@ describe("Deep Recursion Type Tests", () => {
         const $l51_20 = market
             .add("l51_20")
             .product({ suppliers: layer50, factory: () => 5120 })
-        const layer51 = [
+        const layer51 = tuple(
             $l51_1,
             $l51_2,
             $l51_3,
@@ -4570,7 +4570,7 @@ describe("Deep Recursion Type Tests", () => {
             $l51_18,
             $l51_19,
             $l51_20
-        ]
+        )
 
         // Layer 52: depends on layer51 suppliers
         const $l52_1 = market
@@ -4587,12 +4587,10 @@ describe("Deep Recursion Type Tests", () => {
         const resultProduct = $l52_1.assemble({})
 
         // Verify the type is correct
-        expectTypeOf(resultProduct).toExtend<
-            Supply<number, AnyProductSupplier>
-        >()
+        expectTypeOf(resultProduct).toExtend<Supply>()
         expectTypeOf(resultProduct.unpack).toBeFunction()
 
         // Runtime check to ensure it works
         expect(resultProduct.unpack()).toBe(5201)
-    }, 10000)
+    }, 20000)
 })

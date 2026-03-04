@@ -27,7 +27,7 @@ describe("Assemblers Feature", () => {
         expect(factoryMock).not.toHaveBeenCalled()
     })
 
-    it("should force hired assemblers to be pre-supplied", () => {
+    it("should require request supplies for hired assemblers", () => {
         const market = createMarket()
         const $input = market.add("input").request<string>()
 
@@ -608,7 +608,9 @@ describe("Assemblers Feature", () => {
                     expectTypeOf(
                         supply.supplies.assembler2
                     ).not.toEqualTypeOf<any>()
-                    expectTypeOf(supply.supplies.assembler2).toExtend<Supply>()
+                    expectTypeOf(supply.supplies.assembler2).toExtend<
+                        Supply<any>
+                    >()
                     expect(supply.supplies.assembler2.unpack()).toBe(
                         "assembler2-value"
                     )

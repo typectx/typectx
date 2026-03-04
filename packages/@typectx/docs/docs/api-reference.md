@@ -15,8 +15,6 @@ keywords:
 
 # API Reference
 
-## API Reference
-
 ### `createMarket()`
 
 Creates a new dependency injection scope.
@@ -27,7 +25,7 @@ const market = createMarket()
 
 ### `market.add("name")`
 
-Creates a new supplier with the given name. The name must be a valid Javascript identifier, e.g. it must only contain digits, letters, `$` or `_`, and cannot start with a digit.
+Creates a new supplier with the given name. The name must be a valid JavaScript identifier, i.e. it can only contain digits, letters, `$`, or `_`, and cannot start with a digit.
 
 ```ts
 const $supplier = market.add("name")
@@ -93,14 +91,14 @@ const $alternative = $originalSupplier.mock({
 
 ### `$supplier.hire(...hiredSuppliers)`
 
-`Composition root` method to wire additionnal suppliers. Mocks will replace originals
+Composition root method to wire additional suppliers. Hired suppliers replace originals
 with the same name across the entire dependency chain.
 
 ```ts
 const $modified = $originalSupplier.hire($mockSupplier)
 ```
 
-You can also pass originals to hiredSuppliers to batch assemble multiple products together. You access other products via `product.deps.otherSupplier`
+You can also hire additional original suppliers to batch-assemble multiple products together. You access these resolved values through the returned supply's `deps`.
 
 ```ts
 const ASupply = $A.hire($B, $C).assemble({})
@@ -110,9 +108,9 @@ const B = ASupply.deps.B
 const C = ASupply.deps.C
 ```
 
-### `product.deps`
+### `supply.deps`
 
-Access a product dependencies, but from outside a factory. See example above in `$supplier.hire()` section. Typescript only displays supplies it is sure the product has, which is often `unknown` in factories since the supplier from which the product has been created may have been swapped with a mock with unknown supplies. But hired suppliers will always be available in supplies to enable batch assemble as seen in `$supplier.hire()` section.
+Access resolved dependencies from outside a factory. See example above in `$supplier.hire()` section. TypeScript only exposes dependencies it can prove are present for that assembled supplier context.
 
 ### `index(...supplies)`
 
@@ -128,4 +126,4 @@ const suppliesObject = index(supply1, supply2, supply3)
 The factory function is where your service logic lives. It receives two arguments:
 
 - **`deps`**: An object of dependencies of the form: `{[supplier.name]: value}`
-- **`ctx(Supplier or Assembler)`**: A function to safely access contextualized suppliers or assemblers in a factory.
+- **`ctx($supplierOrAssembler)`**: A function to access contextualized suppliers or assemblers in a factory.

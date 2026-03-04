@@ -24,7 +24,7 @@ typectx's "Dependency Injection Supply Chain" (DISC) model can do everything con
 
 ## The Supply Chain Metaphor
 
-typectx uses an intuitive supply chain metaphor to make dependency injection easier to understand. You create fully-decoupled, hyper-specialized **suppliers** that exchange **resources** and **products** in a free-market fashion to assemble new, more complex products.
+typectx uses an intuitive supply chain metaphor to make dependency injection easier to understand. You create fully-decoupled, hyper-specialized **suppliers** that exchange **request data** and **products** in a free-market fashion to assemble new, more complex products.
 
 | Term                 | Classical DI Equivalent | Description       |
 | -------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------- |
@@ -43,7 +43,7 @@ Injection happens statelessly via a memoized, recursive, self-referential, lazy 
 
 ```typescript
 const supplies = {
-    // Resources are provided directly
+    // Request data is provided directly
     reqA,
     reqB,
 

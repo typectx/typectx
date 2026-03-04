@@ -1,52 +1,84 @@
-export interface Supplier<NAME extends string = string, CONSTRAINT = any> {
+export interface BaseSupplier<
+    NAME extends string = string,
+    CONSTRAINT = unknown
+> {
     name: NAME
-    suppliers: any[]
-    optionals: any[]
-    assemblers: any[]
-    hired: any[]
-    team: any[]
-    pack: <VALUE extends CONSTRAINT>(
+    suppliers: MainSupplier[]
+    optionals: RequestSupplier[]
+    assemblers: UnknownProductSupplier[]
+    hired: UnknownProductSupplier[]
+    pack: <THIS extends Supplier, VALUE extends CONSTRAINT>(
+        this: THIS,
         value: VALUE
-    ) => Supply<
-        VALUE,
-        RequestSupplier<NAME, CONSTRAINT>,
-        Record<never, never>,
-        Record<never, never>
+    ) => Supply<THIS>
+    _constraint: CONSTRAINT
+}
+
+export interface RequestSupplier<
+    NAME extends string = string,
+    CONSTRAINT = unknown
+> extends BaseSupplier<NAME, CONSTRAINT> {
+    suppliers: []
+    optionals: []
+    assemblers: []
+    hired: []
+    _constraint: CONSTRAINT
+    _request: true
+    _mock: false
+}
+
+export type Factory<
+    NAME extends string,
+    CONSTRAINT,
+    SUPPLIERS extends MainSupplier[] = [],
+    OPTIONALS extends RequestSupplier[] = [],
+    ASSEMBLERS extends UnknownProductSupplier[] = []
+> = (
+    deps: Deps<{
+        suppliers: SUPPLIERS
+        optionals: OPTIONALS
+        hired: []
+    }>,
+    ctx: Ctx<
+        ProductSupplier<NAME, unknown, SUPPLIERS, OPTIONALS, ASSEMBLERS, []>
     >
-    _: {
-        constraint: CONSTRAINT
-    }
-}
+) => CONSTRAINT
 
-export interface RequestSupplier<NAME extends string = string, CONSTRAINT = any>
-    extends Supplier<NAME, CONSTRAINT> {
-    suppliers: never[]
-    optionals: never[]
-    assemblers: never[]
-    hired: never[]
-    team: never[]
-    _: {
-        constraint: CONSTRAINT
-        request: true
-    }
-}
+type Init<
+    CONSTRAINT,
+    SUPPLIERS extends MainSupplier[] = [],
+    OPTIONALS extends RequestSupplier[] = [],
+    HIRED extends UnknownProductSupplier[] = []
+> = (
+    value: CONSTRAINT,
+    deps: Deps<{
+        suppliers: SUPPLIERS
+        optionals: OPTIONALS
+        hired: HIRED
+    }>
+) => void
 
-export interface AnyProductSupplier extends Supplier<string, any> {
-    suppliers: any[]
-    optionals: any[]
-    assemblers: any[]
-    hired: any[]
-    team: any[]
-    factory: (deps: any, ctx: any) => any
-    assemble: (supplied: any) => Supply<any, AnyProductSupplier, any, any, any>
-    init?: (value: any, deps: any) => void
+export type ProductConfig<
+    NAME extends string,
+    CONSTRAINT,
+    SUPPLIERS extends MainSupplier[] = [],
+    OPTIONALS extends RequestSupplier[] = [],
+    ASSEMBLERS extends UnknownProductSupplier[] = [],
+    HIRED extends UnknownProductSupplier[] = [],
+    INIT extends Init<CONSTRAINT, SUPPLIERS, OPTIONALS, HIRED> = Init<
+        CONSTRAINT,
+        SUPPLIERS,
+        OPTIONALS,
+        HIRED
+    >
+> = {
+    suppliers?: [...SUPPLIERS]
+    optionals?: [...OPTIONALS]
+    assemblers?: [...ASSEMBLERS]
+    hired?: [...HIRED]
+    factory: Factory<NAME, CONSTRAINT, SUPPLIERS, OPTIONALS, ASSEMBLERS>
+    init?: INIT
     lazy?: boolean
-    hire: (...hired: AnyProductSupplier[]) => any
-    _: {
-        constraint: any
-        product: true
-        build: (...args: any[]) => Supply<any, AnyProductSupplier, any, any>
-    }
 }
 
 export interface ProductSupplier<
@@ -54,23 +86,12 @@ export interface ProductSupplier<
     CONSTRAINT,
     SUPPLIERS extends MainSupplier[],
     OPTIONALS extends RequestSupplier[],
-    ASSEMBLERS extends AnyProductSupplier[],
-    HIRED extends AnyProductSupplier[] = [],
-    TEAM extends Supplier[] = Team<SUPPLIERS, OPTIONALS, HIRED>,
-    DEPS extends Deps<MergeSuppliers<SUPPLIERS, HIRED>, OPTIONALS> = Deps<
-        MergeSuppliers<SUPPLIERS, HIRED>,
-        OPTIONALS
-    >,
-    RESOLVED extends Resolved<
-        MergeSuppliers<SUPPLIERS, HIRED>,
-        OPTIONALS
-    > = Resolved<MergeSuppliers<SUPPLIERS, HIRED>, OPTIONALS>,
-    CTX extends Ctx<
-        MergeSuppliers<SUPPLIERS, HIRED>,
-        OPTIONALS,
-        MergeSuppliers<ASSEMBLERS, HIRED>
-    > = Ctx<TEAM, OPTIONALS, ASSEMBLERS>
-> extends Supplier<NAME, CONSTRAINT> {
+    ASSEMBLERS extends UnknownProductSupplier[],
+    HIRED extends UnknownProductSupplier[] = [],
+    KNOWN extends Record<string, unknown> = Record<never, unknown>,
+    MOCK extends boolean = boolean,
+    COMPOSITE extends boolean = boolean
+> extends BaseSupplier<NAME, CONSTRAINT> {
     /** Array of suppliers this supplier depends on */
     suppliers: SUPPLIERS
     /** Array of optional request suppliers this supplier may depend on */
@@ -78,26 +99,123 @@ export interface ProductSupplier<
     /** Array of assemblers (lazy unassembled suppliers) */
     assemblers: ASSEMBLERS
     hired: HIRED
-    team: TEAM
-    /** Factory function that creates the product from its dependencies */
-    factory: (deps: DEPS, ctx: CTX) => CONSTRAINT
+    known: KNOWN
+    team: <THIS extends UnknownProductSupplier>(
+        this: THIS
+    ) => UnknownProductSupplier extends THIS ? Supplier[]
+    :   [
+            ...THIS["optionals"],
+            ...TransitiveSuppliers<
+                MergeSuppliers<THIS["suppliers"], THIS["hired"]>
+            >
+        ]
+    assemblersTeam: <THIS extends UnknownProductSupplier>(
+        this: THIS
+    ) => UnknownProductSupplier extends THIS ? Supplier[]
+    :   [
+            ...THIS["optionals"],
+            ...TransitiveSuppliers<
+                MergeSuppliers<THIS["suppliers"], THIS["hired"]>
+            >,
+            ...TransitiveSuppliers<
+                MergeSuppliers<THIS["assemblers"], THIS["hired"]>
+            >
+        ]
+
     /** Assembles the supplier by providing request values and auto-wiring product dependencies */
-    assemble: (
-        supplied: ToSupply<SUPPLIERS, OPTIONALS, HIRED>
-    ) => Supply<CONSTRAINT, AnyProductSupplier, DEPS, RESOLVED>
+    assemble: <
+        THIS extends UnknownProductSupplier,
+        TO_SUPPLY extends ToSupply<THIS> = ToSupply<THIS>
+    >(
+        this: THIS,
+        supplied: TO_SUPPLY
+    ) => Supply<THIS>
     /** Optional initialization function called after factory */
-    init?: (value: CONSTRAINT, deps: DEPS) => void
+    init?: <THIS extends UnknownProductSupplier & { _constraint: CONSTRAINT }>(
+        this: THIS,
+        value: THIS["_constraint"],
+        deps: Deps<THIS>
+    ) => void
     /** Whether this supplier should be lazily evaluated */
     lazy?: boolean
-    hire: (...hired: AnyProductSupplier[]) => any
-    _: {
-        constraint: CONSTRAINT
-        product: true
-        build: (
-            ...args: any[]
-        ) => Supply<CONSTRAINT, AnyProductSupplier, DEPS, RESOLVED>
-    }
+    mock: <
+        THIS extends UnknownProductSupplier & {
+            name: NAME
+            _constraint: CONSTRAINT
+        },
+        CONSTRAINT2 extends THIS["_constraint"],
+        SUPPLIERS2 extends MainSupplier[] = [],
+        OPTIONALS2 extends RequestSupplier[] = [],
+        ASSEMBLERS2 extends UnknownProductSupplier[] = []
+    >(
+        this: THIS,
+        config: ProductConfig<
+            THIS["name"],
+            CONSTRAINT2,
+            SUPPLIERS2,
+            OPTIONALS2,
+            ASSEMBLERS2
+        >
+    ) => CircularDependencyGuard<
+        ProductSupplier<
+            THIS["name"],
+            CONSTRAINT2,
+            SUPPLIERS2,
+            OPTIONALS2,
+            ASSEMBLERS2,
+            [],
+            THIS["known"],
+            true
+        >
+    >
+    hire: <
+        THIS extends UnknownProductSupplier & {
+            hired: HIRED
+            _composite: boolean
+        },
+        HIRED2 extends UnknownProductSupplier[]
+    >(
+        this: THIS,
+        ...hired: [...HIRED2]
+    ) => CircularDependencyGuard<
+        ProductSupplier<
+            THIS["name"],
+            THIS["_constraint"],
+            THIS["suppliers"],
+            THIS["optionals"],
+            THIS["assemblers"],
+            MergeSuppliers<THIS["hired"], HIRED2>,
+            THIS["known"],
+            false,
+            true
+        >
+    >
+    _product: true
+    _request: false
+    _constraint: CONSTRAINT
+    /** Factory function that creates the product from its dependencies */
+    _factory: Factory<NAME, CONSTRAINT, SUPPLIERS, OPTIONALS, ASSEMBLERS>
+    _build: <THIS extends UnknownProductSupplier>(
+        this: THIS,
+        supplies: SuppliesRecord
+    ) => Supply<THIS>
+    _mock: MOCK
+    _composite: COMPOSITE
 }
+
+export type Supplier = UnknownProductSupplier | RequestSupplier
+export type MainSupplier = Supplier & {
+    _mock: false
+}
+
+export type UnknownProductSupplier = ProductSupplier<
+    string,
+    unknown,
+    MainSupplier[],
+    RequestSupplier[],
+    UnknownProductSupplier[],
+    UnknownProductSupplier[]
+>
 
 /**
  * Represents a supply - The result of assembling a supplier
@@ -108,51 +226,18 @@ export interface ProductSupplier<
  * @typeParam VALUE - The type of value this supply holds
  * @public
  */
-export type Supply<
-    VALUE = any,
-    SUPPLIER extends Supplier = Supplier,
-    DEPS extends Deps<Supplier[], RequestSupplier[]> = any,
-    RESOLVED extends Resolved<Supplier[], RequestSupplier[]> = any,
-    CTX = Ctx<Supplier[], RequestSupplier[], AnyProductSupplier[]>
-> = {
+export type Supply<SUPPLIER extends Supplier = Supplier> = {
     /** Unpacks and returns the current value of this supply */
-    unpack: () => VALUE
-    deps: DEPS
-    supplies: RESOLVED
+    unpack: () => SUPPLIER["_constraint"]
+    deps: SUPPLIER extends UnknownProductSupplier ? Deps<SUPPLIER> : never
+    supplies: SUPPLIER extends UnknownProductSupplier ? Resolved<SUPPLIER>
+    :   never
     supplier: SUPPLIER
-    _: {
-        ctx: CTX
-        packed: boolean
-    }
+    _ctx: SUPPLIER extends UnknownProductSupplier ? Ctx<SUPPLIER> : never
+    _packed: boolean
 }
 
-export type MainSupplier = Supplier & {
-    _: {
-        mock: false
-    }
-}
-
-export type MainRequestSupplier = RequestSupplier & MainSupplier
-
-export type ProductConfig<
-    CONSTRAINT = any,
-    LAZY extends boolean = false,
-    SUPPLIERS extends MainSupplier[] = MainSupplier[],
-    OPTIONALS extends MainRequestSupplier[] = MainRequestSupplier[],
-    ASSEMBLERS extends AnyProductSupplier[] = AnyProductSupplier[]
-> = {
-    suppliers?: [...SUPPLIERS]
-    optionals?: [...OPTIONALS]
-    assemblers?: [...ASSEMBLERS]
-    factory: (
-        deps: Deps<SUPPLIERS, OPTIONALS>,
-        ctx: Ctx<SUPPLIERS, OPTIONALS, ASSEMBLERS>
-    ) => CONSTRAINT
-    init?: (value: CONSTRAINT, deps: Deps<SUPPLIERS, OPTIONALS>) => void
-    lazy?: LAZY
-}
-
-type MaybeFn<A extends any[], R> = R | ((...args: A) => R)
+export type MaybeFn<A extends any[], R> = R | ((...args: A) => R)
 
 /**
  * A generic map of supplies
@@ -160,15 +245,70 @@ type MaybeFn<A extends any[], R> = R | ((...args: A) => R)
  */
 export type SuppliesRecord<SUPPLIER extends Supplier = Supplier> = Record<
     string,
-    MaybeFn<[], Supply<any, SUPPLIER>>
+    MaybeFn<[], Supply<SUPPLIER>>
+>
+
+/**
+ * A generic map of resolved supplies
+ * @public
+ */
+export type ResolvedRecord<SUPPLIER extends Supplier = Supplier> = Record<
+    string,
+    Supply<SUPPLIER>
 >
 
 /**
  * A generic map of supplies or undefined. Undefined used to force a supply not to be preserved across reassembly.
  * @public
  */
-export type SuppliesOrUndefinedRecord<SUPPLIER extends Supplier = Supplier> =
-    Record<string, MaybeFn<[], Supply<any, SUPPLIER>> | undefined>
+export type SuppliesOrUndefinedRecord<
+    SUPPLIER extends UnknownProductSupplier = UnknownProductSupplier
+> = Record<string, MaybeFn<[], Supply<SUPPLIER>> | undefined>
+
+type AllRequiredSuppliers<
+    SUPPLIER extends Pick<UnknownProductSupplier, "suppliers" | "hired">
+> = TransitiveSuppliers<
+    MergeSuppliers<SUPPLIER["suppliers"], SUPPLIER["hired"]>
+>
+
+type AllRequiredRequestSuppliers<
+    SUPPLIER extends Pick<UnknownProductSupplier, "suppliers" | "hired">
+> = ExcludeSuppliersType<AllRequiredSuppliers<SUPPLIER>, UnknownProductSupplier>
+
+type AllRequiredProductSuppliers<
+    SUPPLIER extends Pick<UnknownProductSupplier, "suppliers" | "hired">
+> = ExcludeSuppliersType<AllRequiredSuppliers<SUPPLIER>, RequestSupplier>
+
+/**
+ * Recursively collects all optional suppliers from a supplier array.
+ * This type walks through the dependency tree and accumulates all optional request
+ * supplies required by product suppliers in the tree.
+ *
+ * @typeParam SUPPLIERS - The array of suppliers to collect optionals from
+ * @returns A flattened array of all optional request suppliers
+ * @internal
+ */
+export type Optionals<
+    SUPPLIERS extends Supplier[],
+    ACC extends Supplier[] = []
+> =
+    any[] extends SUPPLIERS ? Supplier[]
+    : SUPPLIERS extends (
+        [infer FIRST extends Supplier, ...infer REST extends Supplier[]]
+    ) ?
+        Optionals<REST, [...ACC, ...FIRST["optionals"]]>
+    :   ACC
+
+export type AllOptionalSuppliers<
+    SUPPLIER extends Pick<
+        UnknownProductSupplier,
+        "optionals" | "suppliers" | "hired"
+    >
+> = [
+    ...SUPPLIER["optionals"],
+    ...Optionals<AllRequiredProductSuppliers<SUPPLIER>>,
+    ...AllRequiredProductSuppliers<SUPPLIER>
+]
 
 /**
  * Converts an array of suppliers and optionals into a corresponding supply map.
@@ -178,168 +318,79 @@ export type SuppliesOrUndefinedRecord<SUPPLIER extends Supplier = Supplier> =
  * @returns A map where keys are supplier names and values are their assembled supplies
  * @public
  */
-export type Supplies<
-    SUPPLIERS extends Supplier[],
-    OPTIONALS extends Supplier[],
-    WIDE extends boolean = true,
-    DEPS extends Deps<SUPPLIERS, OPTIONALS> = Deps<SUPPLIERS, OPTIONALS>
-> =
-    Supplier[] extends SUPPLIERS | OPTIONALS ?
-        Record<string, MaybeFn<[], Supply>>
-    :   {
-            [SUPPLIER in SUPPLIERS[number] as SUPPLIER["name"]]: MaybeFn<
-                [],
-                Supply<
-                    SUPPLIER["_"]["constraint"],
-                    WIDE extends true ?
-                        Supplier<SUPPLIER["name"], SUPPLIER["_"]["constraint"]>
-                    :   SUPPLIER,
-                    SUPPLIER extends AnyProductSupplier ? DEPS
-                    :   Record<never, never>
-                >
-            >
-        } & {
-            [OPTIONAL in OPTIONALS[number] as OPTIONAL["name"]]?: MaybeFn<
-                [],
-                Supply<
-                    OPTIONAL["_"]["constraint"],
-                    WIDE extends true ?
-                        Supplier<OPTIONAL["name"], OPTIONAL["_"]["constraint"]>
-                    :   OPTIONAL,
-                    OPTIONAL extends AnyProductSupplier ? DEPS
-                    :   Record<never, never>
-                >
-            >
-        }
+export type Supplies<PARENT_SUPPLIER extends UnknownProductSupplier> = {
+    [SUPPLIER in AllRequiredRequestSuppliers<PARENT_SUPPLIER>[number] as SUPPLIER["name"]]: MaybeFn<
+        [],
+        Supply<SUPPLIER>
+    >
+} & {
+    [OPTIONAL in AllOptionalSuppliers<PARENT_SUPPLIER>[number] as OPTIONAL["name"]]?: MaybeFn<
+        [],
+        Supply<OPTIONAL>
+    >
+}
+
+export type ToSupply<PARENT_SUPPLIER extends UnknownProductSupplier> = Omit<
+    Supplies<PARENT_SUPPLIER>,
+    keyof PARENT_SUPPLIER["known"]
+> &
+    Partial<PARENT_SUPPLIER["known"]>
 
 // Same as Supplies, but without MaybeFn wrapper, meaning all supplies are resolved
-export type Resolved<
-    SUPPLIERS extends Supplier[],
-    OPTIONALS extends Supplier[],
-    WIDE extends boolean = true,
-    DEPS extends Deps<SUPPLIERS, OPTIONALS> = Deps<SUPPLIERS, OPTIONALS>
-> =
-    Supplier[] extends SUPPLIERS | OPTIONALS ? Record<string, Supply>
-    :   {
-            [SUPPLIER in SUPPLIERS[number] as SUPPLIER["name"]]: Supply<
-                SUPPLIER["_"]["constraint"],
-                WIDE extends true ?
-                    RequestSupplier<
-                        SUPPLIER["name"],
-                        SUPPLIER["_"]["constraint"]
-                    >
-                :   SUPPLIER,
-                DEPS
-            >
-        } & {
-            [OPTIONAL in OPTIONALS[number] as OPTIONAL["name"]]?: Supply<
-                OPTIONAL["_"]["constraint"],
-                WIDE extends true ?
-                    RequestSupplier<
-                        OPTIONAL["name"],
-                        OPTIONAL["_"]["constraint"]
-                    >
-                :   OPTIONAL,
-                DEPS
-            >
-        }
+export type Resolved<PARENT_SUPPLIER extends UnknownProductSupplier> = {
+    [SUPPLIER in AllRequiredSuppliers<PARENT_SUPPLIER>[number] as SUPPLIER["name"]]: Supply<SUPPLIER>
+} & {
+    [OPTIONAL in PARENT_SUPPLIER["optionals"][number] as OPTIONAL["name"]]?: Supply<OPTIONAL>
+}
 
 // Same as Resolved, but unpacked from the supply wrapper
-export type Deps<SUPPLIERS extends Supplier[], OPTIONALS extends Supplier[]> = {
-    [SUPPLIER in SUPPLIERS[number] as SUPPLIER["name"]]: SUPPLIER["_"]["constraint"]
+export type Deps<
+    PARENT_SUPPLIER extends Pick<
+        UnknownProductSupplier,
+        "suppliers" | "optionals" | "hired"
+    >
+> = {
+    [SUPPLIER in AllRequiredSuppliers<PARENT_SUPPLIER>[number] as SUPPLIER["name"]]: SUPPLIER["_constraint"]
 } & {
-    [OPTIONAL in OPTIONALS[number] as OPTIONAL["name"]]?: OPTIONAL["_"]["constraint"]
+    [OPTIONAL in PARENT_SUPPLIER["optionals"][number] as OPTIONAL["name"]]?: OPTIONAL["_constraint"]
 }
+
+type ResolveAssembler<
+    SUPPLIER extends UnknownProductSupplier,
+    ASSEMBLER extends UnknownProductSupplier,
+    HIRED extends Extract<
+        SUPPLIER["hired"][number],
+        { name: ASSEMBLER["name"] }
+    > = Extract<SUPPLIER["hired"][number], { name: ASSEMBLER["name"] }>
+> =
+    // Avoid distributive conditional behavior on `never` from `Extract`.
+    // If no hired override matches, fall back to the original assembler type.
+    [HIRED] extends [never] ? ASSEMBLER : HIRED
 
 /**
  * ctx transforms suppliers into contextualized suppliers that can be assembled again with new request supplies.
  * This enables dynamic dependency injection within a supplier's factory.
- * @typeParam SUPPLIERS - Array of suppliers available in the context
- * @typeParam OPTIONALS - Array of optional request suppliers
- * @typeParam ASSEMBLERS - Array of product suppliers available as assemblers
- * @returns A function that takes an assembler and returns it with an assemble method
+ * @typeParam SUPPLIER - The current product supplier providing context
+ * @returns A function that takes an assembler and returns it with a contextualized assemble method
  * @public
  */
-export type Ctx<
-    SUPPLIERS extends Supplier[],
-    OPTIONALS extends RequestSupplier[],
-    ASSEMBLERS extends AnyProductSupplier[]
-> = <
-    ASSEMBLER extends {
-        name:
-            | SUPPLIERS[number]["name"]
-            | OPTIONALS[number]["name"]
-            | ASSEMBLERS[number]["name"]
-    }
+export type Ctx<SUPPLIER extends UnknownProductSupplier> = <
+    ASSEMBLER extends ReturnType<SUPPLIER["team"]>[number]
 >(
-    assembler?: ASSEMBLER
-) => ASSEMBLER extends AnyProductSupplier ?
-    Omit<
-        ProductSupplier<
-            ASSEMBLER["name"],
-            ASSEMBLER["_"]["constraint"],
-            ASSEMBLER["suppliers"],
-            ASSEMBLER["optionals"],
-            ASSEMBLER["assemblers"],
-            ASSEMBLER["hired"]
-        >,
-        "assemble" | "hire"
-    > & {
-        hire: <HIRED extends AnyProductSupplier[]>(
-            ...hired: [...HIRED]
-        ) => CircularDependencyGuard<{
-            name: ASSEMBLER["name"]
-            suppliers: ASSEMBLER["suppliers"]
-            optionals: ASSEMBLER["optionals"]
-            assemblers: ASSEMBLER["assemblers"]
-            hired: MergeSuppliers<ASSEMBLER["hired"], HIRED>
-            assemble: (
-                supplied: Omit<
-                    ToSupply<
-                        ASSEMBLER["suppliers"],
-                        ASSEMBLER["optionals"],
-                        MergeSuppliers<ASSEMBLER["hired"], HIRED>
-                    >,
-                    keyof ToSupply<SUPPLIERS, OPTIONALS, []>
-                >
-            ) => Supply<
-                ASSEMBLER["_"]["constraint"],
-                ProductSupplier<
-                    ASSEMBLER["name"],
-                    ASSEMBLER["_"]["constraint"],
-                    ASSEMBLER["suppliers"],
-                    ASSEMBLER["optionals"],
-                    ASSEMBLER["assemblers"],
-                    ASSEMBLER["hired"]
-                >,
-                Deps<MergeSuppliers<SUPPLIERS, HIRED>, OPTIONALS>,
-                Resolved<MergeSuppliers<SUPPLIERS, HIRED>, OPTIONALS>
-            >
-        }>
-        assemble: (
-            supplied: Omit<
-                ToSupply<
-                    ASSEMBLER["suppliers"],
-                    ASSEMBLER["optionals"],
-                    ASSEMBLER["hired"]
-                >,
-                keyof ToSupply<SUPPLIERS, OPTIONALS, []>
-            >
-        ) => Supply<
-            ASSEMBLER["_"]["constraint"],
-            ProductSupplier<
-                ASSEMBLER["name"],
-                ASSEMBLER["_"]["constraint"],
-                ASSEMBLER["suppliers"],
-                ASSEMBLER["optionals"],
-                ASSEMBLER["assemblers"],
-                ASSEMBLER["hired"]
-            >,
-            Deps<SUPPLIERS, OPTIONALS>,
-            Resolved<SUPPLIERS, OPTIONALS>
-        >
-    }
-:   ASSEMBLER // simply returns the assembler itself if it's a runtime supplier (noop)
+    assembler: ASSEMBLER & (UnknownProductSupplier | Supplier)
+) => ASSEMBLER extends UnknownProductSupplier ?
+    ProductSupplier<
+        ASSEMBLER["name"],
+        ASSEMBLER["_constraint"],
+        ResolveAssembler<SUPPLIER, ASSEMBLER>["suppliers"],
+        ResolveAssembler<SUPPLIER, ASSEMBLER>["optionals"],
+        ResolveAssembler<SUPPLIER, ASSEMBLER>["assemblers"],
+        MergeSuppliers<SUPPLIER["hired"], ASSEMBLER["hired"]>,
+        Supplies<SUPPLIER>,
+        ResolveAssembler<SUPPLIER, ASSEMBLER>["_mock"] & ASSEMBLER["_mock"],
+        ASSEMBLER["_composite"]
+    >
+:   ASSEMBLER & RequestSupplier // simply returns the assembler itself if it's a request supplier (noop)
 /**
  * Recursively filters out suppliers of a specific type from a supplier array.
  * This is used internally to separate product suppliers from request suppliers
@@ -355,7 +406,11 @@ export type ExcludeSuppliersType<
     TYPE extends Supplier,
     ACC extends Supplier[] = []
 > =
-    // Flat conditional 1: Head matches TYPE - skip it
+    any[] extends SUPPLIERS ?
+        TYPE extends UnknownProductSupplier ?
+            RequestSupplier[]
+        :   UnknownProductSupplier[]
+    : // Flat conditional 1: Head matches TYPE - skip it
     SUPPLIERS extends (
         [infer Head extends TYPE, ...infer Tail extends Supplier[]]
     ) ?
@@ -381,7 +436,8 @@ export type TransitiveSuppliers<
     SUPPLIERS extends Supplier[],
     ACC extends Supplier[] = []
 > =
-    SUPPLIERS extends (
+    any[] extends SUPPLIERS ? Supplier[]
+    : SUPPLIERS extends (
         [infer FIRST extends Supplier, ...infer REST extends Supplier[]]
     ) ?
         // Tail-recursive: queue up FIRST's suppliers + REST (both filtered), accumulate FIRST
@@ -397,12 +453,6 @@ export type TransitiveSuppliers<
         >
     :   ACC
 
-export type Team<
-    SUPPLIERS extends Supplier[],
-    OPTIONALS extends RequestSupplier[],
-    HIRED extends AnyProductSupplier[]
-> = [...OPTIONALS, ...TransitiveSuppliers<MergeSuppliers<SUPPLIERS, HIRED>>]
-
 /**
  * Recursively collects ALL transitive dependencies (including assemblers and optionals)
  * for strict circular dependency detection.
@@ -413,7 +463,8 @@ export type AllTransitiveSuppliers<
     SUPPLIERS extends Supplier[],
     ACC extends Supplier[] = []
 > =
-    SUPPLIERS extends (
+    any[] extends SUPPLIERS ? Supplier[]
+    : SUPPLIERS extends (
         [infer FIRST extends Supplier, ...infer REST extends Supplier[]]
     ) ?
         AllTransitiveSuppliers<
@@ -433,63 +484,6 @@ export type AllTransitiveSuppliers<
     :   ACC
 
 /**
- * Recursively collects all optional suppliers from a supplier array.
- * This type walks through the dependency tree and accumulates all optional request
- * supplies required by product suppliers in the tree.
- *
- * @typeParam SUPPLIERS - The array of suppliers to collect optionals from
- * @returns A flattened array of all optional request suppliers
- * @internal
- */
-export type Optionals<
-    SUPPLIERS extends Supplier[],
-    ACC extends Supplier[] = []
-> =
-    SUPPLIERS extends (
-        [infer FIRST extends Supplier, ...infer REST extends Supplier[]]
-    ) ?
-        Optionals<REST, [...ACC, ...FIRST["optionals"]]>
-    :   ACC
-
-/**
- * Determines which supplies need to be dynamically supplied when assembling.
- * This type computes the set of request supplies that must be provided to assemble a product supplier.
- * It excludes product suppliers (which are autowired)
- * and returns only request suppliers from the product supplier's transitive dependency tree.
- *
- * @typeParam SUPPLIERS - The array of suppliers to analyze
- * @typeParam OPTIONALS - The array of optional suppliers
- * @typeParam HIRED - The array of hired suppliers
- * @returns A supply map of only the request suppliers that must be provided
- * @public
- */
-export type ToSupply<
-    SUPPLIERS extends Supplier[],
-    OPTIONALS extends RequestSupplier[],
-    HIRED extends AnyProductSupplier[]
-> = Supplies<
-    ExcludeSuppliersType<
-        TransitiveSuppliers<MergeSuppliers<SUPPLIERS, HIRED>>,
-        AnyProductSupplier
-    >,
-    [
-        ...OPTIONALS,
-        ...Optionals<
-            ExcludeSuppliersType<
-                TransitiveSuppliers<MergeSuppliers<SUPPLIERS, HIRED>>,
-                RequestSupplier
-            >
-        >,
-        ...ExcludeSuppliersType<
-            TransitiveSuppliers<MergeSuppliers<SUPPLIERS, HIRED>>,
-            RequestSupplier
-        >
-    ],
-    true,
-    any
->
-
-/**
  * Filters out suppliers from OLD that have matching names in NEW.
  * This is used by the `hire` method to remove old suppliers before adding new ones,
  * allowing hired suppliers to override existing suppliers in the team.
@@ -504,7 +498,8 @@ export type FilterSuppliers<
     DEL extends Supplier[],
     ACC extends Supplier[] = []
 > =
-    OLD extends [infer Head extends Supplier, ...infer Tail] ?
+    any[] extends OLD | DEL ? OLD
+    : OLD extends [infer Head extends Supplier, ...infer Tail] ?
         Head extends { name: DEL[number]["name"] } ?
             FilterSuppliers<Tail extends Supplier[] ? Tail : [], DEL, ACC>
         :   FilterSuppliers<
@@ -538,11 +533,12 @@ export type MergeSuppliers<OLD extends Supplier[], WITH extends Supplier[]> = [
 
 export type CircularDependencyGuard<
     SUPPLIER extends Pick<
-        AnyProductSupplier,
+        UnknownProductSupplier,
         "name" | "suppliers" | "optionals" | "assemblers" | "hired"
     >
 > =
-    SUPPLIER["name"] extends (
+    string extends SUPPLIER["name"] ? SUPPLIER
+    : SUPPLIER["name"] extends (
         AllTransitiveSuppliers<
             [
                 ...MergeSuppliers<SUPPLIER["suppliers"], SUPPLIER["hired"]>,

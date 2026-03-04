@@ -15,9 +15,7 @@ describe("Runtime Validation", () => {
         it("should throw Error when name already exists", () => {
             const market = createMarket()
             market.add("test").request<string>()
-            expect(() => market.add("test")).toThrow(
-                "Name test already exists"
-            )
+            expect(() => market.add("test")).toThrow("Name test already exists")
         })
     })
 
@@ -34,9 +32,7 @@ describe("Runtime Validation", () => {
 
         it("should throw TypeError when config is an array", () => {
             const market = createMarket()
-            expect(() => market.add("A").product([] as any)).toThrow(
-                TypeError
-            )
+            expect(() => market.add("A").product([] as any)).toThrow(TypeError)
             expect(() => market.add("B").product([] as any)).toThrow(
                 "B must be an object, not an array"
             )
@@ -44,9 +40,7 @@ describe("Runtime Validation", () => {
 
         it("should throw TypeError when factory is missing", () => {
             const market = createMarket()
-            expect(() => market.add("A").product({} as any)).toThrow(
-                TypeError
-            )
+            expect(() => market.add("A").product({} as any)).toThrow(TypeError)
             expect(() => market.add("B").product({} as any)).toThrow(
                 "B must have a 'factory' property"
             )
@@ -55,14 +49,10 @@ describe("Runtime Validation", () => {
         it("should throw TypeError when factory is not a function", () => {
             const market = createMarket()
             expect(() =>
-                market
-                    .add("A")
-                    .product({ factory: "not a function" } as any)
+                market.add("A").product({ factory: "not a function" } as any)
             ).toThrow(TypeError)
             expect(() =>
-                market
-                    .add("B")
-                    .product({ factory: "not a function" } as any)
+                market.add("B").product({ factory: "not a function" } as any)
             ).toThrow("B must be a function, got string")
         })
 

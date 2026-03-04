@@ -4,10 +4,14 @@
  * @internal
  */
 
-import { Supplier, type AnyProductSupplier, type RequestSupplier } from "#types"
+import {
+    Supplier,
+    type UnknownProductSupplier,
+    type RequestSupplier
+} from "#types"
 
 /**
- * Validates that a value is a non-empty string.
+ * Validates that a value is a string.
  * @param name - The parameter name for error messages
  * @param value - The value to validate
  * @internal
@@ -25,7 +29,6 @@ export function assertString(
 /**
  * Validates that a value is a valid JavaScript identifier name
  * (suitable for use as a variable name or object property name).
- * @param name - The parameter name for error messages
  * @param value - The value to validate
  * @internal
  * @throws TypeError if the value is not a valid identifier
@@ -68,11 +71,11 @@ export function assertPlainObject(
     }
 }
 
-export function assertHasProperty<K extends string>(
+export function assertHasProperty<K extends string, V>(
     name: string,
-    value: unknown,
+    value: V,
     property: K
-): asserts value is { [key in K]: unknown } {
+): asserts value is V & { [key in K]: unknown } {
     if (!Object.prototype.hasOwnProperty.call(value, property)) {
         throw new TypeError(`${name} must have a '${property}' property`)
     }
@@ -96,6 +99,7 @@ export function assertFunction(
 
 /**
  * Validates the configuration object for product suppliers.
+ * @param name - Supplier name, used in error messages
  * @param config - The configuration object to validate
  * @internal
  * @throws TypeError if the configuration is invalid
@@ -106,27 +110,24 @@ export function assertProductConfig(
         suppliers?: unknown
         optionals?: unknown
         assemblers?: unknown
-        hiredSuppliers?: unknown
-        hiredAssemblers?: unknown
+        factory?: unknown
         init?: unknown
         lazy?: unknown
     }
 ) {
     assertPlainObject(name, config)
     assertHasProperty(name, config, "factory")
-    assertFunction(name, config.factory)
+    if (config.factory !== undefined) {
+        assertFunction(name, config.factory)
+    }
 
     const suppliers = config.suppliers ?? []
     const optionals = config.optionals ?? []
     const assemblers = config.assemblers ?? []
-    const hiredSuppliers = config.hiredSuppliers ?? []
-    const hiredAssemblers = config.hiredAssemblers ?? []
 
     assertSuppliers(name, suppliers)
     assertRequestSuppliers(name, optionals)
     assertProductSuppliers(name, assemblers, true)
-    assertSuppliers(name, hiredSuppliers, true)
-    assertProductSuppliers(name, hiredAssemblers, true)
 
     if (config.init !== undefined) {
         assertFunction(name, config.init)
@@ -144,43 +145,34 @@ export function assertRequestSupplier(
 ): asserts supplier is RequestSupplier {
     assertHasProperty("noname", supplier, "name")
     assertString("noname", supplier.name)
-    assertHasProperty(supplier.name, supplier, "_")
-    assertHasProperty(supplier.name, supplier._, "request")
+
+    assertHasProperty(supplier.name, supplier, "_request")
+    if (!supplier._request) {
+        throw new TypeError(`${supplier.name} is not a request supplier`)
+    }
 }
 
 export function assertProductSupplier(
     supplier: unknown,
     allowMocks: boolean = false
-): asserts supplier is AnyProductSupplier {
+): asserts supplier is UnknownProductSupplier {
     assertHasProperty("noname", supplier, "name")
     assertString("noname", supplier.name)
-    assertHasProperty(supplier.name, supplier, "_")
-    assertHasProperty(supplier.name, supplier._, "product")
-    assertHasProperty(supplier.name, supplier._, "mock")
+    assertHasProperty(supplier.name, supplier, "_product")
+    assertHasProperty(supplier.name, supplier, "_mock")
 
     if (
         !allowMocks &&
-        "hiredSuppliers" in supplier &&
-        Array.isArray(supplier.hiredSuppliers) &&
-        supplier.hiredSuppliers.length > 0
+        "hired" in supplier &&
+        Array.isArray(supplier.hired) &&
+        supplier.hired.length > 0
     ) {
         throw new TypeError(
             `Cannot depend on ${supplier.name} composite supplier`
         )
     }
 
-    if (
-        !allowMocks &&
-        "hiredAssemblers" in supplier &&
-        Array.isArray(supplier.hiredAssemblers) &&
-        supplier.hiredAssemblers.length > 0
-    ) {
-        throw new TypeError(
-            `Cannot depend on ${supplier.name} composite supplier`
-        )
-    }
-
-    if (!allowMocks && supplier._.mock) {
+    if (!allowMocks && supplier._mock) {
         throw new TypeError(`Cannot depend on ${supplier.name} mock supplier`)
     }
 }
@@ -228,7 +220,7 @@ export function assertProductSuppliers(
     name: string,
     suppliers: unknown,
     allowMocks: boolean = false
-): asserts suppliers is AnyProductSupplier[] {
+): asserts suppliers is UnknownProductSupplier[] {
     if (!Array.isArray(suppliers)) {
         throw new TypeError(`${name} must be an array`)
     }
