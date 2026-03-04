@@ -15,7 +15,7 @@ keywords:
 
 # Performance
 
-typectx is designed for optimal performance, featuring a minimal bundle size, smart memory management, and powerful preloading strategies.
+typectx is designed for optimal performance, featuring a minimal bundle size, smart memory management, and eager/lazy execution controls.
 
 ## Bundle Size & Footprint
 
@@ -70,18 +70,19 @@ const $cache = market.add("cache").product({
 })
 
 const $app = market.add("app").product({
-    suppliers: [$db, $cache],
-    factory: async ({dbPromise, cache}) => {
+    suppliers: [$dbPromise, $cache],
+    factory: async ({ dbPromise, cache }) => {
         if (cache.get("greeting")) {
             return cache.get("greeting")
         }
         const db = await dbPromise
         const greeting = db.getGreeting()
         cache.set("greeting", greeting)
+        return greeting
     }
 })
 
-const appSupply = $app.assemble({}) // Starts constructing both $db and $cache at once in parallel
+const appSupply = $app.assemble({}) // Starts constructing both dbPromise and cache in parallel
 ```
 
 ### Lazy Loading with `lazy: true`
@@ -93,26 +94,25 @@ const $lazy = market.add("lazy").product({
     suppliers: [$db],
     // Will only be loaded when `deps.lazy` is called in another factory,
     // or when `$lazy.assemble({...}).unpack()` is called directly.
-    factory: ({db}) => new ExpensiveService(db).unpack()),
+    factory: ({ db }) => new ExpensiveService(db),
     lazy: true
 })
 ```
 
 ## Initialization with `init()`
 
-For products that need to perform side-effects upon creation (like connecting to a database or logging), you can use the `init` function. It runs immediately after the `factory` function returns, and receives the constructed value and the deps as its 2 first arguments
+For products that need to perform side-effects upon creation (like connecting to a database or logging), you can use `init`. It runs immediately after the `factory` function returns, and receives the constructed value and deps as arguments.
 
 This is useful for pre-warming caches or running setup logic without cluttering your factory.
 
-For example, you can easily implement the preload pattern:
+For example, you can eagerly warm a memoized function:
 
 ```typescript
 const $profile = market.add("profile").product({
-    suppliers: [$currentUser]
+    suppliers: [$currentUser],
     factory: () => memo((userId) => db.profiles.get(userId))
-    init: (getProfile, {currentUser}) => {
-        // Allows to preload the current logged in user's profile.
-        // the memoization cache will be prepopulated with the current user's profile if requested later.
+    init: (getProfile, { currentUser }) => {
+        // Pre-warm the current user's profile in the memoization cache.
         getProfile(currentUser)
     }
 })

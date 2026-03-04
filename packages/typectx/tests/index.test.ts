@@ -17,7 +17,7 @@ describe("typectx", () => {
             expect(pack.unpack()).toBe("test-value")
             expect(pack.supplier.name).toBe("input")
             expect($input.name).toBe("input")
-            expect($input._.request).toBe(true)
+            expect($input._request).toBe(true)
         })
 
         it("should throw error if two suppliers with the same name", () => {
@@ -54,7 +54,7 @@ describe("typectx", () => {
 
             expect($resource.assemble({}).unpack()).toBe("resource")
             expect($resource.name).toBe("resource")
-            expect($resource._.product).toBe(true)
+            expect($resource._product).toBe(true)
         })
 
         it("should add a product supplier with suppliers", () => {
@@ -127,7 +127,9 @@ describe("typectx", () => {
             })
 
             expect(
-                $main.assemble(index($resource.pack("initial-resource"))).unpack()
+                $main
+                    .assemble(index($resource.pack("initial-resource")))
+                    .unpack()
             ).toEqual({
                 resource: "initial-resource"
             })
@@ -348,7 +350,7 @@ describe("typectx", () => {
             await $main.assemble({}).unpack()
         })
     })
-    describe("Preload Feature", () => {
+    describe("Eager init (prerun) behavior", () => {
         it("should init eager product suppliers, not lazy ones ", async () => {
             const market = createMarket()
             const initedValueSpy = vi

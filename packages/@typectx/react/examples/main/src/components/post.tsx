@@ -20,8 +20,8 @@ export const $Post = market.add("Post").product({
     ],
     optionals: [req.$post],
     assemblers: [$Comment, $SelectSession],
-    factory: (initDeps, ctx) =>
-        function Post({ post }: { post: Post }) {
+    factory: (initDeps, ctx) => {
+        return function Post({ post }: { post: Post }) {
             const {
                 userQuery,
                 defaultUser,
@@ -29,7 +29,13 @@ export const $Post = market.add("Post").product({
                 usersQuery,
                 commentsQuery
             } = useDeps(initDeps)
-            const { data: defaultSession } = useQuery(userQuery(defaultUser))
+            const {
+                data: defaultSession,
+                status: defaultSessionStatus,
+                isFetching: defaultSessionFetching,
+                isError: defaultSessionIsError,
+                error: defaultSessionError
+            } = useQuery(userQuery(defaultUser))
             const { data: users } = useQuery(usersQuery)
             const { data: comments } = useQuery(commentsQuery(post.id))
             // Local session override - falls back to parent session until user changes it
@@ -52,14 +58,14 @@ export const $Post = market.add("Post").product({
                 newCtx
             )
 
-            if (!users || !comments) {
-                return <div>Loading users or comments...</div>
-            }
-
             const SelectSession = assertStableSelectSession(
                 CommentProduct.deps[$SelectSession.name]
             )
             const Comment = assertStableComment(CommentProduct.unpack())
+
+            if (!users || !comments) {
+                return <div>Loading users or comments...</div>
+            }
 
             return (
                 <div className="border-2 border-purple-500 rounded-lg p-4 bg-gray-800">
@@ -78,4 +84,5 @@ export const $Post = market.add("Post").product({
                 </div>
             )
         }
+    }
 })

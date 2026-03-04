@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, expectTypeOf } from "vitest"
-import { CircularDependencyError, createMarket, index, type Supply } from "#index"
+import {
+    CircularDependencyError,
+    createMarket,
+    index,
+    type Supply
+} from "#index"
 import { sleep, once } from "#utils"
 
 describe("Mocks Feature", () => {
@@ -16,7 +21,7 @@ describe("Mocks Feature", () => {
 
             const $mocked = $base.mock({
                 suppliers: [],
-                factory: () => ({ base: true, enhanced: true }),
+                factory: () => ({ base: true, enhanced: true })
             })
 
             const result = $mocked.assemble({}).unpack()
@@ -374,16 +379,12 @@ describe("Mocks Feature", () => {
             const $main = market.add("main").product({
                 suppliers: [$supplier],
                 assemblers: [$assembler],
-                factory: ({ supplier },ctx) => {
+                factory: ({ supplier }, ctx) => {
+                    const supply = ctx($supplier).hire($assembler).assemble({})
 
-                    const supply = ctx($supplier)
-                        .hire($assembler)
-                        .assemble({})
-
-                    const assemblerSupply =
-                        supply.supplies[$assembler.name]
+                    const assemblerSupply = supply.supplies[$assembler.name]
                     expectTypeOf(assemblerSupply).not.toEqualTypeOf<any>()
-                    expectTypeOf(assemblerSupply).toExtend<Supply|undefined>()
+                    expectTypeOf(assemblerSupply).toExtend<Supply<any>>()
                     expect(assemblerSupply.unpack()).toBe("assembler-value")
                 }
             })

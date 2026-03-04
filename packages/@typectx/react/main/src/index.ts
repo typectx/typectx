@@ -1,14 +1,14 @@
 import { useLayoutEffect, useState, useSyncExternalStore } from "react"
 import type {
-    Resolved,
-    Supplier,
-    Supply,
     Deps,
-    RequestSupplier,
-    ProductSupplier
+    UnknownProductSupplier,
+    ToSupply,
+    ResolvedRecord,
+    Supply,
+    Supplier
 } from "typectx"
 
-export function useDeps<INIT_DEPS extends Deps<Supplier[], RequestSupplier[]>>(
+export function useDeps<INIT_DEPS extends Deps<UnknownProductSupplier>>(
     initDeps: INIT_DEPS
 ) {
     // useSyncExternalStore subscribes to store updates.
@@ -26,29 +26,34 @@ export function useDeps<INIT_DEPS extends Deps<Supplier[], RequestSupplier[]>>(
 }
 
 export function useAssembleComponent<
-    CONSTRAINT,
-    TOSUPPLY,
-    SUPPLIED extends TOSUPPLY & Record<string, Supply | undefined>,
-    DEPS extends Deps<Supplier[], RequestSupplier[]>,
-    RESOLVED extends Resolved<Supplier[], RequestSupplier[]>
->(
-    supplier: {
-        assemble: (
-            supplied: TOSUPPLY & Record<string, Supply | undefined>
-        ) => Supply<CONSTRAINT, ProductSupplier, DEPS, RESOLVED>
-    },
-    supplied: SUPPLIED
-) {
+    SUPPLIER extends UnknownProductSupplier,
+    TO_SUPPLY extends ToSupply<SUPPLIER> = ToSupply<SUPPLIER>
+>(supplier: SUPPLIER, supplied: TO_SUPPLY) {
     // First render captures the initial assembly.
     // Child components won't be in `components` until they've mounted and
     // initialized their store.
     const [first] = useState(() => supplier.assemble(supplied))
 
+    function isProductSupply(
+        supply: Supply<Supplier>
+    ): supply is Supply<UnknownProductSupplier> {
+        return (
+            "_product" in supply.supplier && supply.supplier._product === true
+        )
+    }
+
     const components = Object.entries(first.supplies).reduce(
-        (acc: Record<string, Supply<any, ProductSupplier>>, [key, supply]) => {
-            return store.has(supply.deps)  ? { ...acc, [key]: supply as Supply<any, ProductSupplier> } : acc
+        (acc, [key, supply]) => {
+            if (!isProductSupply(supply)) return acc
+            if (store.has(supply.deps)) return { ...acc, [key]: supply }
+            return acc
         },
-        (store.has(first.deps) ? { [first.supplier.name]: first } : {})
+        store.has(first.deps) ?
+            ({
+                [first.supplier.name]: first
+            } as ResolvedRecord<UnknownProductSupplier>)
+        :   ({} as ResolvedRecord<UnknownProductSupplier>)
+        // Assertion necessary because intersection of mapped types do not work well with wide types
     )
 
     const triggered = Object.entries(components)
@@ -62,7 +67,12 @@ export function useAssembleComponent<
                 ].some(
                     (supplier) =>
                         supplier.name in supplied &&
-                        supplied[supplier.name] !==
+                        supplied[
+                            supplier.name as keyof Omit<
+                                TO_SUPPLY,
+                                keyof SUPPLIER["known"]
+                            >
+                        ] !==
                             (store.get(component.deps)?.[supplier.name] ??
                                 undefined)
                 )
@@ -71,10 +81,10 @@ export function useAssembleComponent<
 
             store.set(
                 component.deps,
-                // We need ctx, because supplied here is not necessarily the
+                // We need ctx, because supplied here is not necessarily the same
                 // as supplied in the useState() call. This is not necessarily the first render, so supplies here
                 // may lack the ones provided in first render.
-                first._.ctx(component.supplier).assemble({
+                first._ctx(component.supplier).assemble({
                     ...supplied,
                     ...components
                 }).deps
@@ -104,22 +114,22 @@ export const useAssembleHook = useAssembleComponent
 
 const store = {
     set(
-        componentDeps: Deps<Supplier[], RequestSupplier[]>,
-        elementDeps: Deps<Supplier[], RequestSupplier[]>
+        componentDeps: Deps<UnknownProductSupplier>,
+        elementDeps: Deps<UnknownProductSupplier>
     ) {
         store._.state.set(componentDeps, elementDeps)
     },
-    get(componentDeps: Deps<Supplier[], RequestSupplier[]>) {
+    get(componentDeps: Deps<UnknownProductSupplier>) {
         return store._.state.get(componentDeps)
     },
-    has(componentDeps: Deps<Supplier[], RequestSupplier[]>) {
+    has(componentDeps: Deps<UnknownProductSupplier>) {
         return store._.state.has(componentDeps)
     },
-    trigger(componentDeps: Deps<Supplier[], RequestSupplier[]>) {
+    trigger(componentDeps: Deps<UnknownProductSupplier>) {
         store._.listeners.get(componentDeps)?.forEach((listener) => listener())
     },
     subscribe(
-        componentDeps: Deps<Supplier[], RequestSupplier[]>,
+        componentDeps: Deps<UnknownProductSupplier>,
         listener: () => unknown
     ) {
         store._.listeners.set(componentDeps, [
@@ -138,11 +148,11 @@ const store = {
     },
     _: {
         state: new WeakMap<
-            Deps<Supplier[], RequestSupplier[]>,
-            Deps<Supplier[], RequestSupplier[]>
+            Deps<UnknownProductSupplier>,
+            Deps<UnknownProductSupplier>
         >(),
         listeners: new WeakMap<
-            Deps<Supplier[], RequestSupplier[]>,
+            Deps<UnknownProductSupplier>,
             (() => unknown)[]
         >()
     }
