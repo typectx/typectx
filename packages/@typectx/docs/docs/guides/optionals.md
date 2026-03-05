@@ -26,15 +26,13 @@ This is particularly useful for feature flags, authentication contexts, caching 
 Here's a simple example of using an optional resource:
 
 ```typescript
-import { createMarket, index } from "typectx"
-
-const market = createMarket()
+import { index, supplier } from "typectx"
 
 // Define an optional apiKey
-const $apiKey = market.add("apiKey").request<string>()
+const $apiKey = supplier("apiKey").request<string>()
 
 // Use it as an optional dependency
-const $apiClient = market.add("apiClient").product({
+const $apiClient = supplier("apiClient").product({
     optionals: [$apiKey],
     // apiKey will be typed string | undefined
     factory: ({ apiKey }) => {
@@ -69,15 +67,13 @@ const authenticatedClient = $apiClient
 Create services that work differently for authenticated vs. anonymous users:
 
 ```typescript
-const market = createMarket()
-
-const $user = market.add("user").request<{
+const $user = supplier("user").request<{
     userId: string
     name:string
     token: string
 }>()
 
-const $app = market.add("app").product({
+const $app = supplier("app").product({
     optionals: [$user],
     factory: ({ user }) => {
         if (!user) {

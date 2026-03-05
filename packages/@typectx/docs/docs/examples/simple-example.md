@@ -15,17 +15,14 @@ keywords:
 Dummy todo app built with typectx.
 
 ```typescript
-import { createMarket, index } from "typectx"
+import { index, supplier } from "typectx"
 
-// 1. Create a market
-const market = createMarket()
-
-// 2. Define request and product suppliers
-const $session = market.add("session").request<{ userId: string }>()
-const $todosDb = market.add("todosDb").product({
+// 1. Define request and product suppliers
+const $session = supplier("session").request<{ userId: string }>()
+const $todosDb = supplier("todosDb").product({
     factory: () => new Map<string, string[]>() // Simple in-memory DB
 })
-const $addTodo = market.add("addTodo").product({
+const $addTodo = supplier("addTodo").product({
     suppliers: [$session, $todosDb],
     factory:
         ({ session, todosDb }) =>

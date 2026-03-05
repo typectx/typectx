@@ -1,10 +1,11 @@
-import { market } from "@/market"
 import type { Post, User } from "@/api"
+import { supplier } from "typectx"
 
 export const req = {
-    $defaultUser: market.add("defaultUser").request<string>(),
-    $session: market
-        .add("session")
-        .request<[User | undefined, (user: User | undefined) => void]>(),
-    $post: market.add("post").request<Post>()
+    $defaultUser: supplier("defaultUser").request<string>(),
+    $session:
+        supplier("session").request<
+            [User | undefined, (user: User | undefined) => void]
+        >(),
+    $post: supplier("post").request<Post>()
 }

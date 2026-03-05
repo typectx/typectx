@@ -25,7 +25,7 @@ The simplest way to mock a dependency is to use `.pack()` on a **Product Supplie
 
 ```typescript
 // Production services
-const $db = market.add("db").product({
+const $db = supplier("db").product({
     factory: () => {
         return {
             async findUser(id:string) {
@@ -34,7 +34,7 @@ const $db = market.add("db").product({
         }
     }
 })
-const $userRepo = market.add("userRepo").product({
+const $userRepo = supplier("userRepo").product({
     suppliers: [$db],
     factory: ({ db }) => new UserRepo(db)
 })
@@ -71,7 +71,7 @@ For more complex scenarios where your mock needs its own logic, state, or depend
 
 ```typescript
 // Production user supplier
-const $user = market.add("user").product({
+const $user = supplier("user").product({
     suppliers: [$db, $session],
     factory: ({ db, session }) => db.findUserById(session.userId)
 })
@@ -85,7 +85,7 @@ const $userMock = $user.mock({
 })
 
 // The product supplier to test
-const $profile = market.add("profile").product({
+const $profile = supplier("profile").product({
     suppliers: [$user],
     factory: ({ user }) => `<h1>Profile of ${user.name}</h1>`
 })

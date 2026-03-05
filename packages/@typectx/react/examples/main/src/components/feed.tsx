@@ -1,11 +1,11 @@
 import { $postsQuery } from "@/api"
-import { market } from "@/market"
 import { $Post } from "@/components/post"
 import { useQuery } from "@tanstack/react-query"
 import { useDeps } from "@typectx/react"
 import { useAssertStable } from "@/hooks"
+import { supplier } from "typectx"
 
-export const $Feed = market.add("Feed").product({
+export const $Feed = supplier("Feed").product({
     suppliers: [$postsQuery, $Post],
     factory: (initDeps) =>
         function Feed() {

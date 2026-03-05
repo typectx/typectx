@@ -28,7 +28,7 @@ typectx uses an intuitive supply chain metaphor to make dependency injection eas
 
 | Term                 | Classical DI Equivalent | Description       |
 | -------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------- |
-| **`createMarket()`** | `createContainer()`     | A namespace/scope for all your suppliers.                     |
+| **`supplier(name).request()` / `supplier(name).product(config)`** | `createContainer()+register()` | Declare suppliers directly with explicit names and config. |
 | **Supplier**         |  Service                | Provides dependencies to other suppliers. Node in your dependency graph.    |
 | **Request Supplier**|  Value Service           | Supplier for a value from the user's request (request params, cookies, etc.)  |
 | **Product Supplier** |  Factory Service        | Supplier for a value derived from other product or request suppliers via a factory function                |

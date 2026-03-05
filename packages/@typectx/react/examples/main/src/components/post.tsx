@@ -1,16 +1,15 @@
 import { $commentsQuery, $userQuery, $usersQuery } from "@/api"
-import { market } from "@/market"
 import type { Comment, Post } from "@/api"
 import { useState } from "react"
 import { $Comment } from "@/components/comment"
-import { index } from "typectx"
+import { index, supplier } from "typectx"
 import { req } from "@/req"
 import { useQuery } from "@tanstack/react-query"
 import { $SelectSession } from "./session"
 import { useAssembleComponent, useDeps } from "@typectx/react"
 import { useAssertStable } from "@/hooks"
 
-export const $Post = market.add("Post").product({
+export const $Post = supplier("Post").product({
     suppliers: [
         req.$session,
         $usersQuery,

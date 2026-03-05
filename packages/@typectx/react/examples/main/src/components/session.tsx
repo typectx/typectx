@@ -1,10 +1,10 @@
-import { market } from "@/market"
 import { $usersQuery } from "@/api"
 import { req } from "@/req"
 import { useQuery } from "@tanstack/react-query"
 import { useDeps } from "@typectx/react"
+import { supplier } from "typectx"
 
-export const $SelectSession = market.add("SelectSession").product({
+export const $SelectSession = supplier("SelectSession").product({
     suppliers: [$usersQuery, req.$session],
     optionals: [req.$post],
     factory: (initDeps) =>

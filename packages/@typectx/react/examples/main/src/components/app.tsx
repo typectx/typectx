@@ -1,15 +1,14 @@
 import { $Feed } from "@/components/feed"
-import { market } from "@/market"
 import { $SelectSession } from "@/components/session"
 import { req } from "@/req"
 import { $userQuery, type User } from "@/api"
 import { useState } from "react"
-import { index } from "typectx"
+import { index, supplier } from "typectx"
 import { useAssembleComponent, useDeps } from "@typectx/react"
 import { useAssertStable } from "@/hooks"
 import { useQuery } from "@tanstack/react-query"
 
-export const $App = market.add("App").product({
+export const $App = supplier("App").product({
     suppliers: [$userQuery, req.$defaultUser],
     assemblers: [$SelectSession, $Feed],
     factory: (initDeps, ctx) =>

@@ -24,7 +24,7 @@
         "tasks": [
             {
                 "label": "Start typectx Watch Mode",
-                "type": "shell",
+                "type": "process",
                 "command": "pnpm",
                 "args": ["run", "dev"],
                 "runOptions": {

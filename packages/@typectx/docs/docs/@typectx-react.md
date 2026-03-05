@@ -69,31 +69,31 @@ return <Component />;
 
 ### 1. Define Request Suppliers
 
-Define your request data using `market.add().request()`.
+Define your request data using `supplier(name).request<T>()`.
 
 ```typescript
 // req.ts
-import { market } from "typectx"
+import { supplier } from "typectx"
 
 export const req = {
-    $theme: market.add("theme").request<"light" | "dark">(),
-    $user: market.add("user").request<{ name: string } | null>()
+    $theme: supplier("theme").request<"light" | "dark">(),
+    $user: supplier("user").request<{ name: string } | null>()
 }
 ```
 
 ### 2. Define Components
 
-Define your components as products using `market.add().product()`.
+Define your components as products using `supplier(name).product(config)`.
 
 ```typescript
 // components.ts
-import { market, index } from "typectx";
+import { supplier, index } from "typectx";
 import { useDeps, useAssembleComponent } from "@typectx/react";
 import { req } from "./req";
 
 // A child component that consumes 'theme'
-export const $Button = market.add("Button").product({
-    suppliers: [contexts.$theme],
+export const $Button = supplier("Button").product({
+    suppliers: [req.$theme],
     // Name the function component so you can understand your component tree in React DevTools
     factory: (initDeps) => function Button({ children }) {
         const { theme } = useDeps(initDeps);
@@ -108,7 +108,7 @@ export const $Button = market.add("Button").product({
 
 // A parent component that assembles the child
 // No call to useDeps since it has no dependencies in this example
-export const $App = market.add("App").product({
+export const $App = supplier("App").product({
     assemblers: [$Button],
     factory: (initDeps, ctx) => function App() {
         // Assemble the Button component with the current theme
@@ -170,7 +170,7 @@ root.render(<App />);
 ```
 
 - **React Context alternative** - All you can achieve with React Context can be achieved using @typectx/react's API:
-    - `createContext()` → equivalent to defining a new piece of data with `.request()` or `.product()`
+    - `createContext()` → equivalent to defining a new piece of data with `supplier(...).request()` or `supplier(...).product(...)`
     - `useContext()` → equivalent to useDeps(initDeps).someData
     - `<Provider >` → equivalent to useAssembleComponent() with a new value for the supplied context.
 
@@ -179,7 +179,7 @@ root.render(<App />);
 - **Preload pattern** - All factories are eagerly prerun in parallel by default, so preloading is very easy. To preload data, look at file src/api.ts in the demo to see how data prefetching has been achieved with react-query to avoid waterfall loading. The following example shows how to use the preload pattern with @typectx/react.
 
 ```tsx
-market.add("Component").product({
+supplier("Component").product({
     factory: (initDeps, ctx) =>
         React.memo((props) => {
             // return jsx

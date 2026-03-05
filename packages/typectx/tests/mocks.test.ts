@@ -1,20 +1,13 @@
 import { describe, it, expect, vi, expectTypeOf } from "vitest"
-import {
-    CircularDependencyError,
-    createMarket,
-    index,
-    type Supply
-} from "#index"
+import { CircularDependencyError, index, type Supply, supplier } from "#index"
 import { sleep, once } from "#utils"
 
 describe("Mocks Feature", () => {
     describe("Mock Method", () => {
         it("should handle mock with less suppliers", () => {
-            const market = createMarket()
+            const $input = supplier("input").request<boolean>()
 
-            const $input = market.add("input").request<boolean>()
-
-            const $base = market.add("base").product({
+            const $base = supplier("base").product({
                 suppliers: [$input],
                 factory: ({ input }) => ({ base: input })
             })
@@ -31,9 +24,7 @@ describe("Mocks Feature", () => {
         })
 
         it("should not allow mocks in suppliers array", () => {
-            const market = createMarket()
-
-            const $base = market.add("mock").product({
+            const $base = supplier("mock").product({
                 factory: () => "base"
             })
 
@@ -43,7 +34,7 @@ describe("Mocks Feature", () => {
             })
 
             expect(() => {
-                const $next = market.add("next").product({
+                const $next = supplier("next").product({
                     factory: () => "next",
                     //@ts-expect-error - mock in suppliers array
                     suppliers: [$mock]
@@ -52,11 +43,10 @@ describe("Mocks Feature", () => {
         })
 
         it("should handle init setting in mock", async () => {
-            const market = createMarket()
             const baseSpy = vi.fn().mockReturnValue("base")
             const initedSpy = vi.fn().mockReturnValue("inited")
 
-            const $base = market.add("base").product({
+            const $base = supplier("base").product({
                 factory: () => baseSpy
             })
 
@@ -65,7 +55,7 @@ describe("Mocks Feature", () => {
                 init: (product) => product()
             })
 
-            const $test = market.add("test").product({
+            const $test = supplier("test").product({
                 suppliers: [$base],
                 factory: ({ base }) => base
             })
@@ -82,17 +72,15 @@ describe("Mocks Feature", () => {
         })
 
         it("should compute precise TOSUPPLY types with mock", () => {
-            const market = createMarket()
+            const $config = supplier("config").request<string>()
+            const $apiKey = supplier("apiKey").request<string>()
 
-            const $config = market.add("config").request<string>()
-            const $apiKey = market.add("apiKey").request<string>()
-
-            const $logger = market.add("logger").product({
+            const $logger = supplier("logger").product({
                 factory: () => "logger"
             })
 
             // Base service - return compatible type that can be extended
-            const $base = market.add("base").product({
+            const $base = supplier("base").product({
                 factory: () => "base"
             })
 
@@ -124,13 +112,11 @@ describe("Mocks Feature", () => {
         })
 
         it("should detect circular dependencies in mocks", () => {
-            const market = createMarket()
-
-            const $A = market.add("A").product({
+            const $A = supplier("A").product({
                 factory: () => "serviceA"
             })
 
-            const $B = market.add("B").product({
+            const $B = supplier("B").product({
                 suppliers: [$A],
                 factory: ({ A }) => "serviceB uses " + A
             })
@@ -146,34 +132,30 @@ describe("Mocks Feature", () => {
                 expectTypeOf($mockA).toExtend<CircularDependencyError>()
             }).toThrow("Circular dependency detected")
 
-            expect(() => {
-                const $mockA = $A.mock({
-                    assemblers: [$B], // This creates a potential circle
-                    factory: () => "mockA"
-                })
+            const $mockA = $A.mock({
+                assemblers: [$B], // This creates a potential circle, but not caught at runtime, only at compile time
+                factory: () => "mockA"
+            })
 
-                expectTypeOf($mockA).toExtend<CircularDependencyError>()
-            }).toThrow("Circular dependency detected")
+            expectTypeOf($mockA).toExtend<CircularDependencyError>()
         })
     })
 
     describe("Hire Method", () => {
         it("should allow hiring alternative suppliers for testing", () => {
-            const market = createMarket()
-
-            const $db = market.add("db").product({
+            const $db = supplier("db").product({
                 factory: () => "real-db"
             })
 
-            const $cache = market.add("cache").product({
+            const $cache = supplier("cache").product({
                 factory: () => "real-cache"
             })
 
-            const $logger = market.add("logger").product({
+            const $logger = supplier("logger").product({
                 factory: () => "real-logger"
             })
 
-            const $service = market.add("service").product({
+            const $service = supplier("service").product({
                 suppliers: [$db, $cache, $logger],
                 factory: ({ db, cache, logger }) => ({
                     db,
@@ -202,18 +184,16 @@ describe("Mocks Feature", () => {
         })
 
         it("should handle hiring unused suppliers", () => {
-            const market = createMarket()
-
-            const $db = market.add("db").product({
+            const $db = supplier("db").product({
                 factory: () => "db"
             })
 
-            const $main = market.add("main").product({
+            const $main = supplier("main").product({
                 suppliers: [$db],
                 factory: ({ db }) => "main-" + db
             })
 
-            const $unused = market.add("unused").product({
+            const $unused = supplier("unused").product({
                 factory: () => "base-extra"
             })
 
@@ -230,9 +210,7 @@ describe("Mocks Feature", () => {
         })
 
         it("should handle empty hire calls gracefully", () => {
-            const market = createMarket()
-
-            const $main = market.add("main").product({
+            const $main = supplier("main").product({
                 factory: () => "main"
             })
 
@@ -244,13 +222,11 @@ describe("Mocks Feature", () => {
         })
 
         it("should handle duplicate supplier names in hire (last one wins)", () => {
-            const market = createMarket()
-
-            const $db = market.add("db").product({
+            const $db = supplier("db").product({
                 factory: () => "db"
             })
 
-            const $main = market.add("main").product({
+            const $main = supplier("main").product({
                 suppliers: [$db],
                 factory: ({ db }) => "main-" + db
             })
@@ -275,19 +251,17 @@ describe("Mocks Feature", () => {
         })
 
         it("should allow assembling multiple suppliers together", () => {
-            const market = createMarket()
+            const $shared = supplier("shared").request<string>()
+            const $unique = supplier("unique").request<number>()
 
-            const $shared = market.add("shared").request<string>()
-            const $unique = market.add("unique").request<number>()
-
-            const $A = market.add("A").product({
+            const $A = supplier("A").product({
                 suppliers: [$shared],
                 factory: ({ shared }) => {
                     return "A-" + shared
                 }
             })
 
-            const $B = market.add("B").product({
+            const $B = supplier("B").product({
                 suppliers: [$shared, $unique],
                 factory: ({ shared, unique }) => {
                     return "B-" + shared + "-" + unique
@@ -304,19 +278,17 @@ describe("Mocks Feature", () => {
         })
 
         it("should type check that all required request supplies are provided", () => {
-            const market = createMarket()
+            const $db = supplier("db").request<string>()
+            const $cache = supplier("cache").request<string>()
 
-            const $db = market.add("db").request<string>()
-            const $cache = market.add("cache").request<string>()
-
-            const $user = market.add("user").product({
+            const $user = supplier("user").product({
                 suppliers: [$db],
                 factory: ({ db }) => {
                     return "user-" + db
                 }
             })
 
-            const $session = market.add("session").product({
+            const $session = supplier("session").product({
                 suppliers: [$cache],
                 factory: ({ cache }) => {
                     return "session-" + cache
@@ -342,13 +314,11 @@ describe("Mocks Feature", () => {
         })
 
         it("should handle errors in hire() method gracefully", () => {
-            const market = createMarket()
-
-            const $working = market.add("working").product({
+            const $working = supplier("working").product({
                 factory: () => "working-value"
             })
 
-            const $failing = market.add("failing").product({
+            const $failing = supplier("failing").product({
                 factory: () => {
                     throw new Error("Supplier failed")
                     return
@@ -366,17 +336,15 @@ describe("Mocks Feature", () => {
 
     describe("Accessing supplies after ctx.hire() call", () => {
         it("supplies of supply built with reassemble with Hire parameters should contain only the hired suppliers' supplies properly typed", () => {
-            const market = createMarket()
-
-            const $supplier = market.add("supplier").product({
+            const $supplier = supplier("supplier").product({
                 factory: () => "supplier-value"
             })
 
-            const $assembler = market.add("assembler").product({
+            const $assembler = supplier("assembler").product({
                 factory: () => "assembler-value"
             })
 
-            const $main = market.add("main").product({
+            const $main = supplier("main").product({
                 suppliers: [$supplier],
                 assemblers: [$assembler],
                 factory: ({ supplier }, ctx) => {

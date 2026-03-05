@@ -1,6 +1,6 @@
 ---
 title: "Basic Usage Guide"
-description: "Learn the basic usage of typectx, a type-safe dependency injection library for TypeScript. Understand markets, request suppliers, products, and the assembly process."
+description: "Learn the basic usage of typectx, a type-safe dependency injection library for TypeScript. Understand request suppliers, products, and the assembly process."
 keywords:
     - basic usage
     - guide
@@ -8,7 +8,7 @@ keywords:
     - typescript
     - dependency injection
     - typectx
-    - market
+    - request
     - ctx
     - product
     - assemble
@@ -22,30 +22,20 @@ This guide covers the fundamental concepts of typectx in detail, providing you w
 
 typectx uses a supply chain metaphor to make context injection intuitive. Instead of abstract containers and providers, you work with:
 
-- **Markets** - Namespaces where suppliers are defined
 - **Suppliers** - Entities that provide either request data or products
 - **Request data** - Simple data (sessions, request params, etc.) that cannot be derived from other suppliers and provide "context" for other product suppliers.
 - **Products** - Complex services built from request data or other product suppliers
 - **Assembly** - The process of building products with their dependencies
 
-Think of it like a real supply chain: raw materials (request data and simple products) are transformed by factories into increasingly complex products, all orchestrated in a marketplace.
+Think of it like a real supply chain: raw materials (request data and simple products) are transformed by factories into increasingly complex products.
 
-## Step 1: Creating a Market
+## Step 1: Import flat APIs
 
-Every typectx application starts with a market. A market is a namespace that ensures all your suppliers have unique names and provides the foundation for type-safe dependency resolution.
+Every typectx application starts by declaring suppliers directly with `supplier(name).request()` and `supplier(name).product(config)`.
 
 ```typescript
-import { createMarket } from "typectx"
-
-const market = createMarket()
+import { supplier } from "typectx"
 ```
-
-**Key Points:**
-
-- You typically create one market per application
-- Markets prevent name conflicts by maintaining a registry
-- The name registry is the only state a market manages
-- Markets are lightweight and have minimal overhead
 
 ## Step 2: Defining Request suppliers
 
@@ -54,7 +44,7 @@ Request suppliers are the simplest form of suppliers. Just specify the type of t
 ### Creating a Request Supplier
 
 ```typescript
-const $session = market.add("session").request<{
+const $session = supplier("session").request<{
     userId: string
     timestamp: number
 }>()
@@ -62,7 +52,7 @@ const $session = market.add("session").request<{
 
 The `$` prefix is a convention (not required) to distinguish supplier definitions from actual values.
 
-Names given to market.add("") can **only** contain digits, letters, underscores or `$` signs and cannot start with a digit, just like any Javascript identifier. This way, they can be destructured easily to js variables once injected.
+Names passed to `supplier("...")` can **only** contain digits, letters, underscores or `$` signs and cannot start with a digit, just like any Javascript identifier.
 
 ### Packing Request suppliers with Values
 
@@ -90,15 +80,15 @@ Request suppliers aren't limited to objects. They can hold any TypeScript type:
 
 ```typescript
 // Simple types
-const $apiKey = market.add("apiKey").request<string>()
-const $port = market.add("port").request<number>()
-const $isProduction = market.add("isProduction").request<boolean>()
+const $apiKey = supplier("apiKey").request<string>()
+const $port = supplier("port").request<number>()
+const $isProduction = supplier("isProduction").request<boolean>()
 
 // Complex types
-const $database = market.add("database").request<Database>()
+const $database = supplier("database").request<Database>()
 
 // Even functions (but usually, you'll use product suppliers in that case)
-const $logger = market.add("logger").request<{
+const $logger = supplier("logger").request<{
     log: (message: string) => void
     error: (error: Error) => void
 }>()
@@ -111,7 +101,7 @@ Product suppliers are where the real power of typectx shines. Products are facto
 ### Basic Product Definition
 
 ```typescript
-const $userService = market.add("userService").product({
+const $userService = supplier("userService").product({
     suppliers: [$config, $database],
     factory: ({ config, database }) => {
         return {
@@ -126,12 +116,12 @@ const $userService = market.add("userService").product({
 ### Understanding the Factory Function
 
 The factory function receives a special `deps` argument that provides access to all declared dependencies via destructuring. The properties
-of the deps object are the names of the supplier passed to market.add() at definition time.
+of the deps object are the names passed to `supplier("...")` at definition time.
 
 ```typescript
 suppliers: [$config, $database]
 factory: (deps) => {
-    // Because we did market.add("config") when defining the $config variable above
+    // Because we did supplier("config") when defining the $config variable above
     const config = deps.config
     // You can do this, but it produces less boilerplate to just destructure deps directly
     // See previous example just above
@@ -147,7 +137,7 @@ factory: (deps) => {
 Product suppliers don't need to depend on other suppliers! If you have a value available at module-scope in your code, you can load it in your supply chain with a trivial product supplier:
 ```typescript
 const db = dbConnect(/*...*/)
-const $db = market.add("db").product({
+const $db = supplier("db").product({
     factory: ()=>db
 })
 ```
@@ -158,7 +148,7 @@ Products can depend not only on request data, but also on other products, creati
 
 ```typescript
 // Depends on a simple piece of request data
-const $session = market.add("session").product({
+const $session = supplier("session").product({
     suppliers: [$token],
     factory: ({ token }) => {
         // Authentication logic
@@ -167,7 +157,7 @@ const $session = market.add("session").product({
 })
 
 // Depends on the session complex product, on the db trivial product, and on the page request data
-const $userProfile = market.add("userProfile").product({
+const $userProfile = supplier("userProfile").product({
     suppliers: [$session, $database, $page],
     factory: ({ session, db, page }) => {
         const user = db.getUser(session.userId)
@@ -199,7 +189,7 @@ Understanding how and when factories are called is crucial for effective use of 
 **Important:** Your factory function is called exactly **once per `assemble()` call**. This eliminates the need to explicitely configure traditional DI service lifecycles (transient, scoped, singleton).
 
 ```typescript
-const $service = market.add("service").product({
+const $service = supplier("service").product({
     suppliers: [],
     factory: () => {
         console.log("Factory called!")
@@ -224,7 +214,7 @@ const value2 = service3Supply.unpack() // { value: 0.789 } (same instance, no ne
 If you need something that can be called multiple times or needs to run side-effects, return a function from your factory:
 
 ```typescript
-const $userRepository = market.offer("userRepository").asProduct({
+const $userRepository = supplier("userRepository").product({
     suppliers: [$db],
     factory: ({ db }) => {
         // Setup code runs once
@@ -262,17 +252,17 @@ Factories can return any TypeScript value, even Promises, so nothing special is 
 
 ```typescript
 // Return objects
-const $api = market.add("api").product({
+const $api = supplier("api").product({
     factory: () => ({ get: () => {}, post: () => {} })
 })
 
 // Return functions
-const $handler = market.add("handler").product({
+const $handler = supplier("handler").product({
     factory: () => (request: Request) => new Response()
 })
 
 // Return promises
-const $asyncData = market.add("asyncData").product({
+const $asyncData = supplier("asyncData").product({
     factory: async () => {
         const data = await fetch("...")
         return data.json()
@@ -280,7 +270,7 @@ const $asyncData = market.add("asyncData").product({
 })
 
 // Return React components
-const $Header = market.add("Header").product({
+const $Header = supplier("Header").product({
     factory: () => () => <header>My App</header>
 })
 ```
@@ -321,7 +311,7 @@ The `index()` function automatically maps each resource to its supplier name.
 TypeScript will enforce that you provide all required request data:
 
 ```typescript
-const $service = market.add("service").product({
+const $service = supplier("service").product({
     suppliers: [$locale, $session],
     factory: () => ({
         /* ... */
@@ -343,18 +333,18 @@ $service.assemble(index($locale.pack("en"), $session.pack({userId: "user-123"}))
 Notice that you only provide request data during assembly, not products. Products are automatically "auto-wired" - they assemble themselves by recursively resolving their dependencies.
 
 ```typescript
-const $session = market.add("session").request<Session>()
+const $session = supplier("session").request<Session>()
 
-const $db = market.add("db").product({factory: () => dbConnect(/*...*/)})
+const $db = supplier("db").product({factory: () => dbConnect(/*...*/)})
 
-const $userService = market.add("userService").product({
+const $userService = supplier("userService").product({
     suppliers: [$db, $session],
     factory: ({ db, session }) => ({
         /* ... */
     })
 })
 
-const $app = market.add("app").product({
+const $app = supplier("app").product({
     suppliers: [$userService],
     factory: ({ userService }) => {
         return {
@@ -377,7 +367,7 @@ By default, typectx eagerly constructs all products in the background and in par
 ### Eager Loading (Default)
 
 ```typescript
-const $eagerService = market.add("eagerService").product({
+const $eagerService = supplier("eagerService").product({
     suppliers: [$db],
     factory: ({ db }) => {
         console.log("Eager service factory called")
@@ -395,7 +385,7 @@ const appSupply = $app.assemble(index($database.pack(db)))
 For expensive products that might not always be needed, use lazy loading:
 
 ```typescript
-const $expensiveService = market.add("expensiveService").product({
+const $expensiveService = supplier("expensiveService").product({
     suppliers: [$db],
     factory: ({ db }) => {
         console.log("Expensive service factory called")
@@ -404,7 +394,7 @@ const $expensiveService = market.add("expensiveService").product({
     lazy: true // Only construct when first accessed
 })
 
-const $app = market.add("app").product({
+const $app = supplier("app").product({
     suppliers: [$expensiveService],
     factory: (deps) => {
         // Factory not called yet
@@ -440,25 +430,22 @@ const $app = market.add("app").product({
 Let's put everything together with a realistic example:
 
 ```typescript
-import { createMarket, index } from "typectx"
-
-// 1. Create the market
-const market = createMarket()
+import { index, supplier } from "typectx"
 
 // 2. Define request suppliers
-const $req = market.add("req").request<Request>()
-const $config = market.add("config").request<{
+const $req = supplier("req").request<Request>()
+const $config = supplier("config").request<{
     postsPerPage: number
     cacheEnabled: boolean
 }>()
-const $user = market.add("user").request<{
+const $user = supplier("user").request<{
     id: string
     role: "admin" | "user"
 }>()
 
 // 3. Define products (services)
-const $db = market.add("db").product({factory: () => dbConnect(/*...*/)})
-const $postsRepository = market.add("postsRepository").product({
+const $db = supplier("db").product({factory: () => dbConnect(/*...*/)})
+const $postsRepository = supplier("postsRepository").product({
     suppliers: [$db],
     factory: ({ db }) => {
         return {
@@ -476,7 +463,7 @@ const $postsRepository = market.add("postsRepository").product({
     }
 })
 
-const $authorizationService = market.add("authorizationService").product({
+const $authorizationService = supplier("authorizationService").product({
     suppliers: [$user],
     factory: ({ user }) => {
         return {
@@ -489,7 +476,7 @@ const $authorizationService = market.add("authorizationService").product({
     }
 })
 
-const $postsService = market.add("postsService").product({
+const $postsService = supplier("postsService").product({
     suppliers: [$postsRepository, $authorizationService, $config],
     factory: ({
         postsRepository: repo,
@@ -532,7 +519,7 @@ const $postsService = market.add("postsService").product({
 })
 
 // 4. Define the API handler
-const $apiHandler = market.add("apiHandler").product({
+const $apiHandler = supplier("apiHandler").product({
     suppliers: [$postsService, $req],
     factory: async ({ postsService: posts, req }) => {
         const url = new URL(req.url)
