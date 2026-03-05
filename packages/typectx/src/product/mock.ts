@@ -1,10 +1,10 @@
 import { main } from "#product/main"
 import type {
-    CircularDependencyGuard,
     MainSupplier,
     ProductConfig,
     ProductSupplier,
     RequestSupplier,
+    SupplierGraphGuard,
     UnknownProductSupplier
 } from "#types"
 import { assertProductConfig } from "#validation"
@@ -48,7 +48,7 @@ export function Mock<NAME extends string, CONSTRAINT>() {
             OPTIONALS2,
             ASSEMBLERS2
         >
-    ): CircularDependencyGuard<
+    ): SupplierGraphGuard<
         ProductSupplier<
             THIS["name"],
             CONSTRAINT2,

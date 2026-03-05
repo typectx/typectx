@@ -54,7 +54,7 @@ function Ctx<SUPPLIER extends UnknownProductSupplier>(
     resolved: Resolved<UnknownProductSupplier>
 ): Ctx<SUPPLIER> {
     return <ASSEMBLER extends Supplier>(assembler: ASSEMBLER): any => {
-        const assemblersTeam = supplier.assemblersTeam()
+        const assemblersTeam = [...supplier.team(), ...supplier.assemblers]
         const actual = assemblersTeam.find(
             (member) => member.name === assembler.name
         )
@@ -142,15 +142,17 @@ function reassemble<
     const hiredAssembler = assembler.hire<typeof assembler, HIRED>(...hired)
 
     if ("ERROR" in hiredAssembler) {
-        throw new Error("Circular dependency detected")
+        throw new Error(hiredAssembler.ERROR)
     }
 
-    const newSupplies = hiredAssembler.assemble({
+    const validHiredAssembler = hiredAssembler as UnknownProductSupplier
+
+    const newSupplies = validHiredAssembler.assemble({
         ...preserved,
         ...definedSupplied
     } as any).supplies // Assertion required here because there is no way to relate the types of the supplies
 
-    return hiredAssembler._build(newSupplies)
+    return validHiredAssembler._build(newSupplies) as any
 }
 
 /**

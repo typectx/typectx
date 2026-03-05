@@ -1,13 +1,12 @@
 import { describe, it, expect, assertType } from "vitest"
-import { createMarket, index } from "#index"
+import { index, supplier } from "#index"
 
 describe("Optionals Feature", () => {
     describe("Basic Optional Usage", () => {
         it("should allow defining optional request suppliers in product supplier config", () => {
-            const market = createMarket()
-            const $optional = market.add("optional").request<string>()
+            const $optional = supplier("optional").request<string>()
 
-            const $product = market.add("product").product({
+            const $product = supplier("product").product({
                 optionals: [$optional],
                 factory: ({ optional }) => {
                     assertType<string | undefined>(optional)
@@ -27,11 +26,10 @@ describe("Optionals Feature", () => {
         })
 
         it("should work when optional is NOT provided", () => {
-            const market = createMarket()
-            const $config = market.add("config").request<string>()
-            const $optional = market.add("optional").request<number>()
+            const $config = supplier("config").request<string>()
+            const $optional = supplier("optional").request<number>()
 
-            const $product = market.add("product").product({
+            const $product = supplier("product").product({
                 suppliers: [$config],
                 optionals: [$optional],
                 factory: ({ config, optional }) => {
@@ -55,13 +53,12 @@ describe("Optionals Feature", () => {
         })
 
         it("should support multiple optionals", () => {
-            const market = createMarket()
-            const $required = market.add("required").request<string>()
-            const $opt1 = market.add("opt1").request<number>()
-            const $opt2 = market.add("opt2").request<boolean>()
-            const $opt3 = market.add("opt3").request<string>()
+            const $required = supplier("required").request<string>()
+            const $opt1 = supplier("opt1").request<number>()
+            const $opt2 = supplier("opt2").request<boolean>()
+            const $opt3 = supplier("opt3").request<string>()
 
-            const $product = market.add("product").product({
+            const $product = supplier("product").product({
                 suppliers: [$required],
                 optionals: [$opt1, $opt2, $opt3],
                 factory: ({ required, opt1, opt2, opt3 }) => {
@@ -90,11 +87,10 @@ describe("Optionals Feature", () => {
 
     describe("Type Safety with Optionals", () => {
         it("should make optional supplies nullable in deps type", () => {
-            const market = createMarket()
-            const $required = market.add("required").request<string>()
-            const $optional = market.add("optional").request<number>()
+            const $required = supplier("required").request<string>()
+            const $optional = supplier("optional").request<number>()
 
-            const $product = market.add("product").product({
+            const $product = supplier("product").product({
                 suppliers: [$required],
                 optionals: [$optional],
                 factory: ({ required, optional }) => {
@@ -113,11 +109,10 @@ describe("Optionals Feature", () => {
         })
 
         it("should require all required suppliers in ToSupply", () => {
-            const market = createMarket()
-            const $required = market.add("required").request<string>()
-            const $optional = market.add("optional").request<number>()
+            const $required = supplier("required").request<string>()
+            const $optional = supplier("optional").request<number>()
 
-            const $product = market.add("product").product({
+            const $product = supplier("product").product({
                 suppliers: [$required],
                 optionals: [$optional],
                 factory: ({ required, optional }) => {
@@ -137,13 +132,12 @@ describe("Optionals Feature", () => {
 
     describe("Request supplier in ctx wrapper", () => {
         it("should just return request supplier (noop)", () => {
-            const market = createMarket()
-            const $input = market.add("input").request<string>()
-            const $assembler = market.add("assembler").product({
+            const $input = supplier("input").request<string>()
+            const $assembler = supplier("assembler").product({
                 factory: () => "assembled"
             })
 
-            const $product = market.add("product").product({
+            const $product = supplier("product").product({
                 optionals: [$input],
                 assemblers: [$assembler],
                 factory: (deps, ctx) => {
@@ -159,15 +153,14 @@ describe("Optionals Feature", () => {
 
     describe("Optionals with Nested Dependencies", () => {
         it("should handle optionals in nested product supplier chains", () => {
-            const market = createMarket()
-            const $optionalConfig = market
-                .add("optionalConfig")
-                .request<{ apiKey: string }>()
-            const $baseConfig = market
-                .add("baseConfig")
-                .request<{ url: string }>()
+            const $optionalConfig = supplier("optionalConfig").request<{
+                apiKey: string
+            }>()
+            const $baseConfig = supplier("baseConfig").request<{
+                url: string
+            }>()
 
-            const $api = market.add("api").product({
+            const $api = supplier("api").product({
                 suppliers: [$baseConfig],
                 optionals: [$optionalConfig],
                 factory: ({ baseConfig, optionalConfig }) => {
@@ -178,7 +171,7 @@ describe("Optionals Feature", () => {
                 }
             })
 
-            const $app = market.add("app").product({
+            const $app = supplier("app").product({
                 suppliers: [$api],
                 factory: ({ api }) => {
                     return `Connecting to ${api.url} with ${api.apiKey}`
@@ -210,17 +203,16 @@ describe("Optionals Feature", () => {
         })
 
         it("should propagate optionals through transitive dependencies in types", () => {
-            const market = createMarket()
-            const $optional = market.add("optional").request<string>()
+            const $optional = supplier("optional").request<string>()
 
-            const $child = market.add("child").product({
+            const $child = supplier("child").product({
                 optionals: [$optional],
                 factory: ({ optional }) => {
                     return optional ?? "default"
                 }
             })
 
-            const $parent = market.add("parent").product({
+            const $parent = supplier("parent").product({
                 suppliers: [$child],
                 factory: ({ child }) => {
                     return child
@@ -246,12 +238,11 @@ describe("Optionals Feature", () => {
 
     describe("Optionals with Mocks", () => {
         it("should allow mocks to have different optionals", () => {
-            const market = createMarket()
-            const $required = market.add("required").request<string>()
-            const $optional1 = market.add("optional1").request<number>()
-            const $optional2 = market.add("optional2").request<number>()
+            const $required = supplier("required").request<string>()
+            const $optional1 = supplier("optional1").request<number>()
+            const $optional2 = supplier("optional2").request<number>()
 
-            const $base = market.add("base").product({
+            const $base = supplier("base").product({
                 suppliers: [$required],
                 optionals: [$optional1],
                 factory: ({ required, optional1 }) => {
@@ -284,11 +275,10 @@ describe("Optionals Feature", () => {
         })
 
         it("should handle optionals with hire method", () => {
-            const market = createMarket()
-            const $config = market.add("config").request<string>()
-            const $optional = market.add("optional").request<number>()
+            const $config = supplier("config").request<string>()
+            const $optional = supplier("optional").request<number>()
 
-            const $dependency = market.add("dependency").product({
+            const $dependency = supplier("dependency").product({
                 suppliers: [$config],
                 optionals: [$optional],
                 factory: ({ optional }) => {
@@ -297,7 +287,7 @@ describe("Optionals Feature", () => {
                 }
             })
 
-            const $main = market.add("main").product({
+            const $main = supplier("main").product({
                 suppliers: [$dependency],
                 factory: ({ dependency }) => dependency
             })
@@ -315,12 +305,11 @@ describe("Optionals Feature", () => {
 
     describe("Optionals with Reassemble", () => {
         it("should allow reassembling with optional when it was initially provided", () => {
-            const market = createMarket()
-            const $config = market.add("config").request<string>()
-            const $optional1 = market.add("optional1").request<number>()
-            const $optional2 = market.add("optional2").request<number>()
+            const $config = supplier("config").request<string>()
+            const $optional1 = supplier("optional1").request<number>()
+            const $optional2 = supplier("optional2").request<number>()
 
-            const $service = market.add("service").product({
+            const $service = supplier("service").product({
                 suppliers: [$config],
                 optionals: [$optional1, $optional2],
                 factory: ({ config, optional1, optional2 }) => {
@@ -332,7 +321,7 @@ describe("Optionals Feature", () => {
                 }
             })
 
-            const $main = market.add("main").product({
+            const $main = supplier("main").product({
                 suppliers: [$service],
                 factory: ({ service }, ctx) => {
                     const initial = service
@@ -354,12 +343,10 @@ describe("Optionals Feature", () => {
         })
 
         it("should allow removing optional in reassemble", () => {
-            const market = createMarket()
+            const $config = supplier("config").request<string>()
+            const $optional = supplier("optional").request<number>()
 
-            const $config = market.add("config").request<string>()
-            const $optional = market.add("optional").request<number>()
-
-            const $service = market.add("service").product({
+            const $service = supplier("service").product({
                 suppliers: [$config],
                 optionals: [$optional],
                 factory: ({ config, optional }) => ({
@@ -368,7 +355,7 @@ describe("Optionals Feature", () => {
                 })
             })
 
-            const $main = market.add("main").product({
+            const $main = supplier("main").product({
                 suppliers: [$service],
                 factory: ({ service }, ctx) => {
                     const initial = service
@@ -395,18 +382,17 @@ describe("Optionals Feature", () => {
 
     describe("Optionals with .hire() Method", () => {
         it("should handle optionals when using .hire() for batch assembly", () => {
-            const market = createMarket()
-            const $optional1 = market.add("optional1").request<string>()
-            const $optional2 = market.add("optional2").request<string>()
+            const $optional1 = supplier("optional1").request<string>()
+            const $optional2 = supplier("optional2").request<string>()
 
-            const $service1 = market.add("service1").product({
+            const $service1 = supplier("service1").product({
                 optionals: [$optional1],
                 factory: ({ optional1 }) => {
                     return `S1: ${optional1 ?? "none"}`
                 }
             })
 
-            const $service2 = market.add("service2").product({
+            const $service2 = supplier("service2").product({
                 optionals: [$optional2],
                 factory: ({ optional2 }) => {
                     return `S2: ${optional2 ?? "none"}`
@@ -424,10 +410,9 @@ describe("Optionals Feature", () => {
 
     describe("Edge Cases and Error Handling", () => {
         it("should handle empty optionals array", () => {
-            const market = createMarket()
-            const $config = market.add("config").request<string>()
+            const $config = supplier("config").request<string>()
 
-            const $product = market.add("product").product({
+            const $product = supplier("product").product({
                 suppliers: [$config],
                 optionals: [],
                 factory: ({ config }) => config
@@ -440,11 +425,10 @@ describe("Optionals Feature", () => {
         })
 
         it("should handle product with only optionals (no required suppliers)", () => {
-            const market = createMarket()
-            const $optional1 = market.add("optional1").request<string>()
-            const $optional2 = market.add("optional2").request<number>()
+            const $optional1 = supplier("optional1").request<string>()
+            const $optional2 = supplier("optional2").request<number>()
 
-            const $product = market.add("product").product({
+            const $product = supplier("product").product({
                 optionals: [$optional1, $optional2],
                 factory: ({ optional1, optional2 }) => {
                     return {
@@ -480,30 +464,11 @@ describe("Optionals Feature", () => {
             })
         })
 
-        it("should handle same request supplier in both suppliers and optionals gracefully", () => {
-            const market = createMarket()
-            const $input = market.add("input").request<string>()
-
-            const $product = market.add("product").product({
-                suppliers: [$input],
-                optionals: [$input],
-                factory: ({ input }) => input
-            })
-
-            // @ts-expect-error - Required supplier takes precedence over optional
-            const fail = $product.assemble({})
-            const result = $product
-                .assemble(index($input.pack("test")))
-                .unpack()
-            expect(result).toBe("test")
-        })
-
         it("should handle init function with optionals", () => {
-            const market = createMarket()
-            const $optional = market.add("optional").request<number>()
+            const $optional = supplier("optional").request<number>()
             let optStore: number | undefined = undefined
 
-            const $product = market.add("product").product({
+            const $product = supplier("product").product({
                 optionals: [$optional],
                 factory: ({ optional }) => {
                     return optional ?? 10
@@ -525,21 +490,18 @@ describe("Optionals Feature", () => {
 
     describe("Real-World Use Cases", () => {
         it("Feature flag example", () => {
-            const market = createMarket()
-            const $featureFlag = market
-                .add("featureFlag")
-                .request<boolean>()
+            const $featureFlag = supplier("featureFlag").request<boolean>()
 
-            const $session = market.add("session").request<string>()
+            const $session = supplier("session").request<string>()
 
-            const $optionalFeature = market.add("optionalFeature").product({
+            const $optionalFeature = supplier("optionalFeature").product({
                 suppliers: [$session],
                 factory: ({ session }) => {
                     return session
                 }
             })
 
-            const $main = market.add("main").product({
+            const $main = supplier("main").product({
                 optionals: [$featureFlag],
                 assemblers: [$optionalFeature],
                 factory: ({ featureFlag }, ctx) => {
@@ -567,18 +529,16 @@ describe("Optionals Feature", () => {
         })
 
         it("should support optional authentication/authorization context", () => {
-            const market = createMarket()
-
-            const $publicData = market.add("publicData").request<{
+            const $publicData = supplier("publicData").request<{
                 title: string
             }>()
 
-            const $userAuth = market.add("userAuth").request<{
+            const $userAuth = supplier("userAuth").request<{
                 userId: string
                 token: string
             }>()
 
-            const $api = market.add("api").product({
+            const $api = supplier("api").product({
                 suppliers: [$publicData],
                 optionals: [$userAuth],
                 factory: ({ publicData, userAuth }) => {
@@ -620,15 +580,13 @@ describe("Optionals Feature", () => {
         })
 
         it("should support optional caching/performance optimization context", () => {
-            const market = createMarket()
-
-            const $config = market.add("config").request<{
+            const $config = supplier("config").request<{
                 apiUrl: string
             }>()
 
-            const $cache = market.add("cache").request<Map<string, any>>()
+            const $cache = supplier("cache").request<Map<string, unknown>>()
 
-            const $dataService = market.add("dataService").product({
+            const $dataService = supplier("dataService").product({
                 suppliers: [$config],
                 optionals: [$cache],
                 factory: ({ config, cache }) => {
@@ -655,7 +613,7 @@ describe("Optionals Feature", () => {
             })
 
             // With cache
-            const cache = new Map<string, any>()
+            const cache = new Map<string, unknown>()
             const $service2 = $dataService.assemble(
                 index(
                     $config.pack({ apiUrl: "api.example.com" }),

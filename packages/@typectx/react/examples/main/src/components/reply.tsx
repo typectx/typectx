@@ -1,9 +1,9 @@
-import { market } from "@/market"
 import { req } from "@/req"
 import type { Reply } from "@/api"
 import { useDeps } from "@typectx/react"
+import { supplier } from "typectx"
 
-export const $Reply = market.add("Reply").product({
+export const $Reply = supplier("Reply").product({
     suppliers: [req.$post, req.$session],
     factory: (initDeps) =>
         function Reply({ reply }: { reply: Reply }) {

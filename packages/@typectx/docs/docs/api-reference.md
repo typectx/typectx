@@ -1,11 +1,11 @@
 ---
 title: "API Reference"
-description: "Detailed API reference for typectx. Learn about createMarket, add().request(), add().product(), and other core functions for type-safe dependency injection in TypeScript."
+description: "Detailed API reference for typectx. Learn about supplier(name).request(), supplier(name).product(config), and core functions for type-safe dependency injection in TypeScript."
 keywords:
     - api
     - reference
     - typectx
-    - createMarket
+    - product
     - product
     - request
     - assemble
@@ -15,36 +15,20 @@ keywords:
 
 # API Reference
 
-### `createMarket()`
-
-Creates a new dependency injection scope.
-
-```ts
-const market = createMarket()
-```
-
-### `market.add("name")`
-
-Creates a new supplier with the given name. The name must be a valid JavaScript identifier, i.e. it can only contain digits, letters, `$`, or `_`, and cannot start with a digit.
-
-```ts
-const $supplier = market.add("name")
-```
-
-### `add().request<T>()`
+### `supplier(name).request<T>()`
 
 Creates a supplier for a value from the user's request (request params, cookies, etc.) with type T.
 
 ```ts
-const $session = market.add("session").request<Session>()
+const $session = supplier("session").request<Session>()
 ```
 
-### `add().product(options)`
+### `supplier(name).product(config)`
 
 Creates a product supplier.
 
 ```ts
-const $product = market.add("product").product({
+const $product = supplier("product").product({
     suppliers: [$supplier1, $supplier2], // Suppliers
     assemblers: [$assembler1, $assembler2], // Assemblers
     lazy: boolean, // Eager (false) or lazy (true)

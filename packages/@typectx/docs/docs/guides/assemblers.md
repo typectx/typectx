@@ -26,12 +26,12 @@ This architecture is what React Context achieves. Each Post component can run as
 Assemblers in typectx achieve something similar, but within a full DI paradigm.
 
 ```tsx
-const $session = market.add("session").request<Session>()
-const $postId = market.add("postId").request<string>()
+const $session = supplier("session").request<Session>()
+const $postId = supplier("postId").request<string>()
 
 const $db = connectDb(/*...*/))
 
-const $Post = market.add("Post").product({
+const $Post = supplier("Post").product({
     suppliers: [$db, $postId, $session],
     factory: async ({db, postId, session}) => {
         const post = await db.getPost(postid)
@@ -43,7 +43,7 @@ const $Post = market.add("Post").product({
     }
 })
 
-const $Feed = market.add("Feed").product({
+const $Feed = supplier("Feed").product({
     suppliers: [$db, $session],
     // Put in assemblers[] all product suppliers depending
     // on new context data computed in this factory
@@ -65,7 +65,7 @@ const $Feed = market.add("Feed").product({
     }
 })
 
-const $App = market.add("App").product({
+const $App = supplier("App").product({
     suppliers: [$Feed],
     factory: ({Feed}) => {
         return <Feed /> // The app is just the feed for now
@@ -108,7 +108,7 @@ Sometimes, you don't need to build a new product from scratch based on new conte
 Here is a classic problem reassembling solves: how can a user safely send money to another user when the sender does not have access to the receiver's account, without having to bypass the receiver's access control layer? Just impersonate the receiver with `ctx($supplier)`!
 
 ```typescript
-const $sendMoney = market.add("sendMoney").product({
+const $sendMoney = supplier("sendMoney").product({
     suppliers: [$addWalletEntry, $session],
     factory: ({ addWalletEntry, session }) => {
         return (toUserId: string, amount: number) => {
@@ -142,7 +142,7 @@ const $sendMoney = market.add("sendMoney").product({
 Let's say you have multiple components to assemble in the Feed once you know the postId:
 
 ```tsx
-const $Feed = market.add("Feed").product({
+const $Feed = supplier("Feed").product({
     suppliers: [$db, $session],
     assemblers: [$PostAISummary, $Post, $PostTopComments],
     factory: ({db}, ctx) => {
@@ -169,7 +169,7 @@ const $Feed = market.add("Feed").product({
 This is not efficient, as the assemble() context needs to be built three times independently. A better way is to use `hire()`
 
 ```tsx
-const $Feed = market.add("Feed").product({
+const $Feed = supplier("Feed").product({
     suppliers: [$db, $session],
     assemblers: [$PostAISummary, $Post, $PostTopComments],
     factory: ({db}, ctx) => {

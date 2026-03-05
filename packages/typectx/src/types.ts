@@ -109,18 +109,6 @@ export interface ProductSupplier<
                 MergeSuppliers<THIS["suppliers"], THIS["hired"]>
             >
         ]
-    assemblersTeam: <THIS extends UnknownProductSupplier>(
-        this: THIS
-    ) => UnknownProductSupplier extends THIS ? Supplier[]
-    :   [
-            ...THIS["optionals"],
-            ...TransitiveSuppliers<
-                MergeSuppliers<THIS["suppliers"], THIS["hired"]>
-            >,
-            ...TransitiveSuppliers<
-                MergeSuppliers<THIS["assemblers"], THIS["hired"]>
-            >
-        ]
 
     /** Assembles the supplier by providing request values and auto-wiring product dependencies */
     assemble: <
@@ -156,7 +144,7 @@ export interface ProductSupplier<
             OPTIONALS2,
             ASSEMBLERS2
         >
-    ) => CircularDependencyGuard<
+    ) => SupplierGraphGuard<
         ProductSupplier<
             THIS["name"],
             CONSTRAINT2,
@@ -177,7 +165,7 @@ export interface ProductSupplier<
     >(
         this: THIS,
         ...hired: [...HIRED2]
-    ) => CircularDependencyGuard<
+    ) => SupplierGraphGuard<
         ProductSupplier<
             THIS["name"],
             THIS["_constraint"],
@@ -525,6 +513,36 @@ export type MergeSuppliers<OLD extends Supplier[], WITH extends Supplier[]> = [
     ...WITH
 ]
 
+type FindDuplicateName<
+    SUPPLIERS extends Supplier[],
+    SEEN extends string[] = []
+> =
+    any[] extends SUPPLIERS ? never
+    : SUPPLIERS extends (
+        [infer FIRST extends Supplier, ...infer REST extends Supplier[]]
+    ) ?
+        string extends FIRST["name"] ? never
+        : FIRST["name"] extends SEEN[number] ? FIRST["name"]
+        : FindDuplicateName<REST, [...SEEN, FIRST["name"]]>
+    :   never
+
+export interface DuplicateDependencyError {
+    ERROR: "Duplicate dependency name detected"
+}
+
+export type DuplicateDependencyGuard<SUPPLIER extends UnknownProductSupplier> =
+    [
+        FindDuplicateName<
+            [
+                ...SUPPLIER["suppliers"],
+                ...SUPPLIER["optionals"],
+                ...SUPPLIER["assemblers"]
+            ]
+        >
+    ] extends [never] ?
+        SUPPLIER
+    :   DuplicateDependencyError
+
 /**
  * Checks if a supplier has a circular dependency by seeing if its name appears
  * in the transitive dependencies of its own suppliers.
@@ -557,3 +575,10 @@ export type CircularDependencyGuard<
 export type CircularDependencyError = {
     ERROR: "Circular dependency detected"
 }
+
+export type SupplierGraphGuard<SUPPLIER extends UnknownProductSupplier> =
+    DuplicateDependencyGuard<SUPPLIER> extends infer DUPLICATE_CHECK ?
+        DUPLICATE_CHECK extends DuplicateDependencyError ?
+            DUPLICATE_CHECK
+        :   CircularDependencyGuard<SUPPLIER>
+    :   never

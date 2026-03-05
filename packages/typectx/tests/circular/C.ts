@@ -1,20 +1,20 @@
-import { market } from "./market"
+import { supplier } from "#index"
 import { $B, $F, $J } from "./B"
 
 // @ts-expect-error - circular dependency
-export const $C = market.add("C").product({
+export const $C = supplier("C").product({
     suppliers: [$B],
     factory: () => "C"
 })
 
 // @ts-expect-error - circular dependency
-export const $G = market.add("G").product({
+export const $G = supplier("G").product({
     assemblers: [$F],
     factory: () => "G"
 })
 
 // @ts-expect-error - circular dependency
-export const $K = market.add("K").product({
+export const $K = supplier("K").product({
     suppliers: [$J],
     factory: () => "K"
 })

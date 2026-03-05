@@ -1,12 +1,12 @@
 import { $repliesQuery } from "@/api"
-import { market } from "@/market"
 import { type Comment, type Reply } from "@/api"
 import { $Reply } from "@/components/reply"
 import { useQuery } from "@tanstack/react-query"
 import { useDeps } from "@typectx/react"
 import { useAssertStable } from "@/hooks"
+import { supplier } from "typectx"
 
-export const $Comment = market.add("Comment").product({
+export const $Comment = supplier("Comment").product({
     suppliers: [$repliesQuery, $Reply],
     factory: (initDeps) =>
         function Comment({ comment }: { comment: Comment }) {

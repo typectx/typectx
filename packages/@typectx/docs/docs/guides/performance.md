@@ -31,7 +31,7 @@ typectx is designed for optimal performance, featuring a minimal bundle size, sm
 
 ```typescript
 // ✅ Good: Factory called once, returns a function for multiple calls
-const $createUser = market.add("createUser").product({
+const $createUser = supplier("createUser").product({
     suppliers: [$db],
     factory: ({ db }) => {
         // This setup code runs only once per assemble()
@@ -61,15 +61,15 @@ By default, all products are constructed in parallel and cached as soon as `.ass
 
 ```typescript
 // Both of these services will be constructed immediately and in parallel
-const $dbPromise = market.add("dbPromise").product({
+const $dbPromise = supplier("dbPromise").product({
     // Async factories are possible
     factory: async () => await db.connect()
 })
-const $cache = market.add("cache").product({
+const $cache = supplier("cache").product({
     factory: () => new Map()
 })
 
-const $app = market.add("app").product({
+const $app = supplier("app").product({
     suppliers: [$dbPromise, $cache],
     factory: async ({ dbPromise, cache }) => {
         if (cache.get("greeting")) {
@@ -90,7 +90,7 @@ const appSupply = $app.assemble({}) // Starts constructing both dbPromise and ca
 For expensive services that are only used in certain situations (e.g., an admin panel service or a PDF export tool), you can enable lazy loading by setting `lazy: true`. The product will only be constructed the first time its value is accessed via `unpack()`.
 
 ```typescript
-const $lazy = market.add("lazy").product({
+const $lazy = supplier("lazy").product({
     suppliers: [$db],
     // Will only be loaded when `deps.lazy` is called in another factory,
     // or when `$lazy.assemble({...}).unpack()` is called directly.
@@ -108,7 +108,7 @@ This is useful for pre-warming caches or running setup logic without cluttering 
 For example, you can eagerly warm a memoized function:
 
 ```typescript
-const $profile = market.add("profile").product({
+const $profile = supplier("profile").product({
     suppliers: [$currentUser],
     factory: () => memo((userId) => db.profiles.get(userId))
     init: (getProfile, { currentUser }) => {

@@ -1,8 +1,8 @@
 import { main } from "#product/main"
 import type {
-    CircularDependencyGuard,
     MergeSuppliers,
     ProductSupplier,
+    SupplierGraphGuard,
     UnknownProductSupplier
 } from "#types"
 
@@ -26,7 +26,7 @@ export function Hire<HIRED extends UnknownProductSupplier[]>() {
     >(
         this: THIS,
         ...hired: [...HIRED2]
-    ): CircularDependencyGuard<
+    ): SupplierGraphGuard<
         ProductSupplier<
             THIS["name"],
             THIS["_constraint"],

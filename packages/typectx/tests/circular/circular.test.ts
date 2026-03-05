@@ -5,6 +5,7 @@ describe("Circular Dependencies", () => {
     it("should detect circular dependencies", async () => {
         await expect(async () => {
             const { $A } = await import("./A")
+            expectTypeOf($A).not.toEqualTypeOf<any>()
             expectTypeOf($A).toExtend<CircularDependencyError>()
         }).rejects.toThrow()
     })

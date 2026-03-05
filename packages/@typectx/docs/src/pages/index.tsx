@@ -10,12 +10,11 @@ import SectionSeparator from "@site/src/components/SectionSeparator"
 
 import styles from "./index.module.css"
 
-const heroCode = `import { createMarket, index } from "typectx"
+const heroCode = `import { index, supplier } from "typectx"
 
-// Create market and define suppliers
-const market = createMarket()
-const $session = market.add("session").request<{ userId: string }>()
-const $api = market.add("api").product({
+// Define suppliers
+const $session = supplier("session").request<{ userId: string }>()
+const $api = supplier("api").product({
     suppliers: [$session],
     factory: ({ session }) => new ApiClient(session.userId)
 })
@@ -28,19 +27,19 @@ const api = $api
 // Use it!
 const users = await api.getUsers()`
 
-const typeExample = `const $flags = market.add("flags").request<{
+const typeExample = `const $flags = supplier("flags").request<{
     darkMode: boolean;
 }>();
 
-const $db = market.add("db").product({
+const $db = supplier("db").product({
     factory: () => new DatabaseClient() // Returns a DatabaseClient instance
 });
 
-const $userService = market.add("userService").product({
+const $userService = supplier("userService").product({
     suppliers: [$flags, $db],
     factory: ({ flags, db }) => {
         // No explicit types needed! They are all inferred.
-        // flags: { darkMode: boolean } (Inferred from the .request<T>() definition)
+        // flags: { darkMode: boolean } (Inferred from the supplier(...).request<T>() definition)
         // db: DatabaseClient (Inferred from the $db's factory return type)
 
         return {
@@ -51,7 +50,7 @@ const $userService = market.add("userService").product({
 });`
 
 const performanceExample = `// An expensive service, lazy-loaded for on-demand performance.
-const $reportGenerator = market.add("reportGenerator").product({
+const $reportGenerator = supplier("reportGenerator").product({
     factory: () => {
         // This expensive logic runs only ONCE, the first time it's needed.
         console.log("🚀 Initializing Report Generator...");
@@ -60,7 +59,7 @@ const $reportGenerator = market.add("reportGenerator").product({
     lazy: true
 });
 
-const $app = market.add("app").product({
+const $app = supplier("app").product({
     suppliers: [$reportGenerator],
     factory: (deps) => (userAction: "view_dashboard" | "generate_report") => {
         if (userAction === "generate_report") {
@@ -74,7 +73,7 @@ const $app = market.add("app").product({
 });`
 
 const testingExample = `// A product supplier that depends on a real database.
-const $userProfile = market.add("userProfile").product({
+const $userProfile = supplier("userProfile").product({
     suppliers: [$db],
     factory: ({ db }) => ({
         bio: db.fetchBio()
@@ -90,7 +89,7 @@ const mockUserProfile = $userProfile.mock({
 });
 
 // The component we want to test.
-const $app = market.add("app").product({
+const $app = supplier("app").product({
     suppliers: [$userProfile],
     factory: ({ userProfile }) => \`<div>\${userProfile.bio}</div>\`
 });
@@ -321,7 +320,7 @@ function WhySection() {
                         </div>
                         <h3>Intuitive Terminology</h3>
                         <p>
-                            A supply chain metaphor (Market, Supplier, Supply, Product)
+                            A supply chain metaphor (Supplier, Supply, Product)
                             that makes dependency injection feel natural and
                             easier to understand.
                         </p>

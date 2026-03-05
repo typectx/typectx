@@ -24,14 +24,14 @@ src/
 ├── req.ts            # Request data used globally
 ├── index.css         # Global styles
 ├── main.tsx          # Application entry point
-├── market.ts         # Main market with resources and products
+├── hooks.ts          # Stability/debug helper hooks for the demo
 └── query.ts          # React Query initialization
 ```
 
 ## 📚 Learning Path
 
 1. **Explore `src/api.ts`** - See how to integrate react-query for data loading and preloading
-2. **Check `src/contexts.ts`** - See how to aggregate ctx definitions in a context to replace React Context.
+2. **Check `src/req.ts`** - See how request suppliers are defined with `supplier(...).request()`.
 3. **Review `src/components/`** - Understand how to create components as products with JSX
 4. **Examine `src/main.tsx`** - See how everything is assembled and used
 5. **Experiment with the live demo** - Notice the absence of waterfall loading

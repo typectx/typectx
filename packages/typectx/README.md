@@ -41,18 +41,15 @@ npm install typectx
 ## Quick Example
 
 ```ts
-import { createMarket, index } from "typectx"
+import { index, supplier } from "typectx"
 
-// 1. Create a market
-const market = createMarket()
-
-// 2. Define request and product suppliers
-const $session = market.add("session").request<{ userId: string }>()
-const $todosDb = market.add("todosDb").product({
+// 1. Define request and product suppliers
+const $session = supplier("session").request<{ userId: string }>()
+const $todosDb = supplier("todosDb").product({
     suppliers: [],
     factory: () => new Map<string, string[]>() // Simple in-memory DB
 })
-const $addTodo = market.add("addTodo").product({
+const $addTodo = supplier("addTodo").product({
     suppliers: [$session, $todosDb],
     factory:
         ({ session, todosDb }) =>
@@ -76,16 +73,16 @@ console.log(addTodo("Build app")) // ["Learn typectx", "Build app"]
 
 typectx uses an intuitive supply chain metaphor to make dependency injection easier to understand. You create fully-decoupled, hyper-specialized **suppliers** that exchange **supplies** in a free-market fashion to assemble new, more complex products.
 
-| Term                 | Classical DI Equivalent | Description                                                                                                             |
-| -------------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| **`createMarket()`** | `createContainer()`     | A namespace/scope for all your suppliers.                                                                               |
-| **Supplier**         | Service                 | Provides dependencies to other suppliers. Node in your dependency graph.                                                |
-| **Request Supplier** | Value Service           | Supplier for a value from the user's request (request params, cookies, etc.)                                            |
-| **Product Supplier** | Factory Service         | Supplier for a value derived from other product or request suppliers via a factory function                             |
-| **Supply or Pack**   | Proxy                   | Value wrapper for type-checking and transport across suppliers                                                          |
-| **Supplies**         | Container / Context     | The collection of resolved dependencies, but still within their supply or pack wrapper.                                 |
-| **`assemble()`**     | `resolve()`             | Gathers all required request supplies (product supplies are auto-wired) and injects them in product supplier factories. |
-| **Deps**             | Values                  | The collection of resolved unpacked dependencies a factory receives                                                     |
+| Term                                                              | Classical DI Equivalent        | Description                                                                                                             |
+| ----------------------------------------------------------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| **`supplier(name).request()` / `supplier(name).product(config)`** | `createContainer()+register()` | Declare suppliers directly with explicit names and config.                                                              |
+| **Supplier**                                                      | Service                        | Provides dependencies to other suppliers. Node in your dependency graph.                                                |
+| **Request Supplier**                                              | Value Service                  | Supplier for a value from the user's request (request params, cookies, etc.)                                            |
+| **Product Supplier**                                              | Factory Service                | Supplier for a value derived from other product or request suppliers via a factory function                             |
+| **Supply or Pack**                                                | Proxy                          | Value wrapper for type-checking and transport across suppliers                                                          |
+| **Supplies**                                                      | Container / Context            | The collection of resolved dependencies, but still within their supply or pack wrapper.                                 |
+| **`assemble()`**                                                  | `resolve()`                    | Gathers all required request supplies (product supplies are auto-wired) and injects them in product supplier factories. |
+| **Deps**                                                          | Values                         | The collection of resolved unpacked dependencies a factory receives                                                     |
 
 ## Full features list
 
@@ -129,16 +126,10 @@ typectx uses an intuitive supply chain metaphor to make dependency injection eas
 
 ## Basic Usage
 
-### 1. Create a Market
+### 1. Declare suppliers directly
 
-All suppliers are created from a `market`, which creates a scope shared by Request and Product Suppliers.
-You'll usually create one market per application. Markets register the names of the suppliers so that no name conflicts occur. The name registry is the only state the market manages. Names can **only** contain digits, letters, underscores or `$` signs and cannot start with a digit, just like any Javascript identifier.
-
-```ts
-import { createMarket } from "typectx"
-
-const market = createMarket()
-```
+Suppliers are declared directly using `supplier(name).request()` and `supplier(name).product(config)`.
+Names can **only** contain digits, letters, underscores or `$` signs and cannot start with a digit, just like any Javascript identifier.
 
 ### 2. Define Request Suppliers
 
@@ -146,7 +137,7 @@ Request suppliers are used to wire the data you get from the user's request, and
 
 ```tsx
 // I like calling suppliers with $ prefix, but this is up to you.
-const $session = market.add("session").request<{
+const $session = supplier("session").request<{
     userId: string
 }>()
 
@@ -164,9 +155,9 @@ Product suppliers are your application's services, components or features. They 
 Dependencies are accessed via the 1st argument of the factory (deps).
 
 ```tsx
-const $user = market.add("user").product({
+const $user = supplier("user").product({
     suppliers: [$session, $db], // Depends on session and db suppliers.
-    // properties of the deps object are the names provided to market.add() for $session and $db suppliers.
+    // properties of deps are the names provided to supplier("...").
     factory: ({ session, db }) => {
         return db.getUser(session.userId) // query the db to retrieve the user.
     }
@@ -181,7 +172,7 @@ const $user = market.add("user").product({
 
 ```ts
 // ✅ Good: Factory called once, returns a function for multiple calls or side-effects
-const $createUser = market.add("createUser").product({
+const $createUser = supplier("createUser").product({
     suppliers: [$db],
     factory: ({ db }) => {
         // This setup code runs only once per assemble()
@@ -209,14 +200,14 @@ By default, all products are constructed on `assemble()` call immediately in the
 
 ```ts
 // Eager loading - constructed immediately when assemble() is called
-const $eagerService = market.add("eagerService").product({
+const $eagerService = supplier("eagerService").product({
     suppliers: [$db],
     factory: ({ db }) => buildExpensiveService(db)
     lazy: false // default
 })
 
 // Lazy loading - constructed only when accessed
-const $lazyService = market.add("lazyService").product({
+const $lazyService = supplier("lazyService").product({
     suppliers: [$db],
     factory: ({db}) => buildExpensiveService(db),
     lazy: true // Loaded when first accessed via deps
@@ -228,7 +219,7 @@ const $lazyService = market.add("lazyService").product({
 Your Application is just a product like the other ones. It's the main, most complex product at the top of the supply chain.
 
 ```tsx
-const $app = market.add("app").product({
+const $app = supplier("app").product({
     suppliers: [$user], // Depends on User product
     // Destructure the user value.
     // Its type will be automatically inferred from $user's factory's inferred return type.
@@ -298,14 +289,14 @@ Assemblers are typectx's flagship feature — they transform DI containers into 
 You usually use `pack()` to provide request data to `assemble()`, but you can also use `pack()` on products. This allows to provide a value for that product directly, bypassing its factory. Perfect to override a product's implementation with a mock for testing.
 
 ```tsx
-const $profile = market.add("profile").product({
+const $profile = supplier("profile").product({
     suppliers: [$user],
     factory: ({ user }) => {
         return <h1>Profile of {user.name}</h1>
     }
 })
 
-const $user = market.add("user").product({
+const $user = supplier("user").product({
     suppliers: [$db, $session],
     factory: ({db,session}) => {
         return db.findUserById(session.userId)
@@ -334,14 +325,14 @@ const profile = $profile.assemble(
 For more complete alternative implementations, with complex dependency needs, you can use `.mock()` and `.hire()` instead of `.pack()` to access the whole power of your supply chain. The same example as above could be:
 
 ```tsx
-const $profile = market.add("profile").product({
+const $profile = supplier("profile").product({
     suppliers: [$user],
     factory: ({ user }) => {
         return <h1>Profile of {user.name}</h1>
     }
 })
 
-const $user = market.add("user").product({
+const $user = supplier("user").product({
     suppliers: [$db, $session],
     factory: ({ db, session }) => {
         return db.findUserById(session.userId)
