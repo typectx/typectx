@@ -3,16 +3,12 @@
     "setupTasks": [
         {
             "name": "Installing Dependencies",
-            "command": "pnpm install"
+            "command": "pnpm install && pnpm update"
         }
     ],
 
     // These tasks can be run from CodeSandbox. Running one will open a log in the app.
     "tasks": {
-        "update": {
-            "name": "update",
-            "command": "pnpm update"
-        },
         "dev": {
             "name": "dev",
             "command": "pnpm dev",
