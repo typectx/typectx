@@ -81,6 +81,13 @@ export type ProductConfig<
     lazy?: boolean
 }
 
+type Team<SUPPLIER extends UnknownProductSupplier> = [
+    ...SUPPLIER["optionals"],
+    ...TransitiveSuppliers<
+        MergeSuppliers<SUPPLIER["suppliers"], SUPPLIER["hired"]>
+    >
+]
+
 export interface ProductSupplier<
     NAME extends string,
     CONSTRAINT,
@@ -102,13 +109,7 @@ export interface ProductSupplier<
     known: KNOWN
     team: <THIS extends UnknownProductSupplier>(
         this: THIS
-    ) => UnknownProductSupplier extends THIS ? Supplier[]
-    :   [
-            ...THIS["optionals"],
-            ...TransitiveSuppliers<
-                MergeSuppliers<THIS["suppliers"], THIS["hired"]>
-            >
-        ]
+    ) => UnknownProductSupplier extends THIS ? Supplier[] : Team<THIS>
 
     /** Assembles the supplier by providing request values and auto-wiring product dependencies */
     assemble: <
@@ -182,7 +183,11 @@ export interface ProductSupplier<
     _request: false
     _constraint: CONSTRAINT
     /** Factory function that creates the product from its dependencies */
-    _factory: Factory<NAME, CONSTRAINT, SUPPLIERS, OPTIONALS, ASSEMBLERS>
+    _factory: <THIS extends UnknownProductSupplier>(
+        this: THIS,
+        deps: Deps<THIS>,
+        ctx: Ctx<THIS>
+    ) => THIS["_constraint"]
     _build: <THIS extends UnknownProductSupplier>(
         this: THIS,
         supplies: SuppliesRecord
@@ -363,7 +368,7 @@ type ResolveAssembler<
  * @public
  */
 export type Ctx<SUPPLIER extends UnknownProductSupplier> = <
-    ASSEMBLER extends ReturnType<SUPPLIER["team"]>[number]
+    ASSEMBLER extends Team<SUPPLIER>[number] | SUPPLIER["assemblers"][number]
 >(
     assembler: ASSEMBLER & (UnknownProductSupplier | Supplier)
 ) => ASSEMBLER extends UnknownProductSupplier ?
