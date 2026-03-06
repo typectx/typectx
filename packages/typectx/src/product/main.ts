@@ -1,4 +1,6 @@
 import type {
+    Ctx,
+    Deps,
     MainSupplier,
     ProductConfig,
     ProductSupplier,
@@ -65,7 +67,13 @@ export function main<
         lazy: config.lazy ?? false,
         init: config.init,
         assemble,
-        _factory: config.factory,
+        _factory<THIS extends UnknownProductSupplier>(
+            this: THIS,
+            deps: Deps<THIS>,
+            ctx: Ctx<THIS>
+        ) {
+            return config.factory(deps, ctx)
+        },
         _request: false as const,
         _product: true as const,
         _constraint: null as unknown as CONSTRAINT,
