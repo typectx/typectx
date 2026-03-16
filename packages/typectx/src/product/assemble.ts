@@ -1,32 +1,58 @@
-import type {
-    UnknownProductSupplier,
-    ToSupply,
-    SuppliesRecord,
-    Supply,
-    MaybeFn
-} from "#types"
-import { isProductSupplier, once } from "#utils"
+import type { Supplier, Supply, UnknownProductSupplier } from "#types/public"
+import type { MaybeFn, SuppliesRecord } from "#types/records"
+import { isPacked, isProductSupplier, isProductSupply, once } from "#utils"
 import { assertPlainObject } from "#validation"
 
-export function assemble<
-    THIS extends UnknownProductSupplier,
-    TO_SUPPLY extends ToSupply<THIS> = ToSupply<THIS>
->(this: THIS, supplied: TO_SUPPLY) {
+export function assemble<THIS extends UnknownProductSupplier>(
+    this: THIS,
+    supplied: THIS["_toSupply"]
+) {
     assertPlainObject("supplied", supplied)
-    const effectiveSupplied = {
-        ...this.known,
-        ...supplied
-    } as TO_SUPPLY & Partial<THIS["known"]>
 
-    const supplies: SuppliesRecord = Object.fromEntries(
-        Object.entries(effectiveSupplied).filter(
-            (entry): entry is [string, MaybeFn<[], Supply>] =>
+    // Stores the supplies that can be preserved to optimize reassemble
+    const preserved: SuppliesRecord = {}
+
+    for (const [name, supply] of Object.entries(this._known)) {
+        // Do not preserve supplies from newly hired
+        // or newly supplied
+        if (this._hired.some((hname) => hname === name) || name in supplied) {
+            continue
+        }
+
+        // Do not preserve if some of the suppliers's team members
+        // depend on newly hired or supplied (unless packed supplies
+        // which are preserved if not directly overwritten by supplied)
+        if (
+            !isPacked(supply) &&
+            isProductSupply(supply) &&
+            supply.supplier._team.some(
+                (t: Supplier) =>
+                    t.name in supplied ||
+                    this._hired.some((hname) => hname === t.name)
+            )
+        ) {
+            continue
+        }
+
+        // Do not preserve if supplied explicitely sets the supply to undefined
+        if (name in supplied && supplied[name] === undefined) {
+            continue
+        }
+
+        preserved[name] = supply
+    }
+
+    const definedSupplied: SuppliesRecord = Object.fromEntries(
+        Object.entries(supplied).filter(
+            (entry): entry is [string, MaybeFn<[], Supply<Supplier>>] =>
                 entry[1] !== undefined
         )
     )
 
-    for (const sup of this.team()) {
-        if (!isProductSupplier(sup) || sup.name in effectiveSupplied) continue
+    const supplies: SuppliesRecord = { ...preserved, ...definedSupplied }
+
+    for (const sup of this._team) {
+        if (!isProductSupplier(sup) || sup.name in supplies) continue
         supplies[sup.name] = once(() => sup._build(supplies))
     }
 

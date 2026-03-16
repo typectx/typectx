@@ -1,17 +1,7 @@
-import type {
-    Ctx,
-    Deps,
-    MaybeFn,
-    MergeSuppliers,
-    Resolved,
-    Supplier,
-    ToSupply,
-    SuppliesRecord,
-    Supply,
-    UnknownProductSupplier,
-    ProductSupplier
-} from "#types"
-import { isPacked, isProductSupplier, once } from "#utils"
+import type { Ctx, UnknownProductSupplierPlan } from "#types/internal"
+import type { Supplier, Supply, UnknownProductSupplier } from "#types/public"
+import type { Resolved, SuppliesRecord } from "#types/records"
+import { isProductSupplier, once } from "#utils"
 
 function createResolver(supplies: SuppliesRecord) {
     return once(() => {
@@ -30,13 +20,10 @@ function createResolver(supplies: SuppliesRecord) {
     })
 }
 
-function prerun(
-    supplier: { team: () => Supplier[] },
-    deps: Record<string, any>
-) {
+function prerun(supplier: { _team: Supplier[] }, deps: Record<string, any>) {
     // Prerun supplier factories in the background (non-blocking)
-    for (const member of Object.values(supplier.team())) {
-        if ("lazy" in member && member.lazy) continue
+    for (const member of supplier._team) {
+        if ("_lazy" in member && member._lazy) continue
 
         // If prerun fails, we don't want to break the entire supply chain
         // The error will be thrown again when the dependency is actually needed
@@ -49,18 +36,13 @@ function prerun(
     }
 }
 
-function Ctx<SUPPLIER extends UnknownProductSupplier>(
-    supplier: SUPPLIER,
-    resolved: Resolved<UnknownProductSupplier>
-): Ctx<SUPPLIER> {
-    return <ASSEMBLER extends Supplier>(assembler: ASSEMBLER): any => {
-        const assemblersTeam = [...supplier.team(), ...supplier.assemblers]
-        const actual = assemblersTeam.find(
-            (member) => member.name === assembler.name
-        )
-        if (!actual) {
-            throw new Error(`Assembler ${assembler.name} not found`)
-        }
+export function Ctx<
+    PLAN extends Pick<UnknownProductSupplierPlan, "suppliers" | "optionals">
+>(plan: PLAN, resolved: Resolved<UnknownProductSupplierPlan>): Ctx<PLAN> {
+    return <SUPPLIER extends Supplier>(supplier: SUPPLIER): any => {
+        const actual =
+            plan.suppliers.find((member) => member.name === supplier.name) ??
+            supplier
 
         if (!isProductSupplier(actual)) {
             return actual
@@ -68,91 +50,9 @@ function Ctx<SUPPLIER extends UnknownProductSupplier>(
 
         return {
             ...actual,
-            known: resolved,
-            assemble: (supplied: ToSupply<typeof actual>) =>
-                reassemble(actual, resolved, supplied)
+            _known: resolved
         }
     }
-}
-
-function reassemble<
-    ASSEMBLER extends UnknownProductSupplier,
-    HIRED extends UnknownProductSupplier[]
->(
-    assembler: ASSEMBLER,
-    resolved: Record<string, Supply>,
-    supplied: Record<string, unknown>,
-    ...hired: [...HIRED]
-): Supply<
-    ProductSupplier<
-        ASSEMBLER["name"],
-        ASSEMBLER["_constraint"],
-        ASSEMBLER["suppliers"],
-        ASSEMBLER["optionals"],
-        ASSEMBLER["assemblers"],
-        MergeSuppliers<ASSEMBLER["hired"], HIRED>,
-        Record<never, unknown>,
-        false,
-        true
-    >
-> {
-    // Stores the supplies that can be preserved to optimize reassemble
-    const preserved: SuppliesRecord = {}
-
-    for (const name of Object.keys(resolved)) {
-        const supply = resolved[name]
-
-        if (!supply) {
-            throw new Error("Impossible state: supply not found in resolved")
-        }
-
-        if (hired.some((h) => h.name === name) || name in supplied) {
-            // Do not preserve supplies from newly hired
-            // or newly supplied
-            continue
-        }
-
-        // Do not preserve if some of the suppliers's team members
-        // depend on newly hired or supplied (unless packed supplies
-        // which are preserved if not directly overwritten by supplied)
-        if (
-            !isPacked(supply) &&
-            isProductSupplier(supply.supplier) &&
-            supply.supplier
-                .team()
-                .some(
-                    (t) =>
-                        t.name in supplied ||
-                        hired.some((h) => h.name === t.name)
-                )
-        ) {
-            continue
-        }
-
-        preserved[name] = supply
-    }
-
-    const definedSupplied: SuppliesRecord = Object.fromEntries(
-        Object.entries(supplied).filter(
-            (entry): entry is [string, MaybeFn<[], Supply>] =>
-                entry[1] !== undefined
-        )
-    )
-
-    const hiredAssembler = assembler.hire<typeof assembler, HIRED>(...hired)
-
-    if ("ERROR" in hiredAssembler) {
-        throw new Error(hiredAssembler.ERROR)
-    }
-
-    const validHiredAssembler = hiredAssembler as UnknownProductSupplier
-
-    const newSupplies = validHiredAssembler.assemble({
-        ...preserved,
-        ...definedSupplied
-    } as any).supplies // Assertion required here because there is no way to relate the types of the supplies
-
-    return validHiredAssembler._build(newSupplies) as any
 }
 
 /**
@@ -175,7 +75,7 @@ export function _build<THIS extends UnknownProductSupplier>(
 
     const { deps, resolved } = Object.keys(supplies).reduce(
         (acc, name) => {
-            if (!this.team().some((member) => member.name === name)) {
+            if (!this._team.some((member) => member.name === name)) {
                 return acc
             }
 
@@ -197,21 +97,24 @@ export function _build<THIS extends UnknownProductSupplier>(
             return acc
         },
         {
-            deps: {} as Deps<THIS>,
-            resolved: {} as Resolved<THIS>
+            deps: {},
+            resolved: {}
         }
     )
 
     // Prerun supplier factories in the background (non-blocking)
     prerun(this, deps)
 
-    const ctx = Ctx(this, resolved)
+    const ctx = Ctx(
+        { suppliers: this._suppliers, optionals: this._optionals },
+        resolved
+    )
 
     const supply = {
         unpack: once(() => {
             const value = this._factory(deps, ctx)
-            if (this.init) {
-                this.init(value, deps)
+            if (this._init) {
+                this._init(value, deps)
             }
             return value
         }),

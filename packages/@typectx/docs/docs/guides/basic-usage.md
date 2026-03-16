@@ -135,10 +135,11 @@ factory: (deps) => {
 ### Trivial products
 
 Product suppliers don't need to depend on other suppliers! If you have a value available at module-scope in your code, you can load it in your supply chain with a trivial product supplier:
+
 ```typescript
 const db = dbConnect(/*...*/)
 const $db = supplier("db").product({
-    factory: ()=>db
+    factory: () => db
 })
 ```
 
@@ -163,18 +164,18 @@ const $userProfile = supplier("userProfile").product({
         const user = db.getUser(session.userId)
         if (page === 1) {
             return {
-               name: user.name,
-               avatar: user.avatar,
-               //...
-           }
+                name: user.name,
+                avatar: user.avatar
+                //...
+            }
         }
 
         if (page === 2) {
             return {
-               address: user.address,
-               email: user.email,
-               //...
-           }
+                address: user.address,
+                email: user.email
+                //...
+            }
         }
     }
 })
@@ -277,7 +278,7 @@ const $Header = supplier("Header").product({
 
 ## Step 5: Assembly at the Entry Point
 
-Assembly is where everything comes together. At your application's entry point, you assemble your main product by providing the required request data. 
+Assembly is where everything comes together. At your application's entry point, you assemble your main product by providing the required request data.
 
 ### Basic Assembly
 
@@ -325,7 +326,9 @@ $service.assemble({})
 $service.assemble(index($locale.pack("en")))
 
 // ✅ All required resources provided
-$service.assemble(index($locale.pack("en"), $session.pack({userId: "user-123"})))
+$service.assemble(
+    index($locale.pack("en"), $session.pack({ userId: "user-123" }))
+)
 ```
 
 ### You Only Supply Request Data
@@ -335,7 +338,7 @@ Notice that you only provide request data during assembly, not products. Product
 ```typescript
 const $session = supplier("session").request<Session>()
 
-const $db = supplier("db").product({factory: () => dbConnect(/*...*/)})
+const $db = supplier("db").product({ factory: () => dbConnect(/*...*/) })
 
 const $userService = supplier("userService").product({
     suppliers: [$db, $session],
@@ -444,7 +447,7 @@ const $user = supplier("user").request<{
 }>()
 
 // 3. Define products (services)
-const $db = supplier("db").product({factory: () => dbConnect(/*...*/)})
+const $db = supplier("db").product({ factory: () => dbConnect(/*...*/) })
 const $postsRepository = supplier("postsRepository").product({
     suppliers: [$db],
     factory: ({ db }) => {
@@ -552,7 +555,9 @@ export async function handleRequest(request: Request) {
     }
 
     const response = await $apiHandler
-        .assemble(index($req.pack(request), $user.pack(user), $config.pack(config)))
+        .assemble(
+            index($req.pack(request), $user.pack(user), $config.pack(config))
+        )
         .unpack()
 
     return response
@@ -575,7 +580,7 @@ Now that you understand the basics, explore these advanced features:
 - **[Performance Optimization](performance)** - Advanced lazy loading and initialization strategies
 - **[Design Philosophy](design-philosophy)** - Understanding the principles behind typectx
 
-For more advanced context propagation patterns:
+For more advanced patterns:
 
 - **[Optionals](optionals)** - Handle dependencies that may or may not be present
-- **[Assemblers](assemblers)** - For Just-in-time product assembly.
+- **[Context Propagation](context-propagation)** - For just-in-time nested assembly with `ctx(...).assemble(...)`.

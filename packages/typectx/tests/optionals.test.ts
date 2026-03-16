@@ -14,7 +14,7 @@ describe("Optionals Feature", () => {
                 }
             })
 
-            expect($product.optionals).toEqual([$optional])
+            expect($product._optionals).toEqual([$optional])
             expect($product.assemble({}).unpack()).toEqual(undefined)
             expect(
                 $product.assemble(index($optional.pack("test"))).unpack()
@@ -122,6 +122,8 @@ describe("Optionals Feature", () => {
                 }
             })
 
+            type test = Parameters<typeof $product.assemble>[0]
+
             // @ts-expect-error - missing required supplier
             $product.assemble(index($optional.pack(42))).unpack()
 
@@ -133,17 +135,16 @@ describe("Optionals Feature", () => {
     describe("Request supplier in ctx wrapper", () => {
         it("should just return request supplier (noop)", () => {
             const $input = supplier("input").request<string>()
-            const $assembler = supplier("assembler").product({
+            const $contextual = supplier("contextual").product({
                 factory: () => "assembled"
             })
 
             const $product = supplier("product").product({
                 optionals: [$input],
-                assemblers: [$assembler],
                 factory: (deps, ctx) => {
                     // Both should be in ctx
                     expect(ctx($input)).toBe($input)
-                    expect(ctx($assembler).name).toBe($assembler.name)
+                    expect(ctx($contextual).name).toBe($contextual.name)
                 }
             })
 
@@ -503,7 +504,6 @@ describe("Optionals Feature", () => {
 
             const $main = supplier("main").product({
                 optionals: [$featureFlag],
-                assemblers: [$optionalFeature],
                 factory: ({ featureFlag }, ctx) => {
                     const enabled = featureFlag
 

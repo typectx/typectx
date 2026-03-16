@@ -1,11 +1,9 @@
-import {
+import type {
+    ProductSupply,
     Supplier,
-    type CircularDependencyGuard,
-    type MainSupplier,
-    type RequestSupplier,
-    type Supply,
-    type UnknownProductSupplier
-} from "#types"
+    Supply,
+    UnknownProductSupplier
+} from "#types/public"
 
 /**
  * Minimal once implementation for memoizing function results.
@@ -39,6 +37,14 @@ export function once<F extends (...args: any[]) => any>(func: F): F {
     } as F
 }
 
+export function dedupe(suppliers: Supplier[]) {
+    const deduped: Record<string, Supplier> = {}
+    for (const supplier of suppliers) {
+        deduped[supplier.name] = supplier
+    }
+    return Object.values(deduped)
+}
+
 /**
  * Transforms an array of supplies into a map keyed by supplier names.
  * This provides type-safe access to assembled supplies by their supplier names.
@@ -67,7 +73,7 @@ export function index<LIST extends { supplier: { name: string } }[]>(
  */
 export type MapFromList<LIST extends { supplier: { name: string } }[]> =
     LIST extends [] ? Record<string, never>
-    :   Merge<
+    :   UnionToIntersection<
             {
                 [K in keyof LIST]: {
                     [NAME in LIST[K]["supplier"]["name"]]: LIST[K]
@@ -84,14 +90,6 @@ export function sleep(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-export function dedupe(suppliers: Supplier[]) {
-    const deduped: Record<string, Supplier> = {}
-    for (const supplier of suppliers) {
-        deduped[supplier.name] = supplier
-    }
-    return Object.values(deduped)
-}
-
 /**
  * Type guard to check if a supplier is a ProductSupplier.
  * @param supplier - The supplier to check
@@ -104,7 +102,13 @@ export function isProductSupplier<SUPPLIER extends UnknownProductSupplier>(
     return "_product" in supplier && supplier._product === true
 }
 
-export function isPacked(supply: Supply) {
+export function isProductSupply<SUPPLY extends Supply<Supplier>>(
+    supply: SUPPLY
+): supply is Extract<SUPPLY, ProductSupply<UnknownProductSupplier>> {
+    return "supplier" in supply && isProductSupplier(supply.supplier)
+}
+
+export function isPacked(supply: Supply<Supplier>) {
     return "_packed" in supply && supply._packed === true
 }
 
@@ -116,6 +120,8 @@ export function isPacked(supply: Supply) {
  * @public
  */
 
-export type Merge<U> =
+export type UnionToIntersection<U> =
     (U extends any ? (k: U) => void : never) extends (k: infer I) => void ? I
     :   never
+
+export type Merge<T, U> = [U] extends [never] ? T : Omit<T, keyof U> & U

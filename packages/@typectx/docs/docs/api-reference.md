@@ -30,13 +30,12 @@ Creates a product supplier.
 ```ts
 const $product = supplier("product").product({
     suppliers: [$supplier1, $supplier2], // Suppliers
-    assemblers: [$assembler1, $assembler2], // Assemblers
     lazy: boolean, // Eager (false) or lazy (true)
     init: (value, deps) => void // Run a function right after construction
     factory: (deps, ctx) => {
         // Factory function
         // deps = dependencies received, can be destructured
-        // ctx = Function to contextualize suppliers and assemblers used in the factory
+        // ctx = Function to contextualize suppliers used in the factory
         return serviceImplementation
     }
 })
@@ -110,4 +109,4 @@ const suppliesObject = index(supply1, supply2, supply3)
 The factory function is where your service logic lives. It receives two arguments:
 
 - **`deps`**: An object of dependencies of the form: `{[supplier.name]: value}`
-- **`ctx($supplierOrAssembler)`**: A function to access contextualized suppliers or assemblers in a factory.
+- **`ctx($supplier)`**: A function to access contextualized suppliers in a factory and reassemble them with additional or overridden request data.

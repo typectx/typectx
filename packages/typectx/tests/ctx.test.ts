@@ -1,20 +1,21 @@
 import { describe, it, expect, vi, expectTypeOf } from "vitest"
-import { type Supply, supplier } from "#index"
+import { supplier } from "#index"
 import { index, sleep } from "#utils"
+import type { DuplicateDependencyError } from "#types/guards"
+import type { Supply } from "#types/public"
 
-describe("Assemblers Feature", () => {
-    it("should pass assemblers to factory but not auto-assemble them", () => {
+describe("Context Propagation", () => {
+    it("ctx should return a supplier with same name", () => {
         const factoryMock = vi.fn().mockReturnValue("value")
 
-        const $assembler = supplier("assembler").product({
+        const $contextual = supplier("contextual").product({
             factory: factoryMock
         })
 
         const $main = supplier("main").product({
-            assemblers: [$assembler],
             factory: (deps, ctx) => {
-                // Assemblers are passed but not auto-assembled
-                expect(ctx($assembler).name).toBe($assembler.name)
+                // Contextual suppliers are passed but not auto-assembled
+                expect(ctx($contextual).name).toBe($contextual.name)
                 expect(factoryMock).not.toHaveBeenCalled()
 
                 return "main-result"
@@ -26,30 +27,28 @@ describe("Assemblers Feature", () => {
         expect(factoryMock).not.toHaveBeenCalled()
     })
 
-    it("should require request supplies for hired assemblers", () => {
+    it("should require request supplies for hired contextual suppliers", () => {
         const $input = supplier("input").request<string>()
 
-        const $assembler1 = supplier("assembler1").product({
+        const $contextual1 = supplier("contextual1").product({
             suppliers: [$input],
             factory: ({ input }) => `A1: ${input}`
         })
 
-        const $assembler2 = supplier("assembler2").product({
+        const $contextual2 = supplier("contextual2").product({
             suppliers: [$input],
             factory: ({ input }) => `A2: ${input}`
         })
 
         const $base = supplier("base").product({
-            assemblers: [$assembler1],
             factory: (deps, ctx) => {
-                return ctx($assembler1)
+                return ctx($contextual1)
                     .assemble(index($input.pack("test")))
                     .unpack()
             }
         })
 
-        const $extended = $base.hire($assembler2)
-        const test = $extended.team
+        const $extended = $base.hire($contextual2)
 
         // @ts-expect-error - hired request supplies must be supplied also
         $extended.assemble({})
@@ -57,25 +56,24 @@ describe("Assemblers Feature", () => {
         expect(result).toBe("A1: test")
     })
 
-    it("should allow manual assembly of assemblers within factory", () => {
+    it("should allow manual contextual assembly within factory", () => {
         const factoryMock = vi.fn().mockReturnValue("value")
 
-        const $assembler = supplier("assembler").product({
+        const $contextual = supplier("contextual").product({
             factory: factoryMock
         })
 
         const $main = supplier("main").product({
-            assemblers: [$assembler],
             factory: (deps, ctx) => {
-                const assemblerSupply = ctx($assembler).assemble({})
-                const value = assemblerSupply.unpack()
+                const contextualSupply = ctx($contextual).assemble({})
+                const value = contextualSupply.unpack()
 
                 expect(factoryMock).toHaveBeenCalledTimes(1)
                 expect(value).toBe("value")
 
                 return {
                     main: "main-result",
-                    assembler: value
+                    contextual: value
                 }
             }
         })
@@ -83,7 +81,7 @@ describe("Assemblers Feature", () => {
         const result = $main.assemble({}).unpack()
         expect(result).toEqual({
             main: "main-result",
-            assembler: "value"
+            contextual: "value"
         })
     })
 
@@ -110,7 +108,6 @@ describe("Assemblers Feature", () => {
 
         const $main = supplier("main").product({
             suppliers: [$session, $userFeature],
-            assemblers: [$adminFeature],
             factory: ({ session, userFeature }, ctx) => {
                 const role = session.role
 
@@ -155,16 +152,15 @@ describe("Assemblers Feature", () => {
         })
     })
 
-    it("should handle assembler errors gracefully", () => {
+    it("should handle contextual supplier errors gracefully", () => {
         const $failing = supplier("failing").product({
             factory: () => {
-                throw new Error("Assembler failed")
+                throw new Error("Context supplier failed")
                 return
             }
         })
 
         const $main = supplier("main").product({
-            assemblers: [$failing],
             factory: (deps, ctx) => {
                 ctx($failing).assemble({}).unpack()
                 return "main"
@@ -173,29 +169,10 @@ describe("Assemblers Feature", () => {
 
         expect(() => {
             $main.assemble({}).unpack()
-        }).toThrow("Assembler failed")
+        }).toThrow("Context supplier failed")
     })
 
-    it("should support assembler in mock() method", () => {
-        const $assembler = supplier("assembler").product({
-            factory: () => "assembler-value"
-        })
-
-        const $main = supplier("main").product({
-            factory: () => "main-value"
-        })
-
-        const $mock = $main.mock({
-            assemblers: [$assembler],
-            factory: () => {
-                return "mock-value"
-            }
-        })
-
-        expect($mock.assemblers).toHaveLength(1)
-    })
-
-    it("should support complex assembler dependency chains", () => {
+    it("should support complex contextual dependency chains", () => {
         const $db = supplier("db").request<string>()
 
         const $repository = supplier("repo").product({
@@ -213,7 +190,6 @@ describe("Assemblers Feature", () => {
         })
 
         const $main = supplier("main").product({
-            assemblers: [$feature],
             factory: (deps, ctx) => {
                 const feature = ctx($feature)
                     .assemble(
@@ -231,7 +207,7 @@ describe("Assemblers Feature", () => {
         )
     })
 
-    it("should properly overwrite request supply in assembler's assemble() method", () => {
+    it("should properly overwrite request supply in contextual assemble() calls", () => {
         const $number = supplier("number").request<number>()
         const $doubler = supplier("doubler").product({
             suppliers: [$number],
@@ -249,7 +225,6 @@ describe("Assemblers Feature", () => {
 
         const $main = supplier("main").product({
             suppliers: [$doubler],
-            assemblers: [$quadrupler],
             factory: (deps, ctx) => {
                 const assembled = ctx($quadrupler)
                     .assemble(index($number.pack(5)))
@@ -285,7 +260,6 @@ describe("Assemblers Feature", () => {
 
         const $main = supplier("main").product({
             suppliers: [$dummy, $counter],
-            assemblers: [$reassembled],
             factory: (deps, ctx) => {
                 const reassembled = ctx($reassembled)
                     .assemble(index($number.pack(10)))
@@ -317,7 +291,6 @@ describe("Assemblers Feature", () => {
 
         const $main = supplier("main").product({
             suppliers: [$number, $username],
-            assemblers: [$greeter],
             factory: (deps, ctx) => {
                 const assembled = ctx($greeter)
                     .assemble({ [$username.name]: undefined })
@@ -332,10 +305,10 @@ describe("Assemblers Feature", () => {
         expect(result).toEqual("Hello, John-10!")
     })
 
-    it("should support mocks with assembler", () => {
+    it("should support mocks with contextual supplier assembly", () => {
         const factoryMock = vi.fn().mockReturnValue("value")
 
-        const $assembler = supplier("assembler").product({
+        const $contextual = supplier("contextual").product({
             factory: factoryMock
         })
 
@@ -345,14 +318,13 @@ describe("Assemblers Feature", () => {
 
         const $mock = $base.mock({
             factory: (deps, ctx) => {
-                expect(ctx($assembler).name).toBe($assembler.name)
+                expect(ctx($contextual).name).toBe($contextual.name)
 
-                const assembled = ctx($assembler).assemble({})
+                const assembled = ctx($contextual).assemble({})
                 const product = assembled.unpack()
 
                 return `base-value-${product}`
-            },
-            assemblers: [$assembler]
+            }
         })
 
         const result = $mock.assemble({}).unpack()
@@ -360,7 +332,7 @@ describe("Assemblers Feature", () => {
         expect(factoryMock).toHaveBeenCalledTimes(1)
     })
 
-    it("should support mocks with multiple assemblers", () => {
+    it("should support mocks with multiple contextual suppliers", () => {
         const ASpy = vi.fn().mockReturnValue("A")
         const BSpy = vi.fn().mockReturnValue("B")
 
@@ -377,12 +349,11 @@ describe("Assemblers Feature", () => {
         })
 
         const $mock = $base.mock({
-            assemblers: [$A, $B],
             factory: (deps, ctx) => {
-                const assembler1 = ctx($A).assemble({}).unpack()
-                const assembler2 = ctx($B).assemble({}).unpack()
+                const contextualA = ctx($A).assemble({}).unpack()
+                const contextualB = ctx($B).assemble({}).unpack()
 
-                return `base-value-${assembler1}-${assembler2}`
+                return `base-value-${contextualA}-${contextualB}`
             }
         })
 
@@ -392,7 +363,7 @@ describe("Assemblers Feature", () => {
         expect(BSpy).toHaveBeenCalledTimes(1)
     })
 
-    it("should support hire() method with assembler replacing original ones", async () => {
+    it("should support hire() method with contextual replacement", async () => {
         const originalSpy = vi.fn().mockReturnValue("original")
         const hiredSpy = vi.fn().mockReturnValue("hired")
 
@@ -404,7 +375,6 @@ describe("Assemblers Feature", () => {
             factory: hiredSpy
         })
         const $base = supplier("base").product({
-            assemblers: [$originalAssembler],
             factory: (deps, ctx) => {
                 return ctx($originalAssembler).assemble({}).unpack()
             }
@@ -419,13 +389,13 @@ describe("Assemblers Feature", () => {
         expect(result).toBe("hired")
         expect(originalSpy).toHaveBeenCalledTimes(0)
         // Eager loading, called on both assemble() calls
-        // Because nothing is preserved between assembler calls
-        // Because passed via assemblers, not suppliers
+        // Because nothing is preserved between contextual assemble() calls
+        // because the value is reached through a contextualized path
         // Just a weird, but normal edge case
         expect(hiredSpy).toHaveBeenCalledTimes(2)
     })
 
-    it("should support empty assembler in mocks", () => {
+    it("should support empty contextual dependency setup in mocks", () => {
         const $base = supplier("base").product({
             factory: () => "base-value"
         })
@@ -440,9 +410,9 @@ describe("Assemblers Feature", () => {
         expect(result).toBe("mock-value")
     })
 
-    it("should handle assembler errors in mocks gracefully", () => {
+    it("should handle contextual supplier errors in mocks gracefully", () => {
         const errorSpy = vi.fn().mockImplementation(() => {
-            throw new Error("Assembler error")
+            throw new Error("Context supplier error")
         })
 
         const $error = supplier("error").product({
@@ -457,20 +427,19 @@ describe("Assemblers Feature", () => {
             factory: (deps, ctx) => {
                 expect(() => {
                     ctx($error).assemble({}).unpack()
-                }).toThrow("Assembler error")
+                }).toThrow("Context supplier error")
                 return "mock-value"
-            },
-            assemblers: [$error]
+            }
         })
 
         const result = $mock.assemble({}).unpack()
         expect(result).toBe("mock-value")
     })
 
-    it("should handle assembler errors in hire() method gracefully", () => {
+    it("should handle contextual supplier errors in hire() method gracefully", () => {
         const baseSpy = vi.fn().mockReturnValue("base")
         const errorSpy = vi.fn().mockImplementation(() => {
-            throw new Error("Assembler error")
+            throw new Error("Context supplier error")
         })
 
         const $base = supplier("base").product({
@@ -482,7 +451,6 @@ describe("Assemblers Feature", () => {
         })
 
         const $main = supplier("main").product({
-            assemblers: [$base],
             factory: (deps, ctx) => {
                 expect(() => {
                     ctx($base).assemble({}).unpack()
@@ -497,7 +465,7 @@ describe("Assemblers Feature", () => {
         expect(result).toBe("main")
     })
 
-    it("should support complex assembler dependency chains in mocks", () => {
+    it("should support complex contextual dependency chains in mocks", () => {
         const dbSpy = vi.fn().mockReturnValue("db")
         const testSpy = vi.fn().mockReturnValue("test")
 
@@ -516,7 +484,6 @@ describe("Assemblers Feature", () => {
         })
 
         const $mock = $base.mock({
-            assemblers: [$test],
             factory: (deps, ctx) => {
                 const test = ctx($test)
                     .assemble(index($config.pack({ env: "test" })))
@@ -530,7 +497,7 @@ describe("Assemblers Feature", () => {
         expect(result).toBe("base-test")
     })
 
-    it("should handle duplicate assembler names in hire() method by overriding", async () => {
+    it("should error on duplicate contextual supplier names in hire()", async () => {
         const originalSpy = vi.fn().mockReturnValue("original")
         const overrideSpy = vi.fn().mockReturnValue("override")
         const overrideSpy2 = vi.fn().mockReturnValue("override2")
@@ -548,7 +515,6 @@ describe("Assemblers Feature", () => {
         })
 
         const $base = supplier("base").product({
-            assemblers: [$original],
             factory: (deps, ctx) => {
                 return ctx($original).assemble({}).unpack()
             }
@@ -556,45 +522,39 @@ describe("Assemblers Feature", () => {
 
         const $hired = $base.hire($override, $override2)
 
-        const result = $hired.assemble({}).unpack()
-        await sleep(10)
-        expect(result).toBe("override2")
-        expect(originalSpy).toHaveBeenCalledTimes(0)
-        expect(overrideSpy).toHaveBeenCalledTimes(0)
-        expect(overrideSpy2).toHaveBeenCalledTimes(2)
+        expectTypeOf($hired).toExtend<DuplicateDependencyError>()
     })
 
     describe("Accessing supplies after hire() call in a factory", () => {
         it("supplies of supply built with hire() should contain only the hired suppliers' supplies properly typed", () => {
-            const $assembler1 = supplier("assembler1").product({
-                factory: () => "assembler1-value"
+            const $contextual1 = supplier("contextual1").product({
+                factory: () => "contextual1-value"
             })
 
-            const $assembler2 = supplier("assembler2").product({
-                factory: () => "assembler2-value"
+            const $contextual2 = supplier("contextual2").product({
+                factory: () => "contextual2-value"
             })
 
             const $main = supplier("main").product({
-                assemblers: [$assembler1, $assembler2],
                 factory: (deps, ctx) => {
-                    const supply = ctx($assembler1)
-                        .hire($assembler2)
+                    const supply = ctx($contextual1)
+                        .hire($contextual2)
                         .assemble({})
 
                     expectTypeOf(
-                        supply.supplies.assembler2
+                        supply.supplies.contextual2
                     ).not.toEqualTypeOf<any>()
-                    expectTypeOf(supply.supplies.assembler2).toExtend<
+                    expectTypeOf(supply.supplies.contextual2).toExtend<
                         Supply<any>
                     >()
-                    expect(supply.supplies.assembler2.unpack()).toBe(
-                        "assembler2-value"
+                    expect(supply.supplies.contextual2.unpack()).toBe(
+                        "contextual2-value"
                     )
 
                     expectTypeOf(
-                        supply.deps.assembler2
+                        supply.deps.contextual2
                     ).not.toEqualTypeOf<any>()
-                    expectTypeOf(supply.deps.assembler2).toExtend<string>()
+                    expectTypeOf(supply.deps.contextual2).toExtend<string>()
                 }
             })
 
@@ -625,7 +585,6 @@ describe("Assemblers Feature", () => {
 
             const $main = supplier("main").product({
                 suppliers: [$productA],
-                assemblers: [$productB],
                 factory: (deps, ctx) => {
                     // @ts-expect-error - input supply inputB is not supplied
                     ctx($productB).assemble({})
@@ -679,7 +638,6 @@ describe("Assemblers Feature", () => {
             })
 
             const $main = supplier("main").product({
-                assemblers: [$productB, $productAMock],
                 factory: (deps, ctx) => {
                     const hired = ctx($productB).hire($productAMock)
 

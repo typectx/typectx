@@ -18,7 +18,6 @@ export const $Post = supplier("Post").product({
         req.$defaultUser
     ],
     optionals: [req.$post],
-    assemblers: [$Comment, $SelectSession],
     factory: (initDeps, ctx) => {
         return function Post({ post }: { post: Post }) {
             const {

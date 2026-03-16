@@ -26,7 +26,7 @@ const sidebars: SidebarsConfig = {
             Guides: [
                 "guides/basic-usage",
                 "guides/optionals",
-                "guides/assemblers",
+                "guides/context-propagation",
                 "guides/testing",
                 "guides/performance",
                 "guides/design-philosophy"

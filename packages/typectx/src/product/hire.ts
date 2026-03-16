@@ -1,10 +1,11 @@
-import { main } from "#product/main"
-import type {
-    MergeSuppliers,
-    ProductSupplier,
-    SupplierGraphGuard,
-    UnknownProductSupplier
-} from "#types"
+import { team } from "#product/main"
+import type { ProductSupplierGuard } from "#types/guards"
+import type { ProductSupplier } from "#types/public"
+import type { Supply, UnknownProductSupplier } from "#types/public"
+import type { SupplyDeps } from "#types/records"
+import type { MergeStringTuples } from "#types/utils"
+import type { Merge } from "#utils"
+import { assertProductSuppliers } from "#validation"
 
 /**
  * Hires additional suppliers into the dependency chain of this product supplier.
@@ -16,66 +17,147 @@ import type {
  * @returns A new product supplier with the hired suppliers merged into the team
  * @public
  */
-export function Hire<HIRED extends UnknownProductSupplier[]>() {
+export function Hire() {
     return function hire<
-        THIS extends UnknownProductSupplier & {
-            hired: [...HIRED]
+        THIS extends Omit<UnknownProductSupplier, "_hired" | "_composite"> & {
+            _hired: string[]
             _composite: boolean
         },
-        HIRED2 extends UnknownProductSupplier[]
+        HIRED extends UnknownProductSupplier[] = []
     >(
         this: THIS,
-        ...hired: [...HIRED2]
-    ): SupplierGraphGuard<
+        ...hired: [...HIRED]
+    ): ProductSupplierGuard<
         ProductSupplier<
             THIS["name"],
             THIS["_constraint"],
-            THIS["suppliers"],
-            THIS["optionals"],
-            THIS["assemblers"],
-            MergeSuppliers<THIS["hired"], HIRED2>,
-            Record<never, unknown>,
+            THIS["_known"],
+            Merge<
+                {
+                    [SUPPLIER in HIRED[number] as SUPPLIER["name"]]: Supply<SUPPLIER>
+                },
+                Merge<
+                    Omit<
+                        THIS["_resolved"],
+                        keyof HIRED[number]["_oldResolved"]
+                    >,
+                    HIRED[number]["_resolved"]
+                >
+            >,
+            Merge<
+                {
+                    [SUPPLIER in HIRED[number] as SUPPLIER["name"]]?: Supply<SUPPLIER>
+                },
+                Merge<
+                    Omit<
+                        THIS["_toSupply"],
+                        keyof HIRED[number]["_oldToSupply"]
+                    >,
+                    HIRED[number]["_toSupply"]
+                >
+            >,
+            MergeStringTuples<
+                THIS["_hired"],
+                {
+                    [K in keyof HIRED]: HIRED[K]["name"]
+                }
+            >,
             false,
             true
-        >
+        >,
+        HIRED
     > {
-        const mergedHired = [
-            ...this.hired.filter(
+        assertProductSuppliers(this.name, hired, true)
+        const mergedSuppliers = [
+            ...this._suppliers.filter(
                 (oldSupplier) =>
                     !hired.some(
                         (newSupplier) => newSupplier.name === oldSupplier.name
                     )
             ),
             ...hired
-        ] as MergeSuppliers<THIS["hired"], HIRED2>
+        ]
 
-        const h = main<
-            THIS["name"],
-            THIS["_constraint"],
-            THIS["suppliers"],
-            THIS["optionals"],
-            THIS["assemblers"],
-            typeof mergedHired
-        >(this.name, {
-            ...this,
-            hired: mergedHired,
-            factory: this._factory
-        })
+        const mergedHired = [
+            ...this._hired.filter(
+                (oldName) =>
+                    !hired.some((newSupplier) => newSupplier.name === oldName)
+            ),
+            ...hired.map((newSupplier) => newSupplier.name)
+        ] as MergeStringTuples<
+            THIS["_hired"],
+            {
+                [K in keyof HIRED]: HIRED[K]["name"]
+            }
+        >
+
+        const _resolved = null as unknown as Merge<
+            {
+                [SUPPLIER in HIRED[number] as SUPPLIER["name"]]: Supply<SUPPLIER>
+            },
+            Merge<
+                Omit<THIS["_resolved"], keyof HIRED[number]["_oldResolved"]>,
+                HIRED[number]["_resolved"]
+            >
+        >
+        const _toSupply = null as unknown as Merge<
+            {
+                [SUPPLIER in HIRED[number] as SUPPLIER["name"]]?: Supply<SUPPLIER>
+            },
+            Merge<
+                Omit<THIS["_toSupply"], keyof HIRED[number]["_oldToSupply"]>,
+                HIRED[number]["_toSupply"]
+            >
+        >
+        const _deps = null as unknown as SupplyDeps<typeof _resolved>
 
         return {
             ...this,
-            ...h,
-            known: this.known,
-            _composite: true as const,
-            _mock: false as const
+            _suppliers: mergedSuppliers,
+            _hired: mergedHired,
+            _team: team(this.name, mergedSuppliers, this._optionals),
+            _resolved,
+            _toSupply,
+            _deps,
+            _oldResolved: _resolved,
+            _oldToSupply: _toSupply,
+            _oldDeps: _deps,
+            _mock: false as const,
+            _composite: true as const
         } satisfies ProductSupplier<
             THIS["name"],
             THIS["_constraint"],
-            THIS["suppliers"],
-            THIS["optionals"],
-            THIS["assemblers"],
-            MergeSuppliers<THIS["hired"], HIRED2>,
-            THIS["known"],
+            THIS["_known"],
+            Merge<
+                {
+                    [SUPPLIER in HIRED[number] as SUPPLIER["name"]]: Supply<SUPPLIER>
+                },
+                Merge<
+                    Omit<
+                        THIS["_resolved"],
+                        keyof HIRED[number]["_oldResolved"]
+                    >,
+                    HIRED[number]["_resolved"]
+                >
+            >,
+            Merge<
+                {
+                    [SUPPLIER in HIRED[number] as SUPPLIER["name"]]?: Supply<SUPPLIER>
+                },
+                Merge<
+                    Omit<
+                        THIS["_toSupply"],
+                        keyof HIRED[number]["_oldToSupply"]
+                    >,
+                    HIRED[number]["_toSupply"]
+                >
+            >,
+            MergeStringTuples<
+                THIS["_hired"],
+                {
+                    [K in keyof HIRED]: HIRED[K]["name"]
+                }
+            >,
             false,
             true
         > as any

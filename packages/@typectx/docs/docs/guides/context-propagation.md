@@ -1,0 +1,106 @@
+---
+title: "Context Propagation"
+description: "Learn how to propagate and override context in typectx with ctx(...).assemble() and hire(...)."
+keywords:
+    - context propagation
+    - reassemble
+    - dependency injection
+    - typescript
+    - typectx
+    - nested context
+---
+
+# Context Propagation
+
+Context propagation is how typectx creates nested sub-contexts without global state. The core primitive is `ctx($supplier).assemble(...)`:
+
+- `ctx(...)` keeps the current context and any hired replacements.
+- `.assemble(...)` lets you add or override request supplies deeper in the call stack.
+
+## The mental model
+
+A complex app often has "sub-requests" inside a request (for example, one `postId` per feed item). You can model each sub-request by reassembling a supplier with extra request data, while still inheriting parent context (session, db, feature flags, etc.).
+
+```tsx
+const $session = supplier("session").request<Session>()
+const $postId = supplier("postId").request<string>()
+const $db = supplier("db").product({ factory: () => connectDb() })
+
+const $Post = supplier("Post").product({
+    suppliers: [$db, $postId, $session],
+    factory: ({ db, postId, session }) => () => {
+        const post = db.getPost(postId)
+        return (
+            <article>
+                <h2>{post.title}</h2>
+                <p>Hi {session.name}</p>
+            </article>
+        )
+    }
+})
+
+const $Feed = supplier("Feed").product({
+    suppliers: [$db, $session],
+    factory: ({ db }, ctx) => () => {
+        const ids = db.getPostIds()
+        return (
+            <>
+                {ids.map((id) => {
+                    const Post = ctx($Post)
+                        .assemble(index($postId.pack(id)))
+                        .unpack()
+                    return <Post key={id} />
+                })}
+            </>
+        )
+    }
+})
+```
+
+## Why `ctx(...)` matters
+
+Using `ctx(...)` inside factories is important for two reasons:
+
+1. It respects hires/mocks from upstream composition roots.
+2. It narrows `assemble(...)` requirements to only what is not already known in the current context.
+
+Calling module-scope suppliers directly inside factories bypasses those guarantees.
+
+## Reassemble an already-used dependency
+
+You can also reassemble an existing dependency with new request data:
+
+```ts
+const $sendMoney = supplier("sendMoney").product({
+    suppliers: [$addWalletEntry, $session],
+    factory: ({ addWalletEntry }, ctx) => {
+        return (toUserId: string, amount: number) => {
+            addWalletEntry(-amount)
+
+            const addTargetWalletEntry = ctx($addWalletEntry)
+                .assemble(index($session.pack({ userId: toUserId })))
+                .unpack()
+
+            addTargetWalletEntry(amount)
+        }
+    }
+})
+```
+
+This pattern keeps the same business logic but runs it in a different nested context.
+
+## Batch nested assembly with `hire(...)`
+
+If multiple products need the same new context, batch them in one contextual assembly:
+
+```tsx
+const PostSupply = ctx($Post)
+    .hire($PostAISummary, $PostTopComments)
+    .assemble(index($postId.pack(postId)))
+
+const Post = PostSupply.unpack()
+const PostAISummary = PostSupply.deps.PostAISummary
+const PostTopComments = PostSupply.deps.PostTopComments
+```
+
+This avoids building separate nested contexts for each product and improves performance.

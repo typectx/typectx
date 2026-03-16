@@ -4,11 +4,11 @@
  * @internal
  */
 
-import {
+import type {
+    RequestSupplier,
     Supplier,
-    type UnknownProductSupplier,
-    type RequestSupplier
-} from "#types"
+    UnknownProductSupplier
+} from "#types/public"
 
 /**
  * Validates that a value is a string.
