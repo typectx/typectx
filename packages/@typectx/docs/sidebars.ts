@@ -46,8 +46,7 @@ const sidebars: SidebarsConfig = {
                 }
             ]
         },
-        "api-reference",
-        "troubleshooting"
+        "api-reference"
     ]
 }
 
