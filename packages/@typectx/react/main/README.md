@@ -95,7 +95,6 @@ export const $Button = supplier("Button").product({
 // A parent component that assembles the child
 // No call to useDeps since it has no dependencies in this example
 export const $App = supplier("App").product({
-    assemblers: [$Button],
     factory: (initDeps, ctx) => function App() {
         // Assemble the Button component with the current theme
         const Button = useAssembleComponent(
@@ -160,7 +159,7 @@ root.render(<App />);
     - `useContext()` → equivalent to useDeps(initDeps).someData
     - `<Provider >` → equivalent to useAssembleComponent() with a new value for the supplied context.
 
-    For a full showcase of this, head over to the [example](https://typectx.github.io/typectx/examples/react-client), which displays complex context propagation in a deeply nested component tree. See [Assemblers](https://typectx.github.io/typectx/docs/guides/assemblers) for full documentation.
+    For a full showcase of this, head over to the [example](https://typectx.github.io/typectx/examples/react-client), which displays complex context propagation in a deeply nested component tree. See [Context Propagation](https://typectx.github.io/typectx/docs/guides/context-propagation) for full documentation.
 
 - **Preload pattern** - All factories are eagerly prerun in parallel by default, so preloading is very easy. To preload data, look at file src/api.ts in the demo to see how data prefetching has been achieved with react-query to avoid waterfall loading. The following example shows how to use the preload pattern with @typectx/react.
 

@@ -10,7 +10,6 @@ import { useQuery } from "@tanstack/react-query"
 
 export const $App = supplier("App").product({
     suppliers: [$userQuery, req.$defaultUser],
-    assemblers: [$SelectSession, $Feed],
     factory: (initDeps, ctx) =>
         function App() {
             const { userQuery, defaultUser } = useDeps(initDeps)

@@ -1,30 +1,27 @@
 import { Hire } from "#product/hire"
 import { main } from "#product/main"
 import { Mock } from "#product/mock"
-import {
-    MainSupplier,
-    type ProductConfig,
-    type RequestSupplier,
-    type ProductSupplier,
-    type UnknownProductSupplier,
-    type SupplierGraphGuard,
-    type Supplier
-} from "#types"
+import { type Factory, type PartialProductSupplierPlan } from "#types/internal"
+import type { Deps, Resolved, ToSupply } from "#types/records"
+import type { ProductSupplierGuard } from "#types/guards"
 import { assertName, assertProductConfig } from "#validation"
+import type {
+    MainSupplier,
+    ProductSupplier,
+    RequestSupplier,
+    Supplier,
+    Supply
+} from "#types/public"
 
 export function supplier<NAME extends string>(name: NAME) {
     return {
         request<CONSTRAINT = any>(): RequestSupplier<NAME, CONSTRAINT> {
             return {
                 name,
-                suppliers: [],
-                optionals: [],
-                assemblers: [],
-                hired: [],
                 pack<THIS extends Supplier, VALUE extends CONSTRAINT>(
                     this: THIS,
                     value: VALUE
-                ) {
+                ): Supply<THIS> {
                     return {
                         unpack: () => value,
                         deps: {} as never,
@@ -32,7 +29,7 @@ export function supplier<NAME extends string>(name: NAME) {
                         supplier: this,
                         _ctx: (() => null) as never,
                         _packed: true as const
-                    }
+                    } as any
                 },
                 _constraint: null as unknown as CONSTRAINT,
                 _request: true as const,
@@ -46,11 +43,9 @@ export function supplier<NAME extends string>(name: NAME) {
          * @typeParam CONSTRAINT - The type constraint for products this supplier produces
          * @typeParam SUPPLIERS - Array of suppliers this supplier depends on
          * @typeParam OPTIONALS - Array of optional request suppliers this supplier may depend on
-         * @typeParam ASSEMBLERS - Array of assemblers (lazy unassembled product suppliers)
          * @param config - Configuration object for the supplier
          * @param config.suppliers - Array of suppliers this supplier depends on
          * @param config.optionals - Array of optional request suppliers this supplier may depend on
-         * @param config.assemblers - Array of assemblers (lazy unassembled product suppliers)
          * @param config.factory - Factory function that creates the product from its dependencies
          * @param config.init - Optional initialization function called after factory
          * @param config.lazy - Whether the supplier should be lazily evaluated
@@ -61,28 +56,26 @@ export function supplier<NAME extends string>(name: NAME) {
         product<
             CONSTRAINT,
             SUPPLIERS extends MainSupplier[] = [],
-            OPTIONALS extends RequestSupplier[] = [],
-            ASSEMBLERS extends UnknownProductSupplier[] = []
+            OPTIONALS extends RequestSupplier[] = []
         >(
-            config: ProductConfig<
-                NAME,
-                CONSTRAINT,
-                SUPPLIERS,
-                OPTIONALS,
-                ASSEMBLERS
-            >
-        ): SupplierGraphGuard<
+            config: PartialProductSupplierPlan<CONSTRAINT, SUPPLIERS, OPTIONALS>
+        ): ProductSupplierGuard<
             ProductSupplier<
                 NAME,
                 CONSTRAINT,
-                SUPPLIERS,
-                OPTIONALS,
-                ASSEMBLERS,
+                OPTIONALS[number]["name"],
+                Record<never, never>,
+                ToSupply<
+                    {
+                        suppliers: SUPPLIERS
+                        optionals: OPTIONALS
+                    },
+                    Record<never, never>
+                >,
                 [],
-                Record<never, unknown>,
-                false,
                 false
-            >
+            >,
+            [...SUPPLIERS, ...OPTIONALS]
         > {
             assertName(name)
             assertProductConfig(name, config)
@@ -90,18 +83,22 @@ export function supplier<NAME extends string>(name: NAME) {
             return {
                 ...main(name, config),
                 mock: Mock<NAME, CONSTRAINT>(),
-                hire: Hire<[]>(),
+                hire: Hire(),
                 _mock: false as const,
                 _composite: false as const
             } satisfies ProductSupplier<
                 NAME,
                 CONSTRAINT,
-                SUPPLIERS,
-                OPTIONALS,
-                ASSEMBLERS,
+                OPTIONALS[number]["name"],
+                Record<never, never>,
+                ToSupply<
+                    {
+                        suppliers: SUPPLIERS
+                        optionals: OPTIONALS
+                    },
+                    Record<never, never>
+                >,
                 [],
-                Record<never, unknown>,
-                false,
                 false
             > as any
         }
@@ -109,4 +106,4 @@ export function supplier<NAME extends string>(name: NAME) {
 }
 
 export { index, sleep, once } from "#utils"
-export * from "#types"
+export * from "#types/public"

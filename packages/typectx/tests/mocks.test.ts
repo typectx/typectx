@@ -1,6 +1,11 @@
 import { describe, it, expect, vi, expectTypeOf } from "vitest"
-import { CircularDependencyError, index, type Supply, supplier } from "#index"
+import { index, supplier } from "#index"
 import { sleep, once } from "#utils"
+import type {
+    CircularDependencyError,
+    DuplicateDependencyError
+} from "#types/guards"
+import type { Supply } from "#types/public"
 
 describe("Mocks Feature", () => {
     describe("Mock Method", () => {
@@ -131,13 +136,6 @@ describe("Mocks Feature", () => {
 
                 expectTypeOf($mockA).toExtend<CircularDependencyError>()
             }).toThrow("Circular dependency detected")
-
-            const $mockA = $A.mock({
-                assemblers: [$B], // This creates a potential circle, but not caught at runtime, only at compile time
-                factory: () => "mockA"
-            })
-
-            expectTypeOf($mockA).toExtend<CircularDependencyError>()
         })
     })
 
@@ -221,7 +219,7 @@ describe("Mocks Feature", () => {
             expect(test).toBe("main")
         })
 
-        it("should handle duplicate supplier names in hire (last one wins)", () => {
+        it("should error on duplicate supplier names in hire", () => {
             const $db = supplier("db").product({
                 factory: () => "db"
             })
@@ -242,12 +240,8 @@ describe("Mocks Feature", () => {
             })
 
             const $hired = $main.hire($mockDb1, $mockDb2)
-            expect($hired.hired.map((s) => s.name)).toEqual([
-                $mockDb1.name,
-                $mockDb2.name
-            ])
-            const result = $hired.assemble({}).unpack()
-            expect(result).toEqual("main-mock-db-2")
+
+            expectTypeOf($hired).toExtend<DuplicateDependencyError>()
         })
 
         it("should allow assembling multiple suppliers together", () => {
@@ -340,20 +334,19 @@ describe("Mocks Feature", () => {
                 factory: () => "supplier-value"
             })
 
-            const $assembler = supplier("assembler").product({
-                factory: () => "assembler-value"
+            const $contextual = supplier("contextual").product({
+                factory: () => "contextual-value"
             })
 
             const $main = supplier("main").product({
                 suppliers: [$supplier],
-                assemblers: [$assembler],
-                factory: ({ supplier }, ctx) => {
-                    const supply = ctx($supplier).hire($assembler).assemble({})
+                factory: (deps, ctx) => {
+                    const supply = ctx($supplier).hire($contextual).assemble({})
 
-                    const assemblerSupply = supply.supplies[$assembler.name]
-                    expectTypeOf(assemblerSupply).not.toEqualTypeOf<any>()
-                    expectTypeOf(assemblerSupply).toExtend<Supply<any>>()
-                    expect(assemblerSupply.unpack()).toBe("assembler-value")
+                    const contextualSupply = supply.supplies[$contextual.name]
+                    expectTypeOf(contextualSupply).not.toEqualTypeOf<any>()
+                    expectTypeOf(contextualSupply).toExtend<Supply<any>>()
+                    expect(contextualSupply.unpack()).toBe("contextual-value")
                 }
             })
 

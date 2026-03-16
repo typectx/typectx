@@ -1,4 +1,5 @@
-import { supplier, type CircularDependencyError } from "#index"
+import { supplier } from "#index"
+import type { CircularDependencyError } from "#types/guards"
 import { describe, expect, expectTypeOf, it } from "vitest"
 
 describe("Circular test", () => {
@@ -8,7 +9,7 @@ describe("Circular test", () => {
         })
 
         expect(() => {
-            supplier("a1").product({
+            const $a11 = supplier("a1").product({
                 suppliers: [$a1],
                 factory: () => "a2"
             })
@@ -27,6 +28,8 @@ describe("Circular test", () => {
             })
         }
 
-        expectTypeOf(circularProduct).returns.toExtend<CircularDependencyError>()
+        expectTypeOf(
+            circularProduct
+        ).returns.toExtend<CircularDependencyError>()
     })
 })

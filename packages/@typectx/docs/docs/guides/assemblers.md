@@ -1,21 +1,21 @@
 ---
-title: "Assemblers for Context Propagation"
-description: "Learn about Assemblers in typectx, a powerful feature for context propagation and creating nested dependency injection containers in TypeScript applications."
+title: "Context Propagation"
+description: "Learn how to propagate and override context in typectx with ctx(...).assemble() and hire(...)."
 keywords:
-    - assemblers
     - context propagation
+    - reassemble
     - dependency injection
     - typescript
     - typectx
-    - nested containers
-    - reassemble
+    - nested context
 ---
 
-# Assemblers
+# Context Propagation
 
-:::tip
-Assemblers are the flagship feature that transform typectx DI containers into Context Containers. You can picture assemblers as a streamlined way to create nested DI containers, dividing monolithic apps into a tree of different sub-contexts.
-:::
+Context propagation is how typectx creates nested sub-contexts without global state. The core primitive is `ctx($supplier).assemble(...)`:
+
+- `ctx(...)` keeps the current context and any hired replacements.
+- `.assemble(...)` lets you add or override request supplies deeper in the call stack.
 
 ## The mental model
 
@@ -23,13 +23,12 @@ We often picture an application as receiving one request, and producing one resp
 
 This architecture is what React Context achieves. Each Post component can run as a sub-application in its own context, and `use` the postId context to determine what to display to the user for that post. This avoids having to "prop-drill" the postId to every post subcomponent that needs it, since it is available globally in the Context.
 
-Assemblers in typectx achieve something similar, but within a full DI paradigm.
+Ctx in typectx achieve something similar, but within a full DI paradigm.
 
 ```tsx
 const $session = supplier("session").request<Session>()
 const $postId = supplier("postId").request<string>()
-
-const $db = connectDb(/*...*/))
+const $db = supplier("db").product({ factory: () => connectDb() })
 
 const $Post = supplier("Post").product({
     suppliers: [$db, $postId, $session],
@@ -45,20 +44,17 @@ const $Post = supplier("Post").product({
 
 const $Feed = supplier("Feed").product({
     suppliers: [$db, $session],
-    // Put in assemblers[] all product suppliers depending
-    // on new context data computed in this factory
-    assemblers: [$Post],
+
     // Factories receive a ctx() function allowing to access
     // contextualized versions of suppliers or assemblers
-    factory: ({db}, ctx) => {
-        const postIds = db.getPostIds()
+    factory: async ({db}, ctx) => {
+        const postIds = await db.getPostIds()
 
         <h1>Good morning, {session.name}!</h1>
         for (postId of postIds) {
-            // Assemblers are not yet assembled, you need to assemble them with 
-            // 1. The old Feed context by wrapping the assembler with ctx()
-            //          |-> Here, this will propagate the session value, since session is a supplier of Feed.
-            // 2. the new context (postId) computed in this factory
+            // You can assemble any supplier in the current supplier's context.
+            // 1. Wrapping $Post in ctx this will propagate the session value, since session is a supplier of Feed.
+            // 2. You can add new request context in assemble, like the postId here, which is fetched from the db in this factory.
             const Post = ctx($Post).assemble(index($postId.pack(postId))).unpack() // Typescript doesn't complain session is missing, because propagated via ctx().
             return <Post />
         }
@@ -74,21 +70,13 @@ const $App = supplier("App").product({
 
 const App = $app.assemble(
     // Typescript doesn't complain here that postId is missing, because it is not in the `suppliers` chain!
-    // The chain is $App -> $Feed -> ($db, $session), it misses $Post as it is listed as an assembler, not a supplier.
-    // Thus it also misses $postId.
+    // The chain is $App -> $Feed -> ($db, $session)
     index($session.pack({userId: "some-user", timestamp: new Date()}))
 ).unpack()
 return <App />
 ```
 
-
-> **Analogy with React Context**
->
-> If you're familiar with React, you can think of an `Assembler` as being similar to a ContextProvider.
-> Assemblers work similarly by allowing you to provide new dependencies that are only available to children
-> deeper in the call-stack.
-
-## Why `ctx(...)` ?
+## Why `ctx(...)` matters
 
 You might wonder why the 2nd argument of the factory is even needed. In the example, why not call `$Post.assemble(...)` instead of `ctx($Post).assemble(...)`? The `$Post` is available via closure, no?
 
@@ -97,13 +85,19 @@ Well, not really. ctx(...) provides access to `contextualized` product suppliers
 1. If you `hired` a `mock` at the entry-point, `ctx(...)` will return the mock, not the module-scope supplier.
 2. `ctx(...)` knows about the current dependencies. Meaning if you call `ctx(...).assemble()`, Typescript will only require you to provide request data that have not already been provided higher in the call stack. If you call assemble on the module-scope supplier, however, you'd need to reprovide request data you already provided at the entry point.
 
+> **Analogy with React Context**
+>
+> If you're familiar with React, you can think of `ctx` as being similar to a ContextProvider.
+> ctx work similarly by allowing you to provide new dependencies that are only available to children
+> deeper in the call-stack.
+
 ctx() can only wrap $productSuppliers. Using ctx($requestSupplier) works, but does nothing, it's a no-op that just returns $requestSupplier.
 
 In summary, never use product suppliers from module-scope closures in factories. Respect the DI spirit! Product suppliers you use in your factory should come from the factory's arguments (deps or ctx).
 
 ## Reassembling suppliers
 
-Sometimes, you don't need to build a new product from scratch based on new context, like in the `Feed` example. Instead, you may just need to rebuild an _already assembled_ product with a different context. I call this `reassembling`. And you can achieve it simply by calling `ctx(...).assemble()` on a `$supplier` from the suppliers list, not the assemblers list.
+Sometimes, you don't need to build a new product from scratch based on new context, like in the `Feed` example. Instead, you may just need to rebuild an _already assembled_ product with a different context. I call this `reassembling`. And you can achieve it simply by calling `ctx(...).assemble()` on a `$supplier` from the suppliers list.
 
 Here is a classic problem reassembling solves: how can a user safely send money to another user when the sender does not have access to the receiver's account, without having to bypass the receiver's access control layer? Just impersonate the receiver with `ctx($supplier)`!
 
@@ -137,9 +131,9 @@ const $sendMoney = supplier("sendMoney").product({
 > Continuing the React analogy, `ctx($supplier).assemble()` is like calling `<ContextProvider />` a second time
 > on the same context with a new value deeper in the call stack.
 
-## Performance: Assembling Multiple Assemblers with `.hire()` and `.deps`
+## Batch nested assembly with `hire(...)`
 
-Let's say you have multiple components to assemble in the Feed once you know the postId:
+If multiple products need the same new context, batch them in one contextual assembly:
 
 ```tsx
 const $Feed = supplier("Feed").product({
@@ -152,8 +146,8 @@ const $Feed = supplier("Feed").product({
 
         for (postId of postIds) {
             const newSupplies = index($postId.pack(postId))
-            const PostAISummary = ctx($PostAISummary).assemble(newSupplies).unpack() 
-            const Post = ctx($Post).assemble(newSupplies).unpack() 
+            const PostAISummary = ctx($PostAISummary).assemble(newSupplies).unpack()
+            const Post = ctx($Post).assemble(newSupplies).unpack()
             const PostTopComments = ctx($PostTopComments).assemble(newSupplies).unpack()
 
             return <div>
@@ -171,7 +165,6 @@ This is not efficient, as the assemble() context needs to be built three times i
 ```tsx
 const $Feed = supplier("Feed").product({
     suppliers: [$db, $session],
-    assemblers: [$PostAISummary, $Post, $PostTopComments],
     factory: ({db}, ctx) => {
         const postIds = db.getPostIds()
 
@@ -205,3 +198,5 @@ const $Feed = supplier("Feed").product({
     }
 })
 ```
+
+This avoids building separate nested contexts for each product and improves performance.

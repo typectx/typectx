@@ -104,8 +104,8 @@ typectx uses an intuitive supply chain metaphor to make dependency injection eas
 
 - Shared context - Assemble the context once at the entry point, access everywhere without prop-drilling.
 - Smart memoization - Dependencies injected once per assemble() context for optimal performance.
-- Context switching - Override context anywhere in the call stack by using assemblers.
-- Context enrichment - Add new context and products deep in the call stack by using assemblers.
+- Context switching - Override context anywhere in the call stack with `ctx($supplier).assemble(...)`.
+- Context enrichment - Add new context and products deep in the call stack with contextual assembly and `hire(...)`.
 
 ⚡ Waterfall Management
 
@@ -121,7 +121,7 @@ typectx uses an intuitive supply chain metaphor to make dependency injection eas
 
 - Use `mock()` to create alternative implementations of a product supplier, that may depend on different suppliers than the original.
 - Mock factories must return products of the same type as the original product factory.
-- Define mock suppliers or assemblers to `hire()` at the entry-point of your app
+- Define mock or alternative suppliers to `hire()` at the entry-point of your app
 - For example, you can easily hire different versions of a UI component for A/B testing.
 
 ## Basic Usage
@@ -276,11 +276,11 @@ Sometimes a product can work with or without certain dependencies. For these cas
 
 [Learn more about optionals →](https://typectx.github.io/typectx/docs/guides/optionals)
 
-## Assemblers
+## Context Propagation
 
-Assemblers are typectx's flagship feature — they transform DI containers into Context Containers. Think of assemblers as a streamlined way to create nested DI containers, dividing monolithic apps into a tree of different sub-contexts. Perfect for when products depend on values computed deeper in your call stack, or when you need to reassemble dependencies with new context (like impersonating users for secure operations).
+Context propagation is typectx's flagship capability. It lets you reassemble products deeper in the call stack by using `ctx($supplier).assemble(...)` with additional or overridden request supplies. This creates nested sub-contexts without global state and keeps dependency resolution type-safe end to end.
 
-[Learn more about assemblers →](https://typectx.github.io/typectx/docs/guides/assemblers)
+[Learn more about context propagation →](https://typectx.github.io/typectx/docs/guides/context-propagation)
 
 ## Testing and Packing
 

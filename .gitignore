@@ -144,3 +144,5 @@ vite.config.ts.timestamp-*
 *temp*
 
 .chat/
+
+*tsup.config.bundled*

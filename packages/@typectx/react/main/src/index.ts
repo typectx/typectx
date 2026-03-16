@@ -1,14 +1,7 @@
 import { useLayoutEffect, useState, useSyncExternalStore } from "react"
-import type {
-    Deps,
-    UnknownProductSupplier,
-    ToSupply,
-    ResolvedRecord,
-    Supply,
-    Supplier
-} from "typectx"
+import type { UnknownProductSupplier, Supply, Supplier } from "typectx"
 
-export function useDeps<INIT_DEPS extends Deps<UnknownProductSupplier>>(
+export function useDeps<INIT_DEPS extends Record<string, unknown>>(
     initDeps: INIT_DEPS
 ) {
     // useSyncExternalStore subscribes to store updates.
@@ -25,10 +18,10 @@ export function useDeps<INIT_DEPS extends Deps<UnknownProductSupplier>>(
     return deps ?? initDeps
 }
 
-export function useAssembleComponent<
-    SUPPLIER extends UnknownProductSupplier,
-    TO_SUPPLY extends ToSupply<SUPPLIER> = ToSupply<SUPPLIER>
->(supplier: SUPPLIER, supplied: TO_SUPPLY) {
+export function useAssembleComponent<SUPPLIER extends UnknownProductSupplier>(
+    supplier: SUPPLIER,
+    supplied: SUPPLIER["_toSupply"]
+) {
     // First render captures the initial assembly.
     // Child components won't be in `components` until they've mounted and
     // initialized their store.
@@ -51,8 +44,8 @@ export function useAssembleComponent<
         store.has(first.deps) ?
             ({
                 [first.supplier.name]: first
-            } as ResolvedRecord<UnknownProductSupplier>)
-        :   ({} as ResolvedRecord<UnknownProductSupplier>)
+            } as Record<string, Supply<UnknownProductSupplier>>)
+        :   ({} as Record<string, Supply<UnknownProductSupplier>>)
         // Assertion necessary because intersection of mapped types do not work well with wide types
     )
 
@@ -61,18 +54,12 @@ export function useAssembleComponent<
             if (
                 // This is not the team! Team is transitive, this is just the direct dependencies!
                 ![
-                    ...component.supplier.suppliers,
-                    ...component.supplier.optionals,
-                    ...component.supplier.hired
+                    ...component.supplier._suppliers,
+                    ...component.supplier._optionals
                 ].some(
                     (supplier) =>
                         supplier.name in supplied &&
-                        supplied[
-                            supplier.name as keyof Omit<
-                                TO_SUPPLY,
-                                keyof SUPPLIER["known"]
-                            >
-                        ] !==
+                        supplied[supplier.name] !==
                             (store.get(component.deps)?.[supplier.name] ??
                                 undefined)
                 )
@@ -114,24 +101,21 @@ export const useAssembleHook = useAssembleComponent
 
 const store = {
     set(
-        componentDeps: Deps<UnknownProductSupplier>,
-        elementDeps: Deps<UnknownProductSupplier>
+        componentDeps: Record<string, unknown>,
+        elementDeps: Record<string, unknown>
     ) {
         store._.state.set(componentDeps, elementDeps)
     },
-    get(componentDeps: Deps<UnknownProductSupplier>) {
+    get(componentDeps: Record<string, unknown>) {
         return store._.state.get(componentDeps)
     },
-    has(componentDeps: Deps<UnknownProductSupplier>) {
+    has(componentDeps: Record<string, unknown>) {
         return store._.state.has(componentDeps)
     },
-    trigger(componentDeps: Deps<UnknownProductSupplier>) {
+    trigger(componentDeps: Record<string, unknown>) {
         store._.listeners.get(componentDeps)?.forEach((listener) => listener())
     },
-    subscribe(
-        componentDeps: Deps<UnknownProductSupplier>,
-        listener: () => unknown
-    ) {
+    subscribe(componentDeps: Record<string, unknown>, listener: () => unknown) {
         store._.listeners.set(componentDeps, [
             ...(store._.listeners.get(componentDeps) ?? []),
             listener
@@ -147,13 +131,7 @@ const store = {
         }
     },
     _: {
-        state: new WeakMap<
-            Deps<UnknownProductSupplier>,
-            Deps<UnknownProductSupplier>
-        >(),
-        listeners: new WeakMap<
-            Deps<UnknownProductSupplier>,
-            (() => unknown)[]
-        >()
+        state: new WeakMap<Record<string, unknown>, Record<string, unknown>>(),
+        listeners: new WeakMap<Record<string, unknown>, (() => unknown)[]>()
     }
 }
