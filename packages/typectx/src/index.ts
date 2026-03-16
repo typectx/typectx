@@ -63,11 +63,8 @@ export function supplier<NAME extends string>(name: NAME) {
             ProductSupplier<
                 NAME,
                 CONSTRAINT,
+                OPTIONALS[number]["name"],
                 Record<never, never>,
-                Resolved<{
-                    suppliers: SUPPLIERS
-                    optionals: OPTIONALS
-                }>,
                 ToSupply<
                     {
                         suppliers: SUPPLIERS
@@ -92,11 +89,8 @@ export function supplier<NAME extends string>(name: NAME) {
             } satisfies ProductSupplier<
                 NAME,
                 CONSTRAINT,
+                OPTIONALS[number]["name"],
                 Record<never, never>,
-                Resolved<{
-                    suppliers: SUPPLIERS
-                    optionals: OPTIONALS
-                }>,
                 ToSupply<
                     {
                         suppliers: SUPPLIERS

@@ -1,16 +1,15 @@
-import type { Ctx, Factory, PartialProductSupplierPlan } from "#types/internal"
+import type { PartialProductSupplierPlan } from "#types/internal"
 import { assertProductSuppliers } from "#validation"
 import { assemble } from "#product/assemble"
 import { _build } from "#product/build"
 import { supplier } from "#index"
-import type { Deps, Resolved, SupplyDeps, ToSupply } from "#types/records"
+import type { Resolved, SupplyDeps, ToSupply } from "#types/records"
 import { dedupe, isProductSupplier } from "#utils"
 import type {
     ProductSupplier,
     MainSupplier,
     RequestSupplier,
-    Supplier,
-    Supply
+    Supplier
 } from "#types/public"
 
 export function main<
@@ -25,11 +24,8 @@ export function main<
     ProductSupplier<
         NAME,
         CONSTRAINT,
+        OPTIONALS[number]["name"],
         Record<never, never>,
-        Resolved<{
-            suppliers: SUPPLIERS
-            optionals: OPTIONALS
-        }>,
         ToSupply<
             {
                 suppliers: SUPPLIERS
@@ -45,10 +41,6 @@ export function main<
 
     const _team = team(name, config.suppliers ?? [], config.optionals ?? [])
 
-    const _resolved = null as unknown as Resolved<{
-        suppliers: SUPPLIERS
-        optionals: OPTIONALS
-    }>
     const _toSupply = null as unknown as ToSupply<
         {
             suppliers: SUPPLIERS
@@ -56,7 +48,15 @@ export function main<
         },
         Record<never, never>
     >
-    const _deps = null as unknown as SupplyDeps<typeof _resolved>
+    const _resolved = null as unknown as Resolved<
+        typeof _toSupply,
+        Record<never, never>
+    >
+    const _deps = null as unknown as SupplyDeps<
+        typeof _toSupply,
+        OPTIONALS[number]["name"],
+        Record<never, never>
+    >
 
     const s = {
         ...supplier(name).request<CONSTRAINT>(),
@@ -73,6 +73,7 @@ export function main<
         _request: false as const,
         _product: true as const,
         _constraint: null as unknown as CONSTRAINT,
+        _optionalKeys: null as unknown as OPTIONALS[number]["name"],
         _resolved,
         _toSupply,
         _deps,

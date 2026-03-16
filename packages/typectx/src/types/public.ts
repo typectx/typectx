@@ -26,9 +26,9 @@ export interface RequestSupplier<
 export interface ProductSupplier<
     NAME extends string,
     CONSTRAINT,
+    OPTIONAL_KEYS extends string,
     KNOWN extends ResolvedRecord<Supplier>,
-    RESOLVED extends ResolvedRecord<Supplier>,
-    TO_SUPPLY extends Partial<SuppliesRecord<Supplier>>,
+    TO_SUPPLY extends Partial<ResolvedRecord<Supplier>>,
     HIRED extends string[],
     MOCK extends boolean = boolean,
     COMPOSITE extends boolean = boolean
@@ -66,19 +66,8 @@ export interface ProductSupplier<
         ProductSupplier<
             THIS["name"],
             THIS["_constraint"],
+            THIS["_optionalKeys"],
             THIS["_known"],
-            Merge<
-                {
-                    [SUPPLIER in HIRED[number] as SUPPLIER["name"]]: Supply<SUPPLIER>
-                },
-                Merge<
-                    Omit<
-                        THIS["_resolved"],
-                        keyof HIRED[number]["_oldResolved"]
-                    >,
-                    HIRED[number]["_resolved"]
-                >
-            >,
             Merge<
                 {
                     [SUPPLIER in HIRED[number] as SUPPLIER["name"]]?: Supply<SUPPLIER>
@@ -105,13 +94,14 @@ export interface ProductSupplier<
     _product: true
     _request: false
     _constraint: CONSTRAINT
+    _optionalKeys: OPTIONAL_KEYS
     _known: KNOWN
     _toSupply: TO_SUPPLY
-    _resolved: RESOLVED
-    _deps: SupplyDeps<RESOLVED>
-    _oldResolved: RESOLVED
+    _resolved: Resolved<TO_SUPPLY, KNOWN>
+    _deps: SupplyDeps<TO_SUPPLY, OPTIONAL_KEYS, KNOWN>
+    _oldResolved: Resolved<TO_SUPPLY, KNOWN>
     _oldToSupply: TO_SUPPLY
-    _oldDeps: SupplyDeps<RESOLVED>
+    _oldDeps: SupplyDeps<TO_SUPPLY, OPTIONAL_KEYS, KNOWN>
     /** Array of suppliers this supplier depends on */
     _suppliers: MainSupplier[]
     /** Array of optional request suppliers this supplier may depend on */
@@ -119,7 +109,7 @@ export interface ProductSupplier<
     _team: Supplier[]
     _hired: HIRED
     /** Factory function that creates the product from its dependencies */
-    _factory: (deps: any, ctx: Ctx<any>) => any
+    _factory: (deps: any, ctx: Ctx<any, any>) => any
     /** Optional initialization function called after factory */
     _init?: (value: any, deps: any) => void
     _build: <THIS extends UnknownProductSupplier>(
@@ -140,9 +130,9 @@ export type MainSupplier = Supplier & {
 export type UnknownProductSupplier = ProductSupplier<
     string,
     unknown,
+    string,
     ResolvedRecord<any>,
-    ResolvedRecord<any>,
-    Partial<SuppliesRecord<any>>,
+    Partial<ResolvedRecord<any>>,
     string[],
     boolean
 >
@@ -156,11 +146,8 @@ export type Mock<
     ProductSupplier<
         SUPPLIER["name"],
         CONSTRAINT2,
+        OPTIONALS2[number]["name"],
         Record<never, never>,
-        Resolved<{
-            suppliers: SUPPLIERS2
-            optionals: OPTIONALS2
-        }>,
         ToSupply<
             {
                 suppliers: SUPPLIERS2

@@ -2,7 +2,7 @@ import { team } from "#product/main"
 import type { ProductSupplierGuard } from "#types/guards"
 import type { ProductSupplier } from "#types/public"
 import type { Supply, UnknownProductSupplier } from "#types/public"
-import type { SupplyDeps } from "#types/records"
+import type { Resolved, SupplyDeps } from "#types/records"
 import type { MergeStringTuples } from "#types/utils"
 import type { Merge } from "#utils"
 import { assertProductSuppliers } from "#validation"
@@ -31,19 +31,8 @@ export function Hire() {
         ProductSupplier<
             THIS["name"],
             THIS["_constraint"],
+            THIS["_optionalKeys"],
             THIS["_known"],
-            Merge<
-                {
-                    [SUPPLIER in HIRED[number] as SUPPLIER["name"]]: Supply<SUPPLIER>
-                },
-                Merge<
-                    Omit<
-                        THIS["_resolved"],
-                        keyof HIRED[number]["_oldResolved"]
-                    >,
-                    HIRED[number]["_resolved"]
-                >
-            >,
             Merge<
                 {
                     [SUPPLIER in HIRED[number] as SUPPLIER["name"]]?: Supply<SUPPLIER>
@@ -91,15 +80,6 @@ export function Hire() {
             }
         >
 
-        const _resolved = null as unknown as Merge<
-            {
-                [SUPPLIER in HIRED[number] as SUPPLIER["name"]]: Supply<SUPPLIER>
-            },
-            Merge<
-                Omit<THIS["_resolved"], keyof HIRED[number]["_oldResolved"]>,
-                HIRED[number]["_resolved"]
-            >
-        >
         const _toSupply = null as unknown as Merge<
             {
                 [SUPPLIER in HIRED[number] as SUPPLIER["name"]]?: Supply<SUPPLIER>
@@ -109,7 +89,15 @@ export function Hire() {
                 HIRED[number]["_toSupply"]
             >
         >
-        const _deps = null as unknown as SupplyDeps<typeof _resolved>
+        const _resolved = null as unknown as Resolved<
+            typeof _toSupply,
+            THIS["_known"]
+        >
+        const _deps = null as unknown as SupplyDeps<
+            typeof _toSupply,
+            THIS["_optionalKeys"],
+            THIS["_known"]
+        >
 
         return {
             ...this,
@@ -127,19 +115,8 @@ export function Hire() {
         } satisfies ProductSupplier<
             THIS["name"],
             THIS["_constraint"],
+            THIS["_optionalKeys"],
             THIS["_known"],
-            Merge<
-                {
-                    [SUPPLIER in HIRED[number] as SUPPLIER["name"]]: Supply<SUPPLIER>
-                },
-                Merge<
-                    Omit<
-                        THIS["_resolved"],
-                        keyof HIRED[number]["_oldResolved"]
-                    >,
-                    HIRED[number]["_resolved"]
-                >
-            >,
             Merge<
                 {
                     [SUPPLIER in HIRED[number] as SUPPLIER["name"]]?: Supply<SUPPLIER>

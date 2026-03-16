@@ -5,7 +5,7 @@ import type {
     Supply,
     UnknownProductSupplier
 } from "#types/public"
-import type { Deps, Resolved } from "#types/records"
+import type { Deps, Resolved, ToSupply } from "#types/records"
 import type { Merge } from "#utils"
 
 export interface BaseSupplier<
@@ -86,13 +86,10 @@ export type UnknownProductSupplierPlan = ProductSupplierPlan<
  */
 export type Ctx<
     PLAN extends Pick<UnknownProductSupplierPlan, "optionals" | "suppliers">,
-    KNOWN extends Resolved<{
-        suppliers: PLAN["suppliers"]
-        optionals: PLAN["optionals"]
-    }> = Resolved<{
-        suppliers: PLAN["suppliers"]
-        optionals: PLAN["optionals"]
-    }>
+    KNOWN extends Resolved<
+        ToSupply<PLAN, Record<never, never>>,
+        Record<never, never>
+    > = Resolved<ToSupply<PLAN, Record<never, never>>, Record<never, never>>
 > = <SUPPLIER extends Supplier>(
     supplier: SUPPLIER & (UnknownProductSupplier | Supplier)
 ) => SUPPLIER extends UnknownProductSupplier ?
@@ -100,7 +97,7 @@ export type Ctx<
         SUPPLIER,
         {
             _known: KNOWN
-            _toSupply: Omit<SUPPLIER["_toSupply"], keyof KNOWN>
+            _toSupply: Omit<SUPPLIER["_toSupply"], keyof KNOWN> & Partial<KNOWN>
             _deps: SUPPLIER["_deps"]
         }
     >

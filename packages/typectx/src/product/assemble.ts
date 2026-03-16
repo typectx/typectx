@@ -1,5 +1,5 @@
 import type { Supplier, Supply, UnknownProductSupplier } from "#types/public"
-import type { MaybeFn, SuppliesRecord } from "#types/records"
+import type { ResolvedRecord, SuppliesRecord } from "#types/records"
 import { isPacked, isProductSupplier, isProductSupply, once } from "#utils"
 import { assertPlainObject } from "#validation"
 
@@ -10,7 +10,7 @@ export function assemble<THIS extends UnknownProductSupplier>(
     assertPlainObject("supplied", supplied)
 
     // Stores the supplies that can be preserved to optimize reassemble
-    const preserved: SuppliesRecord = {}
+    const preserved: ResolvedRecord<Supplier> = {}
 
     for (const [name, supply] of Object.entries(this._known)) {
         // Do not preserve supplies from newly hired
@@ -23,6 +23,7 @@ export function assemble<THIS extends UnknownProductSupplier>(
         // depend on newly hired or supplied (unless packed supplies
         // which are preserved if not directly overwritten by supplied)
         if (
+            supply &&
             !isPacked(supply) &&
             isProductSupply(supply) &&
             supply.supplier._team.some(
@@ -34,17 +35,12 @@ export function assemble<THIS extends UnknownProductSupplier>(
             continue
         }
 
-        // Do not preserve if supplied explicitely sets the supply to undefined
-        if (name in supplied && supplied[name] === undefined) {
-            continue
-        }
-
         preserved[name] = supply
     }
 
-    const definedSupplied: SuppliesRecord = Object.fromEntries(
+    const definedSupplied: ResolvedRecord<Supplier> = Object.fromEntries(
         Object.entries(supplied).filter(
-            (entry): entry is [string, MaybeFn<[], Supply<Supplier>>] =>
+            (entry): entry is [string, Supply<Supplier>] =>
                 entry[1] !== undefined
         )
     )

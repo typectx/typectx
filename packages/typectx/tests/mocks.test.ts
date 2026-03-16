@@ -340,7 +340,7 @@ describe("Mocks Feature", () => {
 
             const $main = supplier("main").product({
                 suppliers: [$supplier],
-                factory: ({ supplier }, ctx) => {
+                factory: (deps, ctx) => {
                     const supply = ctx($supplier).hire($contextual).assemble({})
 
                     const contextualSupply = supply.supplies[$contextual.name]

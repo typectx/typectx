@@ -33,7 +33,9 @@ export type DuplicateDependencyGuard<
 export type CircularDependencyGuard<SUPPLIER extends UnknownProductSupplier> =
     string extends SUPPLIER["name"] ? SUPPLIER
     : string extends keyof SUPPLIER["_resolved"] ? SUPPLIER
-    : SUPPLIER["name"] extends keyof SUPPLIER["_resolved"] ?
+    : SUPPLIER["name"] extends (
+        keyof Omit<SUPPLIER["_resolved"], keyof SUPPLIER["_known"]>
+    ) ?
         CircularDependencyError
     :   SUPPLIER
 
