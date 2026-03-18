@@ -5,7 +5,6 @@ import type {
     PartialProductSupplierPlan
 } from "#types/internal"
 import type {
-    Resolved,
     ResolvedRecord,
     SuppliesRecord,
     SupplyDeps,
@@ -97,11 +96,9 @@ export interface ProductSupplier<
     _optionalKeys: OPTIONAL_KEYS
     _known: KNOWN
     _toSupply: TO_SUPPLY
-    _resolved: Resolved<TO_SUPPLY, KNOWN>
-    _deps: SupplyDeps<TO_SUPPLY, OPTIONAL_KEYS, KNOWN>
-    _oldResolved: Resolved<TO_SUPPLY, KNOWN>
+    _deps: SupplyDeps<TO_SUPPLY, OPTIONAL_KEYS>
     _oldToSupply: TO_SUPPLY
-    _oldDeps: SupplyDeps<TO_SUPPLY, OPTIONAL_KEYS, KNOWN>
+    _oldDeps: SupplyDeps<TO_SUPPLY, OPTIONAL_KEYS>
     /** Array of suppliers this supplier depends on */
     _suppliers: MainSupplier[]
     /** Array of optional request suppliers this supplier may depend on */
@@ -162,7 +159,6 @@ export type Mock<
 > & {
     _mock: true
     _composite: false
-    _oldResolved: SUPPLIER["_resolved"]
     _oldToSupply: SUPPLIER["_toSupply"]
     _oldDeps: SUPPLIER["_deps"]
 }
@@ -180,7 +176,11 @@ export type ProductSupply<SUPPLIER extends UnknownProductSupplier> = {
     name: SUPPLIER["name"]
     unpack: () => SUPPLIER["_constraint"]
     deps: SUPPLIER["_deps"]
-    supplies: SUPPLIER["_resolved"]
+    supplies: {
+        [NAME in keyof SUPPLIER["_toSupply"]]-?: NonNullable<
+            SUPPLIER["_toSupply"][NAME]
+        >
+    }
     supplier: SUPPLIER
     _ctx: Ctx<any>
     _packed: boolean

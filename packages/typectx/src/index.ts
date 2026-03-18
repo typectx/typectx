@@ -1,8 +1,8 @@
 import { Hire } from "#product/hire"
 import { main } from "#product/main"
 import { Mock } from "#product/mock"
-import { type Factory, type PartialProductSupplierPlan } from "#types/internal"
-import type { Deps, Resolved, ToSupply } from "#types/records"
+import { type PartialProductSupplierPlan } from "#types/internal"
+import type { ToSupply } from "#types/records"
 import type { ProductSupplierGuard } from "#types/guards"
 import { assertName, assertProductConfig } from "#validation"
 import type {
