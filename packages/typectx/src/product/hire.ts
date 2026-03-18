@@ -2,7 +2,7 @@ import { team } from "#product/main"
 import type { ProductSupplierGuard } from "#types/guards"
 import type { ProductSupplier } from "#types/public"
 import type { Supply, UnknownProductSupplier } from "#types/public"
-import type { Resolved, SupplyDeps } from "#types/records"
+import type { SupplyDeps } from "#types/records"
 import type { MergeStringTuples } from "#types/utils"
 import type { Merge } from "#utils"
 import { assertProductSuppliers } from "#validation"
@@ -89,14 +89,9 @@ export function Hire() {
                 HIRED[number]["_toSupply"]
             >
         >
-        const _resolved = null as unknown as Resolved<
-            typeof _toSupply,
-            THIS["_known"]
-        >
         const _deps = null as unknown as SupplyDeps<
             typeof _toSupply,
-            THIS["_optionalKeys"],
-            THIS["_known"]
+            THIS["_optionalKeys"]
         >
 
         return {
@@ -104,10 +99,8 @@ export function Hire() {
             _suppliers: mergedSuppliers,
             _hired: mergedHired,
             _team: team(this.name, mergedSuppliers, this._optionals),
-            _resolved,
             _toSupply,
             _deps,
-            _oldResolved: _resolved,
             _oldToSupply: _toSupply,
             _oldDeps: _deps,
             _mock: false as const,

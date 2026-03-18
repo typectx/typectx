@@ -1,6 +1,6 @@
 import type { Ctx, UnknownProductSupplierPlan } from "#types/internal"
 import type { Supplier, Supply, UnknownProductSupplier } from "#types/public"
-import type { Resolved, SuppliesRecord, ToSupply } from "#types/records"
+import type { SuppliesRecord, ToSupply } from "#types/records"
 import { isProductSupplier, once } from "#utils"
 
 function createResolver(supplies: SuppliesRecord) {
@@ -40,10 +40,7 @@ export function Ctx<
     PLAN extends Pick<UnknownProductSupplierPlan, "suppliers" | "optionals">
 >(
     plan: PLAN,
-    resolved: Resolved<
-        ToSupply<PLAN, Record<never, never>>,
-        Record<never, never>
-    >
+    resolved: Required<ToSupply<PLAN, Record<never, never>>>
 ): Ctx<PLAN> {
     return <SUPPLIER extends Supplier>(supplier: SUPPLIER): any => {
         const actual =

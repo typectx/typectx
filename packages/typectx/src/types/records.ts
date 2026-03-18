@@ -3,9 +3,10 @@ import type {
     Supply,
     Supplier,
     UnknownProductSupplier,
-    RequestSupplier
+    RequestSupplier,
+    ProductSupplier
 } from "#types/public"
-import type { UnionToIntersection } from "#utils"
+import type { Merge, UnionToIntersection } from "#utils"
 
 export type MaybeFn<A extends any[], R> = R | ((...args: A) => R)
 /**
@@ -34,65 +35,63 @@ export type SuppliesOrUndefinedRecord<
     SUPPLIER extends UnknownProductSupplier = UnknownProductSupplier
 > = Record<string, MaybeFn<[], Supply<SUPPLIER>> | undefined>
 
-/**
- * Converts an array of suppliers and optionals into a corresponding supply map.
- *
- * @typeParam SUPPLIERS - Array of suppliers to convert into a supply map
- * @typeParam OPTIONALS - Array of optional suppliers to convert into a supply map
- * @returns A map where keys are supplier names and values are their assembled supplies
- * @public
- */
-/* export type Supplies<
-    PLAN extends Pick<
-        UnknownProductSupplierPlan,
-        "optionals" | "suppliers" | "hired"
-    >
+type ToSupplyBase<
+    PLAN extends Pick<UnknownProductSupplierPlan, "optionals"> & {
+        suppliers: Supplier[]
+    }
 > = {
-    [SUPPLIER in AllRequiredSuppliers<PLAN>[number] as SUPPLIER["name"]]: MaybeFn<
-        [],
-        Supply<SUPPLIER>
-    >
+    [SUPPLIER in Extract<
+        PLAN["suppliers"][number],
+        RequestSupplier
+    > as SUPPLIER["name"]]: Supply<SUPPLIER>
 } & {
-    [OPTIONAL in PLAN["optionals"][number] as OPTIONAL["name"]]?: MaybeFn<
-        [],
+    [OPTIONAL in
+        | PLAN["optionals"][number]
+        | Exclude<
+              PLAN["suppliers"][number],
+              RequestSupplier
+          > as OPTIONAL["name"]]?: OPTIONAL extends RequestSupplier ?
         Supply<OPTIONAL>
-    >
-} */
+    : OPTIONAL extends UnknownProductSupplier ?
+        Supply<
+            ProductSupplier<
+                OPTIONAL["name"],
+                OPTIONAL["_constraint"],
+                OPTIONAL["_optionalKeys"],
+                OPTIONAL["_known"],
+                Partial<ResolvedRecord<Supplier>>,
+                OPTIONAL["_hired"],
+                OPTIONAL["_mock"],
+                OPTIONAL["_composite"]
+            >
+        >
+    :   never
+}
 
 export type ToSupply<
     PLAN extends Pick<UnknownProductSupplierPlan, "optionals"> & {
         suppliers: Supplier[]
     },
     KNOWN extends ResolvedRecord<Supplier>
-> = Omit<
-    {
-        [SUPPLIER in Extract<
-            PLAN["suppliers"][number],
-            RequestSupplier
-        > as SUPPLIER["name"]]: Supply<SUPPLIER>
-    } & {
-        [OPTIONAL in
-            | PLAN["optionals"][number]
-            | Exclude<
-                  PLAN["suppliers"][number],
-                  RequestSupplier
-              > as OPTIONAL["name"]]?: Supply<OPTIONAL>
-    } & UnionToIntersection<
-            Extract<
-                PLAN["suppliers"][number],
-                UnknownProductSupplier
-            >["_toSupply"]
-        >,
-    keyof KNOWN
-> &
-    Partial<KNOWN>
-
-export type Resolved<
-    TO_SUPPLY extends Partial<ResolvedRecord<Supplier>>,
-    KNOWN extends ResolvedRecord<Supplier>
-> = {
-    [NAME in keyof TO_SUPPLY]-?: TO_SUPPLY[NAME]
-} & KNOWN
+> =
+    any[] extends PLAN["suppliers"] ? any
+    :   Merge<
+            ToSupplyBase<PLAN> & {
+                [NAME in keyof UnionToIntersection<
+                    Extract<
+                        PLAN["suppliers"][number],
+                        UnknownProductSupplier
+                    >["_toSupply"]
+                > as NAME extends keyof ToSupplyBase<PLAN> ? never
+                :   NAME]: UnionToIntersection<
+                    Extract<
+                        PLAN["suppliers"][number],
+                        UnknownProductSupplier
+                    >["_toSupply"]
+                >[NAME]
+            },
+            Partial<KNOWN>
+        >
 
 // Same as Resolved, but unpacked from the supply wrapper
 export type Deps<
@@ -100,29 +99,28 @@ export type Deps<
         suppliers: Supplier[]
     }
 > = {
-    [SUPPLIER in PLAN["suppliers"][number] as SUPPLIER["name"]]: SUPPLIER["_constraint"]
-} & {
-    [OPTIONAL in PLAN["optionals"][number] as OPTIONAL["name"]]?: OPTIONAL["_constraint"]
+    [SUPPLIER in
+        | PLAN["suppliers"][number]
+        | PLAN["optionals"][number] as SUPPLIER["name"]]: SUPPLIER extends (
+        PLAN["suppliers"][number]
+    ) ?
+        SUPPLIER["_constraint"]
+    :   SUPPLIER["_constraint"] | undefined
 } & UnionToIntersection<
-        Extract<PLAN["suppliers"][number], UnknownProductSupplier>["_deps"]
-    >
+    Extract<PLAN["suppliers"][number], UnknownProductSupplier>["_deps"]
+>
 
 export type SupplyDeps<
     TO_SUPPLY extends Partial<ResolvedRecord<Supplier>>,
-    OPTIONAL_KEYS extends string,
-    KNOWN extends ResolvedRecord<Supplier>
-> = {
-    [NAME in keyof Omit<Resolved<TO_SUPPLY, KNOWN>, OPTIONAL_KEYS>]: Resolved<
-        TO_SUPPLY,
-        KNOWN
-    >[NAME] extends Supply<infer SUPPLIER> ?
-        SUPPLIER["_constraint"]
-    :   never
-} & {
-    [NAME in keyof Pick<Resolved<TO_SUPPLY, KNOWN>, OPTIONAL_KEYS>]?: Resolved<
-        TO_SUPPLY,
-        KNOWN
-    >[NAME] extends Supply<infer SUPPLIER> ?
-        SUPPLIER["_constraint"]
-    :   never
-}
+    OPTIONAL_KEYS extends string
+> =
+    string extends keyof Required<TO_SUPPLY> ? any
+    :   {
+            [NAME in keyof TO_SUPPLY]-?: Required<TO_SUPPLY>[NAME] extends (
+                Supply<infer SUPPLIER>
+            ) ?
+                NAME extends OPTIONAL_KEYS ?
+                    SUPPLIER["_constraint"] | undefined
+                :   SUPPLIER["_constraint"]
+            :   never
+        }

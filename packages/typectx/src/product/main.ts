@@ -3,7 +3,7 @@ import { assertProductSuppliers } from "#validation"
 import { assemble } from "#product/assemble"
 import { _build } from "#product/build"
 import { supplier } from "#index"
-import type { Resolved, SupplyDeps, ToSupply } from "#types/records"
+import type { SupplyDeps, ToSupply } from "#types/records"
 import { dedupe, isProductSupplier } from "#utils"
 import type {
     ProductSupplier,
@@ -48,14 +48,10 @@ export function main<
         },
         Record<never, never>
     >
-    const _resolved = null as unknown as Resolved<
-        typeof _toSupply,
-        Record<never, never>
-    >
+
     const _deps = null as unknown as SupplyDeps<
         typeof _toSupply,
-        OPTIONALS[number]["name"],
-        Record<never, never>
+        OPTIONALS[number]["name"]
     >
 
     const s = {
@@ -74,10 +70,8 @@ export function main<
         _product: true as const,
         _constraint: null as unknown as CONSTRAINT,
         _optionalKeys: null as unknown as OPTIONALS[number]["name"],
-        _resolved,
         _toSupply,
         _deps,
-        _oldResolved: _resolved,
         _oldToSupply: _toSupply,
         _oldDeps: _deps
     }

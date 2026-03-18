@@ -52,7 +52,6 @@ export function Mock<NAME extends string, CONSTRAINT>() {
             hired: [] as [],
             _mock: true as const,
             _composite: false as const,
-            _oldResolved: this._resolved,
             _oldToSupply: this._toSupply,
             _oldDeps: this._deps
         } satisfies MockType<THIS, CONSTRAINT2, SUPPLIERS2, OPTIONALS2> as any

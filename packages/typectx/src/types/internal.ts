@@ -5,7 +5,7 @@ import type {
     Supply,
     UnknownProductSupplier
 } from "#types/public"
-import type { Deps, Resolved, ToSupply } from "#types/records"
+import type { Deps, ToSupply } from "#types/records"
 import type { Merge } from "#utils"
 
 export interface BaseSupplier<
@@ -86,10 +86,9 @@ export type UnknownProductSupplierPlan = ProductSupplierPlan<
  */
 export type Ctx<
     PLAN extends Pick<UnknownProductSupplierPlan, "optionals" | "suppliers">,
-    KNOWN extends Resolved<
-        ToSupply<PLAN, Record<never, never>>,
-        Record<never, never>
-    > = Resolved<ToSupply<PLAN, Record<never, never>>, Record<never, never>>
+    KNOWN extends Required<ToSupply<PLAN, Record<never, never>>> = Required<
+        ToSupply<PLAN, Record<never, never>>
+    >
 > = <SUPPLIER extends Supplier>(
     supplier: SUPPLIER & (UnknownProductSupplier | Supplier)
 ) => SUPPLIER extends UnknownProductSupplier ?
