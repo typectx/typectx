@@ -5,8 +5,5 @@
     "exports": {
         ".": "./tsconfig.json",
         "./next": "./tsconfig.next.json"
-    },
-    "devDependencies": {
-        "typescript": "latest"
     }
 }

@@ -39,6 +39,7 @@
         "vitest": "^4.0.10",
         "@vitest/coverage-v8": "^4.0.10",
         "memoize": "^10.1.0",
+        "typescript": "^6.0.2",
         "tsup": "^8.5.1",
         "turbo": "^2.5.5"
     }
