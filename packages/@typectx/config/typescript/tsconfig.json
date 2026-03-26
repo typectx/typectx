@@ -1,7 +1,6 @@
 {
     "compilerOptions": {
         "target": "ES2017",
-        "downlevelIteration": true,
         "importHelpers": true,
         "allowJs": true,
         "skipLibCheck": true,
@@ -13,6 +12,7 @@
         "moduleResolution": "bundler",
         "resolveJsonModule": true,
         "isolatedModules": true,
-        "noUncheckedIndexedAccess": true
+        "noUncheckedIndexedAccess": true,
+        "ignoreDeprecations": "6.0"
     }
 }

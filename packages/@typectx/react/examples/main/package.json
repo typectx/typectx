@@ -23,7 +23,7 @@
         "url": "https://github.com/typectx/typectx/issues"
     },
     "scripts": {
-        "dev": "vite",
+        "dev": "fuser -k 3001/tcp && vite",
         "build": "tsc && vite build",
         "preview": "vite preview",
         "test": "vitest",
@@ -58,7 +58,7 @@
         "jsdom": "^27.4.0",
         "postcss": "^8.5.6",
         "tailwindcss": "^4.1.18",
-        "typescript": "^5.9.3",
+        "typescript": "^6.0.2",
         "typescript-eslint": "^8.50.1",
         "vite": "^5.4.21",
         "vitest": "^1.6.1"

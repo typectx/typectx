@@ -19,17 +19,14 @@
         "noUnusedLocals": false,
         "noUnusedParameters": false,
         "noFallthroughCasesInSwitch": true,
-
-        /* Path mapping */
-        "baseUrl": "./src",
         "paths": {
-            "@/*": ["./*"],
-            "@/components/*": ["./components/*"],
-            "@/services/*": ["./services/*"],
-            "@/types/*": ["./types/*"],
-            "@/utils/*": ["./utils/*"]
+            "@/*": ["./src/*"],
+            "@/components/*": ["./src/components/*"],
+            "@/services/*": ["./src/services/*"],
+            "@/types/*": ["./src/types/*"],
+            "@/utils/*": ["./src/utils/*"]
         }
     },
-    "include": ["src", "tests"],
+    "include": ["src", "tests", "vite-env.d.ts"],
     "references": [{ "path": "./tsconfig.node.json" }]
 }
