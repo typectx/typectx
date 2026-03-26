@@ -34,12 +34,12 @@
         "typecheck": "vitest run --typecheck.only"
     },
     "devDependencies": {
-        "@typectx/config.eslint": "*",
-        "@typectx/config.typescript": "*",
+        "@typectx/config.eslint": "workspace:*",
+        "@typectx/config.typescript": "workspace:*",
         "vitest": "^4.0.10",
         "@vitest/coverage-v8": "^4.0.10",
         "memoize": "^10.1.0",
-        "tsup": "^8.5.0",
+        "tsup": "^8.5.1",
         "turbo": "^2.5.5"
     }
 }

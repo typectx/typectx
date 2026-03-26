@@ -68,6 +68,21 @@ type ToSupplyBase<
     :   never
 }
 
+type FirstProperty<
+    SUPPLIERS extends Supplier[],
+    KEY extends "_toSupply" | "_deps",
+    NAME extends PropertyKey
+> =
+    SUPPLIERS extends [infer Head, ...infer Tail] ?
+        Tail extends Supplier[] ?
+            Head extends UnknownProductSupplier ?
+                NAME extends keyof Head[KEY] ?
+                    Head[KEY][NAME]
+                :   FirstProperty<Tail, KEY, NAME>
+            :   FirstProperty<Tail, KEY, NAME>
+        :   never
+    :   never
+
 export type ToSupply<
     PLAN extends Pick<UnknownProductSupplierPlan, "optionals"> & {
         suppliers: Supplier[]
@@ -83,18 +98,12 @@ export type ToSupply<
                         UnknownProductSupplier
                     >["_toSupply"]
                 > as NAME extends keyof ToSupplyBase<PLAN> ? never
-                :   NAME]: UnionToIntersection<
-                    Extract<
-                        PLAN["suppliers"][number],
-                        UnknownProductSupplier
-                    >["_toSupply"]
-                >[NAME]
+                :   NAME]: FirstProperty<PLAN["suppliers"], "_toSupply", NAME>
             },
             Partial<KNOWN>
         >
 
-// Same as Resolved, but unpacked from the supply wrapper
-export type Deps<
+type DepsBase<
     PLAN extends Pick<UnknownProductSupplierPlan, "optionals"> & {
         suppliers: Supplier[]
     }
@@ -106,9 +115,24 @@ export type Deps<
     ) ?
         SUPPLIER["_constraint"]
     :   SUPPLIER["_constraint"] | undefined
-} & UnionToIntersection<
-    Extract<PLAN["suppliers"][number], UnknownProductSupplier>["_deps"]
->
+}
+
+// Same as Resolved, but unpacked from the supply wrapper
+export type Deps<
+    PLAN extends Pick<UnknownProductSupplierPlan, "optionals"> & {
+        suppliers: Supplier[]
+    }
+> =
+    any[] extends PLAN["suppliers"] ? any
+    :   DepsBase<PLAN> & {
+            [NAME in keyof UnionToIntersection<
+                Extract<
+                    PLAN["suppliers"][number],
+                    UnknownProductSupplier
+                >["_deps"]
+            > as NAME extends keyof DepsBase<PLAN> ? never
+            :   NAME]: FirstProperty<PLAN["suppliers"], "_deps", NAME>
+        }
 
 export type SupplyDeps<
     TO_SUPPLY extends Partial<ResolvedRecord<Supplier>>,
