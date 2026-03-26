@@ -24,6 +24,7 @@
     },
     "scripts": {
         "dev": "fuser -k 3001/tcp && vite",
+        "start": "vite",
         "build": "tsc && vite build",
         "preview": "vite preview",
         "test": "vitest",
