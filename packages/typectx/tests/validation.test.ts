@@ -1,79 +1,79 @@
 import { describe, it, expect } from "vitest"
-import { supplier } from "#index"
+import { service } from "#index"
 
 describe("Runtime Validation", () => {
     describe("request()", () => {
-        it("should create request suppliers and allow packing values", () => {
-            const $value = supplier("value").request<string>()
+        it("should create request services and allow packing values", () => {
+            const $value = service("value").request<string>()
             const packed = $value.pack("test")
 
             expect($value.name).toBe("value")
             expect(packed.unpack()).toBe("test")
         })
 
-        it("should still enforce runtime product validation under the flat API", () => {
-            expect(() => supplier("test").product({} as any)).toThrow(TypeError)
-            expect(() => supplier("test").product({} as any)).toThrow(
+        it("should enforce runtime app service config validation under the flat API", () => {
+            expect(() => service("test").app({} as any)).toThrow(TypeError)
+            expect(() => service("test").app({} as any)).toThrow(
                 "test must have a 'factory' property"
             )
         })
     })
 
-    describe("product()", () => {
+    describe("app()", () => {
         it("should throw TypeError when config is not an object", () => {
-            expect(() => supplier("A").product(null as any)).toThrow(TypeError)
-            expect(() => supplier("B").product(null as any)).toThrow(
+            expect(() => service("A").app(null as any)).toThrow(TypeError)
+            expect(() => service("B").app(null as any)).toThrow(
                 "B must be an object, got null"
             )
         })
 
         it("should throw TypeError when config is an array", () => {
-            expect(() => supplier("A").product([] as any)).toThrow(TypeError)
-            expect(() => supplier("B").product([] as any)).toThrow(
+            expect(() => service("A").app([] as any)).toThrow(TypeError)
+            expect(() => service("B").app([] as any)).toThrow(
                 "B must be an object, not an array"
             )
         })
 
         it("should throw TypeError when factory is missing", () => {
-            expect(() => supplier("A").product({} as any)).toThrow(TypeError)
-            expect(() => supplier("B").product({} as any)).toThrow(
+            expect(() => service("A").app({} as any)).toThrow(TypeError)
+            expect(() => service("B").app({} as any)).toThrow(
                 "B must have a 'factory' property"
             )
         })
 
         it("should throw TypeError when factory is not a function", () => {
             expect(() =>
-                supplier("A").product({ factory: "not a function" } as any)
+                service("A").app({ factory: "not a function" } as any)
             ).toThrow(TypeError)
             expect(() =>
-                supplier("B").product({ factory: "not a function" } as any)
+                service("B").app({ factory: "not a function" } as any)
             ).toThrow("B must be a function, got string")
         })
 
-        it("should throw TypeError when suppliers is not an array", () => {
+        it("should throw TypeError when services is not an array", () => {
             expect(() =>
-                supplier("A").product({
+                service("A").app({
                     factory: () => ({}),
-                    suppliers: "not an array"
+                    services: "not an array"
                 } as any)
             ).toThrow(TypeError)
             expect(() =>
-                supplier("B").product({
+                service("B").app({
                     factory: () => ({}),
-                    suppliers: "not an array"
+                    services: "not an array"
                 } as any)
             ).toThrow("B must be an array")
         })
 
         it("should throw TypeError when lazy is not a boolean", () => {
             expect(() =>
-                supplier("A").product({
+                service("A").app({
                     factory: () => ({}),
                     lazy: "yes"
                 } as any)
             ).toThrow(TypeError)
             expect(() =>
-                supplier("B").product({
+                service("B").app({
                     factory: () => ({}),
                     lazy: "yes"
                 } as any)
@@ -81,9 +81,9 @@ describe("Runtime Validation", () => {
         })
     })
 
-    describe("productSupplier.assemble()", () => {
+    describe("appService.assemble()", () => {
         it("should throw TypeError when supplied is not an object", () => {
-            const $resource = supplier("resource").product({
+            const $resource = service("resource").app({
                 factory: () => ({})
             })
             expect(() => $resource.assemble(null as any)).toThrow(TypeError)
@@ -93,7 +93,7 @@ describe("Runtime Validation", () => {
         })
 
         it("should throw TypeError when supplied is an array", () => {
-            const $resource = supplier("resource").product({
+            const $resource = service("resource").app({
                 factory: () => ({})
             })
             expect(() => $resource.assemble([] as any)).toThrow(TypeError)
@@ -103,26 +103,26 @@ describe("Runtime Validation", () => {
         })
     })
 
-    describe("productSupplier.hire()", () => {
-        it("should throw TypeError when suppliers contain invalid items", () => {
-            const $resource = supplier("resource").product({
+    describe("appService.hire()", () => {
+        it("should throw TypeError when services contain invalid items", () => {
+            const $resource = service("resource").app({
                 factory: () => ({})
             })
             expect(() => $resource.hire(null as any)).toThrow(TypeError)
             expect(() => $resource.hire(null as any)).toThrow(TypeError)
         })
 
-        it("should throw TypeError when supplier is missing name property", () => {
-            const $resource = supplier("resource").product({
+        it("should throw TypeError when service is missing name property", () => {
+            const $resource = service("resource").app({
                 factory: () => ({})
             })
             expect(() => $resource.hire({} as any)).toThrow(TypeError)
         })
     })
 
-    describe("productSupplier.mock()", () => {
+    describe("appService.mock()", () => {
         it("should throw TypeError when config is not an object", () => {
-            const $resource = supplier("resource").product({
+            const $resource = service("resource").app({
                 factory: () => ({})
             })
             expect(() => $resource.mock(null as any)).toThrow(TypeError)
@@ -132,7 +132,7 @@ describe("Runtime Validation", () => {
         })
 
         it("should throw TypeError when factory is missing", () => {
-            const $resource = supplier("resource").product({
+            const $resource = service("resource").app({
                 factory: () => ({})
             })
             expect(() => $resource.mock({} as any)).toThrow(TypeError)

@@ -1,20 +1,20 @@
 import { describe, it, expect, vi, expectTypeOf } from "vitest"
-import { supplier } from "#index"
+import { service } from "#index"
 import { index, sleep } from "#utils"
 import type { DuplicateDependencyError } from "#types/guards"
 import type { Supply } from "#types/public"
 
 describe("Context Propagation", () => {
-    it("ctx should return a supplier with same name", () => {
+    it("ctx should return a service with same name", () => {
         const factoryMock = vi.fn().mockReturnValue("value")
 
-        const $contextual = supplier("contextual").product({
+        const $contextual = service("contextual").app({
             factory: factoryMock
         })
 
-        const $main = supplier("main").product({
+        const $main = service("main").app({
             factory: (deps, ctx) => {
-                // Contextual suppliers are passed but not auto-assembled
+                // Contextual services are passed but not auto-assembled
                 expect(ctx($contextual).name).toBe($contextual.name)
                 expect(factoryMock).not.toHaveBeenCalled()
 
@@ -27,20 +27,20 @@ describe("Context Propagation", () => {
         expect(factoryMock).not.toHaveBeenCalled()
     })
 
-    it("should require request supplies for hired contextual suppliers", () => {
-        const $input = supplier("input").request<string>()
+    it("should require request supplies for hired contextual services", () => {
+        const $input = service("input").request<string>()
 
-        const $contextual1 = supplier("contextual1").product({
-            suppliers: [$input],
+        const $contextual1 = service("contextual1").app({
+            services: [$input],
             factory: ({ input }) => `A1: ${input}`
         })
 
-        const $contextual2 = supplier("contextual2").product({
-            suppliers: [$input],
+        const $contextual2 = service("contextual2").app({
+            services: [$input],
             factory: ({ input }) => `A2: ${input}`
         })
 
-        const $base = supplier("base").product({
+        const $base = service("base").app({
             factory: (deps, ctx) => {
                 return ctx($contextual1)
                     .assemble(index($input.pack("test")))
@@ -59,11 +59,11 @@ describe("Context Propagation", () => {
     it("should allow manual contextual assembly within factory", () => {
         const factoryMock = vi.fn().mockReturnValue("value")
 
-        const $contextual = supplier("contextual").product({
+        const $contextual = service("contextual").app({
             factory: factoryMock
         })
 
-        const $main = supplier("main").product({
+        const $main = service("main").app({
             factory: (deps, ctx) => {
                 const contextualSupply = ctx($contextual).assemble({})
                 const value = contextualSupply.unpack()
@@ -86,28 +86,28 @@ describe("Context Propagation", () => {
     })
 
     it("should support conditional assembly based on context (session admin example)", () => {
-        const $session = supplier("session").request<{
+        const $session = service("session").request<{
             userId: string
             role: string
         }>()
 
-        const $adminSession = supplier("adminSession").request<{
+        const $adminSession = service("adminSession").request<{
             userId: string
             role: "admin"
         }>()
 
-        const $adminFeature = supplier("adminFeature").product({
+        const $adminFeature = service("adminFeature").app({
             //Even if unused, protects this function from being called by non-admins via Typescript
-            suppliers: [$adminSession],
+            services: [$adminSession],
             factory: () => "sensitive-admin-data"
         })
 
-        const $userFeature = supplier("userFeature").product({
+        const $userFeature = service("userFeature").app({
             factory: () => "regular-user-data"
         })
 
-        const $main = supplier("main").product({
-            suppliers: [$session, $userFeature],
+        const $main = service("main").app({
+            services: [$session, $userFeature],
             factory: ({ session, userFeature }, ctx) => {
                 const role = session.role
 
@@ -152,15 +152,15 @@ describe("Context Propagation", () => {
         })
     })
 
-    it("should handle contextual supplier errors gracefully", () => {
-        const $failing = supplier("failing").product({
+    it("should handle contextual service errors gracefully", () => {
+        const $failing = service("failing").app({
             factory: () => {
-                throw new Error("Context supplier failed")
+                throw new Error("Context service failed")
                 return
             }
         })
 
-        const $main = supplier("main").product({
+        const $main = service("main").app({
             factory: (deps, ctx) => {
                 ctx($failing).assemble({}).unpack()
                 return "main"
@@ -169,27 +169,27 @@ describe("Context Propagation", () => {
 
         expect(() => {
             $main.assemble({}).unpack()
-        }).toThrow("Context supplier failed")
+        }).toThrow("Context service failed")
     })
 
     it("should support complex contextual dependency chains", () => {
-        const $db = supplier("db").request<string>()
+        const $db = service("db").request<string>()
 
-        const $repository = supplier("repo").product({
-            suppliers: [$db],
+        const $repository = service("repo").app({
+            services: [$db],
             factory: ({ db }) => {
                 return "repo-" + db
             }
         })
 
-        const $feature = supplier("feature").product({
-            suppliers: [$repository],
+        const $feature = service("feature").app({
+            services: [$repository],
             factory: ({ repo }) => {
                 return "feature-" + repo
             }
         })
 
-        const $main = supplier("main").product({
+        const $main = service("main").app({
             factory: (deps, ctx) => {
                 const feature = ctx($feature)
                     .assemble(
@@ -208,23 +208,23 @@ describe("Context Propagation", () => {
     })
 
     it("should properly overwrite request supply in contextual assemble() calls", () => {
-        const $number = supplier("number").request<number>()
-        const $doubler = supplier("doubler").product({
-            suppliers: [$number],
+        const $number = service("number").request<number>()
+        const $doubler = service("doubler").app({
+            services: [$number],
             factory: ({ number }) => {
                 return number * 2
             }
         })
 
-        const $quadrupler = supplier("quadrupler").product({
-            suppliers: [$doubler],
+        const $quadrupler = service("quadrupler").app({
+            services: [$doubler],
             factory: ({ doubler }) => {
                 return doubler * 2
             }
         })
 
-        const $main = supplier("main").product({
-            suppliers: [$doubler],
+        const $main = service("main").app({
+            services: [$doubler],
             factory: (deps, ctx) => {
                 const assembled = ctx($quadrupler)
                     .assemble(index($number.pack(5)))
@@ -238,28 +238,28 @@ describe("Context Propagation", () => {
     })
 
     it("should preserve supplies from previous assemble calls that don't depend on the new supplies", async () => {
-        const $number = supplier("number").request<number>()
-        const $dummy = supplier("dummy").product({
+        const $number = service("number").request<number>()
+        const $dummy = service("dummy").app({
             factory: () => "dummy"
         })
 
         let timesCalled = 0
-        const $counter = supplier("counter").product({
-            suppliers: [$dummy],
+        const $counter = service("counter").app({
+            services: [$dummy],
             factory: ({ dummy }) => {
                 return timesCalled++
             }
         })
 
-        const $reassembled = supplier("reassembled").product({
-            suppliers: [$number, $counter],
+        const $reassembled = service("reassembled").app({
+            services: [$number, $counter],
             factory: ({ number }) => {
                 return number
             }
         })
 
-        const $main = supplier("main").product({
-            suppliers: [$dummy, $counter],
+        const $main = service("main").app({
+            services: [$dummy, $counter],
             factory: (deps, ctx) => {
                 const reassembled = ctx($reassembled)
                     .assemble(index($number.pack(10)))
@@ -274,23 +274,23 @@ describe("Context Propagation", () => {
     })
 
     it("Providing undefined supply to reassemble should not preserve the previous supply", () => {
-        const $number = supplier("number").request<number>()
-        const $username = supplier("username").product({
-            suppliers: [$number],
+        const $number = service("number").request<number>()
+        const $username = service("username").app({
+            services: [$number],
             factory: ({ number }) => {
                 return "John-" + number
             }
         })
 
-        const $greeter = supplier("greeter").product({
-            suppliers: [$username],
+        const $greeter = service("greeter").app({
+            services: [$username],
             factory: ({ username }) => {
                 return "Hello, " + username + "!"
             }
         })
 
-        const $main = supplier("main").product({
-            suppliers: [$number, $username],
+        const $main = service("main").app({
+            services: [$number, $username],
             factory: (deps, ctx) => {
                 const assembled = ctx($greeter)
                     .assemble({ [$username.name]: undefined })
@@ -305,14 +305,14 @@ describe("Context Propagation", () => {
         expect(result).toEqual("Hello, John-10!")
     })
 
-    it("should support mocks with contextual supplier assembly", () => {
-        const factoryMock = vi.fn().mockReturnValue("value")
+    it("should support mocks with contextual service assembly", () => {
+        const factoryMock = vi.fn().mockReturnValue("product")
 
-        const $contextual = supplier("contextual").product({
+        const $contextual = service("contextual").app({
             factory: factoryMock
         })
 
-        const $base = supplier("base").product({
+        const $base = service("base").app({
             factory: () => "base-value"
         })
 
@@ -323,28 +323,28 @@ describe("Context Propagation", () => {
                 const assembled = ctx($contextual).assemble({})
                 const product = assembled.unpack()
 
-                return `base-value-${product}`
+                return `mock-${product}`
             }
         })
 
         const result = $mock.assemble({}).unpack()
-        expect(result).toBe("base-value-value")
+        expect(result).toBe("mock-product")
         expect(factoryMock).toHaveBeenCalledTimes(1)
     })
 
-    it("should support mocks with multiple contextual suppliers", () => {
+    it("should support mocks with multiple contextual services", () => {
         const ASpy = vi.fn().mockReturnValue("A")
         const BSpy = vi.fn().mockReturnValue("B")
 
-        const $A = supplier("A").product({
+        const $A = service("A").app({
             factory: ASpy
         })
 
-        const $B = supplier("B").product({
+        const $B = service("B").app({
             factory: BSpy
         })
 
-        const $base = supplier("base").product({
+        const $base = service("base").app({
             factory: () => "base-value"
         })
 
@@ -367,14 +367,14 @@ describe("Context Propagation", () => {
         const originalSpy = vi.fn().mockReturnValue("original")
         const hiredSpy = vi.fn().mockReturnValue("hired")
 
-        const $originalAssembler = supplier("original").product({
+        const $originalAssembler = service("original").app({
             factory: originalSpy
         })
 
         const $originalAssemblerMock = $originalAssembler.mock({
             factory: hiredSpy
         })
-        const $base = supplier("base").product({
+        const $base = service("base").app({
             factory: (deps, ctx) => {
                 return ctx($originalAssembler).assemble({}).unpack()
             }
@@ -396,7 +396,7 @@ describe("Context Propagation", () => {
     })
 
     it("should support empty contextual dependency setup in mocks", () => {
-        const $base = supplier("base").product({
+        const $base = service("base").app({
             factory: () => "base-value"
         })
 
@@ -410,16 +410,16 @@ describe("Context Propagation", () => {
         expect(result).toBe("mock-value")
     })
 
-    it("should handle contextual supplier errors in mocks gracefully", () => {
+    it("should handle contextual service errors in mocks gracefully", () => {
         const errorSpy = vi.fn().mockImplementation(() => {
-            throw new Error("Context supplier error")
+            throw new Error("Context service error")
         })
 
-        const $error = supplier("error").product({
+        const $error = service("error").app({
             factory: errorSpy
         })
 
-        const $base = supplier("base").product({
+        const $base = service("base").app({
             factory: () => "base-value"
         })
 
@@ -427,7 +427,7 @@ describe("Context Propagation", () => {
             factory: (deps, ctx) => {
                 expect(() => {
                     ctx($error).assemble({}).unpack()
-                }).toThrow("Context supplier error")
+                }).toThrow("Context service error")
                 return "mock-value"
             }
         })
@@ -436,13 +436,13 @@ describe("Context Propagation", () => {
         expect(result).toBe("mock-value")
     })
 
-    it("should handle contextual supplier errors in hire() method gracefully", () => {
+    it("should handle contextual service errors in hire() method gracefully", () => {
         const baseSpy = vi.fn().mockReturnValue("base")
         const errorSpy = vi.fn().mockImplementation(() => {
-            throw new Error("Context supplier error")
+            throw new Error("Context service error")
         })
 
-        const $base = supplier("base").product({
+        const $base = service("base").app({
             factory: baseSpy
         })
 
@@ -450,7 +450,7 @@ describe("Context Propagation", () => {
             factory: errorSpy
         })
 
-        const $main = supplier("main").product({
+        const $main = service("main").app({
             factory: (deps, ctx) => {
                 expect(() => {
                     ctx($base).assemble({}).unpack()
@@ -469,17 +469,17 @@ describe("Context Propagation", () => {
         const dbSpy = vi.fn().mockReturnValue("db")
         const testSpy = vi.fn().mockReturnValue("test")
 
-        const $config = supplier("config").request<{ env: string }>()
-        const $db = supplier("db").product({
-            suppliers: [$config],
+        const $config = service("config").request<{ env: string }>()
+        const $db = service("db").app({
+            services: [$config],
             factory: dbSpy
         })
-        const $test = supplier("test").product({
-            suppliers: [$db],
+        const $test = service("test").app({
+            services: [$db],
             factory: testSpy
         })
 
-        const $base = supplier("base").product({
+        const $base = service("base").app({
             factory: () => "base"
         })
 
@@ -497,12 +497,12 @@ describe("Context Propagation", () => {
         expect(result).toBe("base-test")
     })
 
-    it("should error on duplicate contextual supplier names in hire()", async () => {
+    it("should error on duplicate contextual service names in hire()", async () => {
         const originalSpy = vi.fn().mockReturnValue("original")
         const overrideSpy = vi.fn().mockReturnValue("override")
         const overrideSpy2 = vi.fn().mockReturnValue("override2")
 
-        const $original = supplier("duplicate").product({
+        const $original = service("duplicate").app({
             factory: originalSpy
         })
 
@@ -514,7 +514,7 @@ describe("Context Propagation", () => {
             factory: overrideSpy2
         })
 
-        const $base = supplier("base").product({
+        const $base = service("base").app({
             factory: (deps, ctx) => {
                 return ctx($original).assemble({}).unpack()
             }
@@ -526,16 +526,16 @@ describe("Context Propagation", () => {
     })
 
     describe("Accessing supplies after hire() call in a factory", () => {
-        it("supplies of supply built with hire() should contain only the hired suppliers' supplies properly typed", () => {
-            const $contextual1 = supplier("contextual1").product({
+        it("supplies of supply built with hire() should contain only the hired services' supplies properly typed", () => {
+            const $contextual1 = service("contextual1").app({
                 factory: () => "contextual1-value"
             })
 
-            const $contextual2 = supplier("contextual2").product({
+            const $contextual2 = service("contextual2").app({
                 factory: () => "contextual2-value"
             })
 
-            const $main = supplier("main").product({
+            const $main = service("main").app({
                 factory: (deps, ctx) => {
                     const supply = ctx($contextual1)
                         .hire($contextual2)
@@ -564,32 +564,32 @@ describe("Context Propagation", () => {
 
     describe("Type-safety of nested ctx().assemble() calls", () => {
         it("should properly type the result of nested ctx().assemble() calls", () => {
-            const $inputA = supplier("inputA").request<string>()
-            const $inputB = supplier("inputB").request<string>()
+            const $inputA = service("inputA").request<string>()
+            const $inputB = service("inputB").request<string>()
 
-            const $productA = supplier("productA").product({
-                suppliers: [$inputA],
+            const $A = service("A").app({
+                services: [$inputA],
                 factory: () => {
-                    return "productA-value"
+                    return "A-value"
                 }
             })
 
-            const $productB = supplier("productB").product({
-                suppliers: [$inputA, $inputB],
+            const $B = service("B").app({
+                services: [$inputA, $inputB],
                 factory: ({ inputA, inputB }) => {
                     expect(inputA).toBe("inputA-value")
                     expect(inputB).toBe("inputB-value")
-                    return "productB-value"
+                    return "B-value"
                 }
             })
 
-            const $main = supplier("main").product({
-                suppliers: [$productA],
+            const $main = service("main").app({
+                services: [$A],
                 factory: (deps, ctx) => {
                     // @ts-expect-error - input supply inputB is not supplied
-                    ctx($productB).assemble({})
+                    ctx($B).assemble({})
                     // Works, input supply inputA doesn't need to be supplied, reused from deps
-                    ctx($productB)
+                    ctx($B)
                         .assemble(index($inputB.pack("inputB-value")))
                         .unpack()
                     return "main-value"
@@ -599,17 +599,17 @@ describe("Context Propagation", () => {
             $main.assemble(index($inputA.pack("inputA-value"))).unpack()
         })
 
-        it("Calling ctx($supplier).assemble() (reassemble) should never require any supplies to be supplied", () => {
-            const $input = supplier("input").request<string>()
-            const $product = supplier("product").product({
-                suppliers: [$input],
+        it("Calling ctx($service).assemble() (reassemble) should never require any supplies to be supplied", () => {
+            const $input = service("input").request<string>()
+            const $product = service("product").app({
+                services: [$input],
                 factory: ({ input }) => {
                     return input
                 }
             })
 
-            const $main = supplier("main").product({
-                suppliers: [$product],
+            const $main = service("main").app({
+                services: [$product],
                 factory: (deps, ctx) => {
                     expect(ctx($product).assemble({}).unpack()).toBe(
                         "input-value"
@@ -621,25 +621,25 @@ describe("Context Propagation", () => {
         })
 
         it("Calling ctx().hire(mock).assemble() should be properly typed", () => {
-            const $input = supplier("input").request<string>()
-            const $productA = supplier("productA").product({
-                factory: () => "productA-value"
+            const $input = service("input").request<string>()
+            const $A = service("A").app({
+                factory: () => "A-value"
             })
 
-            const $productB = supplier("productB").product({
-                suppliers: [$productA],
-                factory: ({ productA }) => productA
+            const $B = service("B").app({
+                services: [$A],
+                factory: ({ A }) => A
             })
 
-            const $productAMock = $productA.mock({
-                suppliers: [$input],
-                factory: () => "productAMock-value",
+            const $AMock = $A.mock({
+                services: [$input],
+                factory: () => "AMock-value",
                 lazy: true
             })
 
-            const $main = supplier("main").product({
+            const $main = service("main").app({
                 factory: (deps, ctx) => {
-                    const hired = ctx($productB).hire($productAMock)
+                    const hired = ctx($B).hire($AMock)
 
                     // @ts-expect-error - input supply is not supplied
                     hired.assemble({}).unpack()
@@ -647,7 +647,7 @@ describe("Context Propagation", () => {
                         hired
                             .assemble(index($input.pack("input-value")))
                             .unpack()
-                    ).toBe("productAMock-value")
+                    ).toBe("AMock-value")
                 }
             })
 

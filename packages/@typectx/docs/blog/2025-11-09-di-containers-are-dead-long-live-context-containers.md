@@ -31,7 +31,7 @@ This is the story of how, while refactoring my React app from Client to Server C
 
 A tale of dumb, costly refactoring decisions that I hope produced a useful result in the end :).
 
-<!-- truncate -->
+{/* truncate */}
 
 ### Part 1: Inference-Driven Development
 

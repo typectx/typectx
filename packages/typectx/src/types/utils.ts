@@ -1,4 +1,4 @@
-import type { Supplier } from "#types/public"
+import type { Service } from "#types/public"
 
 type Id<T, CASE extends "self" | "name"> =
     CASE extends "name" ?
@@ -21,18 +21,18 @@ export type MergeTuplesBy<
     :   [...ACC, ...WITH]
 
 /**
- * Merges two supplier arrays by filtering out OLD suppliers that match NEW supplier names,
- * then appending NEW suppliers. This ensures hired suppliers override existing ones.
+ * Merges two service arrays by filtering out OLD services that match NEW service names,
+ * then appending NEW services. This ensures hired services override existing ones.
  * Used internally by the `hire` method to create the merged team.
  *
- * @typeParam OLD - The original array of suppliers
- * @typeParam NEW - The array of new suppliers to merge in (overriding matching names)
- * @returns A merged array with NEW suppliers replacing matching OLD suppliers
+ * @typeParam OLD - The original array of services
+ * @typeParam NEW - The array of new services to merge in (overriding matching names)
+ * @returns A merged array with NEW services replacing matching OLD services
  * @public
  */
-export type MergeSupplierTuples<
-    OLD extends Supplier[],
-    WITH extends Supplier[]
+export type MergeServiceTuples<
+    OLD extends Service[],
+    WITH extends Service[]
 > = MergeTuplesBy<"name", OLD, WITH>
 
 export type MergeStringTuples<

@@ -25,27 +25,27 @@ npm install typectx
 
 ### 2. Import flat APIs
 
-Use the flat supplier APIs directly.
+Use the flat service APIs directly.
 
 ```typescript
-import { supplier } from "typectx"
+import { service } from "typectx"
 ```
 
-### 3. Define Suppliers
+### 3. Define Services
 
-Suppliers create your app's dependencies. **Request suppliers** hold data from the user's request (request params, cookies, etc.), which cannot be derived from other suppliers, while **Product Suppliers** are your application's services, components or features. They are factory functions that depend on request data or other products. Factories can return anything: simple values, promises or other functions.
+Services create your app's dependencies. **Request services** hold data from the user's request (request params, cookies, etc.), which cannot be derived from other services, while **App Services** are your application's services, components or features. They are factory functions that depend on request data or other app services. Factories can return anything: simple values, promises or other functions.
 
-Names passed to `supplier("...")` can **only** contain digits, letters, underscores or `$` signs and cannot start with a digit, just like any Javascript identifier.
+Names passed to `service("...")` can **only** contain digits, letters, underscores or `$` signs and cannot start with a digit, just like any Javascript identifier.
 
 ```typescript
-// A Request supplier for the user session
-const $session = supplier("session").request<{ userId: string }>()
+// A Request service for the user session
+const $session = service("session").request<{ userId: string }>()
 
-// A Product supplier that depends on the session
-const $userService = supplier("userService").product({
-    suppliers: [$session],
+// An app service that depends on the session
+const $userService = service("userService").app({
+    services: [$session],
     // Access the session by destructuring the factory's 1st argument.
-    // The property name is the supplier name passed to supplier("...").
+    // The property name is the service name passed to service("...").
     factory: ({ session }) => {
         return {
             id: session.userId,
@@ -57,7 +57,7 @@ const $userService = supplier("userService").product({
 
 ### 4. Assemble at Your Entry Point
 
-At your application's entry point, `assemble` your main product, providing any required request data. The `index()` utility simplifies this process.
+At your application's entry point, `assemble` your main service, providing any required request data. The `index()` utility simplifies this process.
 
 ```typescript
 import { index } from "typectx"

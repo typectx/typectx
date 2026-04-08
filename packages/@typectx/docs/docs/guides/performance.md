@@ -21,7 +21,7 @@ typectx is designed for optimal performance, featuring a minimal bundle size, sm
 
 - **~5KB minified, ~2KB minzipped**: Hyper-minimalistic bundle size. Most of the package is type definitions.
 - **Zero dependencies**: Adds no external runtime dependencies to your project.
-- **Tree-shakable and code-splittable architecture**: Helps you create hyper-specialized suppliers: One function or piece of data per supplier.
+- **Tree-shakable and code-splittable architecture**: Helps you create hyper-specialized services: One function or piece of data per service.
 
 ## Factory Lifecycle & Memoization
 
@@ -31,8 +31,8 @@ typectx is designed for optimal performance, featuring a minimal bundle size, sm
 
 ```typescript
 // ✅ Good: Factory called once, returns a function for multiple calls
-const $createUser = supplier("createUser").product({
-    suppliers: [$db],
+const $createUser = service("createUser").app({
+    services: [$db],
     factory: ({ db }) => {
         // This setup code runs only once per assemble()
         const cache = new Map()
@@ -61,16 +61,16 @@ By default, all products are constructed in parallel and cached as soon as `.ass
 
 ```typescript
 // Both of these services will be constructed immediately and in parallel
-const $dbPromise = supplier("dbPromise").product({
+const $dbPromise = service("dbPromise").product({
     // Async factories are possible
     factory: async () => await db.connect()
 })
-const $cache = supplier("cache").product({
+const $cache = service("cache").product({
     factory: () => new Map()
 })
 
-const $app = supplier("app").product({
-    suppliers: [$dbPromise, $cache],
+const $app = service("app").app({
+    services: [$dbPromise, $cache],
     factory: async ({ dbPromise, cache }) => {
         if (cache.get("greeting")) {
             return cache.get("greeting")
@@ -90,8 +90,8 @@ const appSupply = $app.assemble({}) // Starts constructing both dbPromise and ca
 For expensive services that are only used in certain situations (e.g., an admin panel service or a PDF export tool), you can enable lazy loading by setting `lazy: true`. The product will only be constructed the first time its value is accessed via `unpack()`.
 
 ```typescript
-const $lazy = supplier("lazy").product({
-    suppliers: [$db],
+const $lazy = service("lazy").app({
+    services: [$db],
     // Will only be loaded when `deps.lazy` is called in another factory,
     // or when `$lazy.assemble({...}).unpack()` is called directly.
     factory: ({ db }) => new ExpensiveService(db),
@@ -101,15 +101,15 @@ const $lazy = supplier("lazy").product({
 
 ## Initialization with `init()`
 
-For products that need to perform side-effects upon creation (like connecting to a database or logging), you can use `init`. It runs immediately after the `factory` function returns, and receives the constructed value and deps as arguments.
+For products that need to perform side-effects upon creation (like connecting to a database or logging), you can use `init`. It runs immediately after the `factory` function returns, and receives the constructed product and deps as arguments.
 
 This is useful for pre-warming caches or running setup logic without cluttering your factory.
 
 For example, you can eagerly warm a memoized function:
 
 ```typescript
-const $profile = supplier("profile").product({
-    suppliers: [$currentUser],
+const $profile = service("profile").app({
+    services: [$currentUser],
     factory: () => memo((userId) => db.profiles.get(userId))
     init: (getProfile, { currentUser }) => {
         // Pre-warm the current user's profile in the memoization cache.

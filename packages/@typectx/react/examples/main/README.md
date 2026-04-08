@@ -13,7 +13,7 @@ A preview browser should automatically show up, but if it doesn't, simply click 
 
 ```
 src/
-├── components/        # UI components as Supplier products
+├── components/        # UI components as App Services
 │   ├── app.tsx       # Main app component
 │   ├── comment.tsx   # Comment component
 │   ├── feed.tsx      # Feed component
@@ -31,8 +31,8 @@ src/
 ## 📚 Learning Path
 
 1. **Explore `src/api.ts`** - See how to integrate react-query for data loading and preloading
-2. **Check `src/req.ts`** - See how request suppliers are defined with `supplier(...).request()`.
-3. **Review `src/components/`** - Understand how to create components as products with JSX
+2. **Check `src/req.ts`** - See how request services are defined with `service(...).request()`.
+3. **Review `src/components/`** - Understand how to create components as app services with JSX
 4. **Examine `src/main.tsx`** - See how everything is assembled and used
 5. **Experiment with the live demo** - Notice the absence of waterfall loading
 

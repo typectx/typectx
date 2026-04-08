@@ -4,10 +4,10 @@ import { $Reply } from "@/components/reply"
 import { useQuery } from "@tanstack/react-query"
 import { useDeps } from "@typectx/react"
 import { useAssertStable } from "@/hooks"
-import { supplier } from "typectx"
+import { service } from "typectx"
 
-export const $Comment = supplier("Comment").product({
-    suppliers: [$repliesQuery, $Reply],
+export const $Comment = service("Comment").app({
+    services: [$repliesQuery, $Reply],
     factory: (initDeps) =>
         function Comment({ comment }: { comment: Comment }) {
             const { repliesQuery, Reply } = useDeps(initDeps)

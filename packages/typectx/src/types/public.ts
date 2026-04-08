@@ -1,9 +1,5 @@
-import type { ProductSupplierGuard } from "#types/guards"
-import type {
-    BaseSupplier,
-    Ctx,
-    PartialProductSupplierPlan
-} from "#types/internal"
+import type { AppServiceGuard } from "#types/guards"
+import type { BaseService, Ctx, PartialAppServicePlan } from "#types/internal"
 import type {
     ResolvedRecord,
     SuppliesRecord,
@@ -13,63 +9,63 @@ import type {
 import type { MergeStringTuples } from "#types/utils"
 import type { Merge } from "#utils"
 
-export interface RequestSupplier<
+export interface RequestService<
     NAME extends string = string,
     CONSTRAINT = unknown
-> extends BaseSupplier<NAME, CONSTRAINT> {
+> extends BaseService<NAME, CONSTRAINT> {
     _constraint: CONSTRAINT
     _request: true
     _mock: false
 }
 
-export interface ProductSupplier<
+export interface AppService<
     NAME extends string,
     CONSTRAINT,
     OPTIONAL_KEYS extends string,
-    KNOWN extends ResolvedRecord<Supplier>,
-    TO_SUPPLY extends Partial<ResolvedRecord<Supplier>>,
+    KNOWN extends ResolvedRecord<Service>,
+    TO_SUPPLY extends Partial<ResolvedRecord<Service>>,
     HIRED extends string[],
     MOCK extends boolean = boolean,
     COMPOSITE extends boolean = boolean
-> extends BaseSupplier<NAME, CONSTRAINT> {
-    /** Assembles the supplier by providing request values and auto-wiring product dependencies */
-    assemble: <THIS extends UnknownProductSupplier>(
+> extends BaseService<NAME, CONSTRAINT> {
+    /** Assembles the service by providing request supplies and auto-wiring app dependencies */
+    assemble: <THIS extends UnknownAppService>(
         this: THIS,
         toSupply: THIS["_toSupply"]
     ) => Supply<THIS>
     mock: <
-        THIS extends UnknownProductSupplier & {
+        THIS extends UnknownAppService & {
             name: NAME
             _constraint: CONSTRAINT
             _mock: false
         },
         CONSTRAINT2 extends THIS["_constraint"],
-        SUPPLIERS2 extends MainSupplier[] = [],
-        OPTIONALS2 extends RequestSupplier[] = []
+        SERVICES2 extends MainService[] = [],
+        OPTIONALS2 extends RequestService[] = []
     >(
         this: THIS,
-        config: PartialProductSupplierPlan<CONSTRAINT2, SUPPLIERS2, OPTIONALS2>
-    ) => ProductSupplierGuard<
-        Mock<THIS, CONSTRAINT2, SUPPLIERS2, OPTIONALS2>,
-        [...SUPPLIERS2, ...OPTIONALS2]
+        config: PartialAppServicePlan<CONSTRAINT2, SERVICES2, OPTIONALS2>
+    ) => AppServiceGuard<
+        Mock<THIS, CONSTRAINT2, SERVICES2, OPTIONALS2>,
+        [...SERVICES2, ...OPTIONALS2]
     >
     hire: <
-        THIS extends UnknownProductSupplier & {
+        THIS extends UnknownAppService & {
             _composite: boolean
         },
-        HIRED extends UnknownProductSupplier[] = []
+        HIRED extends UnknownAppService[] = []
     >(
         this: THIS,
         ...hired: [...HIRED]
-    ) => ProductSupplierGuard<
-        ProductSupplier<
+    ) => AppServiceGuard<
+        AppService<
             THIS["name"],
             THIS["_constraint"],
             THIS["_optionalKeys"],
             THIS["_known"],
             Merge<
                 {
-                    [SUPPLIER in HIRED[number] as SUPPLIER["name"]]?: Supply<SUPPLIER>
+                    [SERVICE in HIRED[number] as SERVICE["name"]]?: Supply<SERVICE>
                 },
                 Merge<
                     Omit<
@@ -90,7 +86,7 @@ export interface ProductSupplier<
         >,
         HIRED
     >
-    _product: true
+    _app: true
     _request: false
     _constraint: CONSTRAINT
     _optionalKeys: OPTIONAL_KEYS
@@ -99,32 +95,32 @@ export interface ProductSupplier<
     _deps: SupplyDeps<TO_SUPPLY, OPTIONAL_KEYS>
     _oldToSupply: TO_SUPPLY
     _oldDeps: SupplyDeps<TO_SUPPLY, OPTIONAL_KEYS>
-    /** Array of suppliers this supplier depends on */
-    _suppliers: MainSupplier[]
-    /** Array of optional request suppliers this supplier may depend on */
-    _optionals: RequestSupplier[]
-    _team: Supplier[]
+    /** Array of services this service depends on */
+    _services: MainService[]
+    /** Array of optional request services this service may depend on */
+    _optionals: RequestService[]
+    _team: Service[]
     _hired: HIRED
-    /** Factory function that creates the product from its dependencies */
+    /** Factory function that creates the service's value from its dependencies */
     _factory: (deps: any, ctx: Ctx<any, any>) => any
     /** Optional initialization function called after factory */
     _init?: (value: any, deps: any) => void
-    _build: <THIS extends UnknownProductSupplier>(
+    _build: <THIS extends UnknownAppService>(
         this: THIS,
         supplies: SuppliesRecord
     ) => Supply<THIS>
-    /** Whether this supplier should be lazily evaluated */
+    /** Whether this service should be lazily evaluated */
     _lazy?: boolean
     _mock: MOCK
     _composite: COMPOSITE
 }
 
-export type Supplier = UnknownProductSupplier | RequestSupplier
-export type MainSupplier = Supplier & {
+export type Service = UnknownAppService | RequestService
+export type MainService = Service & {
     _mock: false
 }
 
-export type UnknownProductSupplier = ProductSupplier<
+export type UnknownAppService = AppService<
     string,
     unknown,
     string,
@@ -135,19 +131,19 @@ export type UnknownProductSupplier = ProductSupplier<
 >
 
 export type Mock<
-    SUPPLIER extends UnknownProductSupplier,
-    CONSTRAINT2 extends SUPPLIER["_constraint"],
-    SUPPLIERS2 extends MainSupplier[] = [],
-    OPTIONALS2 extends RequestSupplier[] = []
+    SERVICE extends UnknownAppService,
+    CONSTRAINT2 extends SERVICE["_constraint"],
+    SERVICES2 extends MainService[] = [],
+    OPTIONALS2 extends RequestService[] = []
 > = Omit<
-    ProductSupplier<
-        SUPPLIER["name"],
+    AppService<
+        SERVICE["name"],
         CONSTRAINT2,
         OPTIONALS2[number]["name"],
         Record<never, never>,
         ToSupply<
             {
-                suppliers: SUPPLIERS2
+                services: SERVICES2
                 optionals: OPTIONALS2
             },
             Record<never, never>
@@ -159,40 +155,40 @@ export type Mock<
 > & {
     _mock: true
     _composite: false
-    _oldToSupply: SUPPLIER["_toSupply"]
-    _oldDeps: SUPPLIER["_deps"]
+    _oldToSupply: SERVICE["_toSupply"]
+    _oldDeps: SERVICE["_deps"]
 }
 
 /**
- * Represents a supply - The result of assembling a supplier
- * with all its product and request dependencies, which can easily be passed
- * to other suppliers.
+ * Represents a supply - The result of assembling a service
+ * with all its app and request dependencies, which can easily be passed
+ * to other services.
  *
  * @typeParam NAME - The unique identifier name for this supply
  * @typeParam VALUE - The type of value this supply holds
  * @public
  */
-export type ProductSupply<SUPPLIER extends UnknownProductSupplier> = {
-    name: SUPPLIER["name"]
-    unpack: () => SUPPLIER["_constraint"]
-    deps: SUPPLIER["_deps"]
+export type AppSupply<SERVICE extends UnknownAppService> = {
+    name: SERVICE["name"]
+    unpack: () => SERVICE["_constraint"]
+    deps: SERVICE["_deps"]
     supplies: {
-        [NAME in keyof SUPPLIER["_toSupply"]]-?: NonNullable<
-            SUPPLIER["_toSupply"][NAME]
+        [NAME in keyof SERVICE["_toSupply"]]-?: NonNullable<
+            SERVICE["_toSupply"][NAME]
         >
     }
-    supplier: SUPPLIER
+    service: SERVICE
     _ctx: Ctx<any>
     _packed: boolean
 }
 
-export type RequestSupply<SUPPLIER extends RequestSupplier> = {
-    name: SUPPLIER["name"]
-    unpack: () => SUPPLIER["_constraint"]
-    supplier: SUPPLIER
+export type RequestSupply<SERVICE extends RequestService> = {
+    name: SERVICE["name"]
+    unpack: () => SERVICE["_constraint"]
+    service: SERVICE
     _packed: boolean
 }
 
-export type Supply<SUPPLIER extends Supplier> =
-    SUPPLIER extends RequestSupplier ? RequestSupply<SUPPLIER>
-    :   ProductSupply<Extract<SUPPLIER, UnknownProductSupplier>>
+export type Supply<SERVICE extends Service> =
+    SERVICE extends RequestService ? RequestSupply<SERVICE>
+    :   AppSupply<Extract<SERVICE, UnknownAppService>>

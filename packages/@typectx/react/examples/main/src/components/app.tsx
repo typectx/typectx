@@ -3,13 +3,13 @@ import { $SelectSession } from "@/components/session"
 import { req } from "@/req"
 import { $userQuery, type User } from "@/api"
 import { useState } from "react"
-import { index, supplier } from "typectx"
+import { index, service } from "typectx"
 import { useAssembleComponent, useDeps } from "@typectx/react"
 import { useAssertStable } from "@/hooks"
 import { useQuery } from "@tanstack/react-query"
 
-export const $App = supplier("App").product({
-    suppliers: [$userQuery, req.$defaultUser],
+export const $App = service("App").app({
+    services: [$userQuery, req.$defaultUser],
     factory: (initDeps, ctx) =>
         function App() {
             const { userQuery, defaultUser } = useDeps(initDeps)

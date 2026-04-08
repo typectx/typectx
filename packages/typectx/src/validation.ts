@@ -4,11 +4,7 @@
  * @internal
  */
 
-import type {
-    RequestSupplier,
-    Supplier,
-    UnknownProductSupplier
-} from "#types/public"
+import type { RequestService, Service, UnknownAppService } from "#types/public"
 
 /**
  * Validates that a value is a string.
@@ -98,18 +94,17 @@ export function assertFunction(
 }
 
 /**
- * Validates the configuration object for product suppliers.
- * @param name - Supplier name, used in error messages
+ * Validates the configuration object for app services.
+ * @param name - Service name, used in error messages
  * @param config - The configuration object to validate
  * @internal
  * @throws TypeError if the configuration is invalid
  */
-export function assertProductConfig(
+export function assertAppServiceConfig(
     name: string,
     config: {
-        suppliers?: unknown
+        services?: unknown
         optionals?: unknown
-        assemblers?: unknown
         factory?: unknown
         init?: unknown
         lazy?: unknown
@@ -121,13 +116,11 @@ export function assertProductConfig(
         assertFunction(name, config.factory)
     }
 
-    const suppliers = config.suppliers ?? []
+    const services = config.services ?? []
     const optionals = config.optionals ?? []
-    const assemblers = config.assemblers ?? []
 
-    assertSuppliers(name, suppliers)
-    assertRequestSuppliers(name, optionals)
-    assertProductSuppliers(name, assemblers, true)
+    assertServices(name, services)
+    assertRequestServices(name, optionals)
 
     if (config.init !== undefined) {
         assertFunction(name, config.init)
@@ -140,91 +133,90 @@ export function assertProductConfig(
     }
 }
 
-export function assertRequestSupplier(
-    supplier: unknown
-): asserts supplier is RequestSupplier {
-    assertHasProperty("noname", supplier, "name")
-    assertString("noname", supplier.name)
+export function assertRequestService(
+    service: unknown
+): asserts service is RequestService {
+    assertHasProperty("noname", service, "name")
+    assertString("noname", service.name)
 
-    assertHasProperty(supplier.name, supplier, "_request")
-    if (!supplier._request) {
-        throw new TypeError(`${supplier.name} is not a request supplier`)
+    assertHasProperty(service.name, service, "_request")
+    if (!service._request) {
+        throw new TypeError(`${service.name} is not a request service`)
     }
 }
 
-export function assertProductSupplier(
-    supplier: unknown,
+export function assertAppService(
+    service: unknown,
     allowMocks: boolean = false
-): asserts supplier is UnknownProductSupplier {
-    assertHasProperty("noname", supplier, "name")
-    assertString("noname", supplier.name)
-    assertHasProperty(supplier.name, supplier, "_product")
-    assertHasProperty(supplier.name, supplier, "_mock")
+): asserts service is UnknownAppService {
+    assertHasProperty("noname", service, "name")
+    assertString("noname", service.name)
+    assertHasProperty(service.name, service, "_app")
+    assertHasProperty(service.name, service, "_mock")
 
     if (
         !allowMocks &&
-        "hired" in supplier &&
-        Array.isArray(supplier.hired) &&
-        supplier.hired.length > 0
+        "hired" in service &&
+        Array.isArray(service.hired) &&
+        service.hired.length > 0
     ) {
         throw new TypeError(
-            `Cannot depend on ${supplier.name} composite supplier`
+            `Cannot depend on ${service.name} composite service`
         )
     }
 
-    if (!allowMocks && supplier._mock) {
-        throw new TypeError(`Cannot depend on ${supplier.name} mock supplier`)
+    if (!allowMocks && service._mock) {
+        throw new TypeError(`Cannot depend on ${service.name} mock service`)
     }
 }
 
 /**
- * Validates that all items in an array are valid suppliers.
+ * Validates that all items in an array are valid services.
  * @param name - The parameter name for error messages
- * @param suppliers - The suppliers array to validate
+ * @param services - The services array to validate
  * @param allowMocks - Whether to allow mocks
  * @internal
- * @throws TypeError if any supplier is invalid
+ * @throws TypeError if any service is invalid
  */
-export function assertSuppliers(
+export function assertServices(
     name: string,
-    suppliers: unknown,
+    services: unknown,
     allowMocks: boolean = false
-): asserts suppliers is Supplier[] {
-    if (!Array.isArray(suppliers)) {
+): asserts services is Service[] {
+    if (!Array.isArray(services)) {
         throw new TypeError(`${name} must be an array`)
     }
-
-    suppliers.forEach((supplier) => {
+    services.forEach((service) => {
         try {
-            assertRequestSupplier(supplier)
+            assertRequestService(service)
             return
         } catch (e) {
-            assertProductSupplier(supplier, allowMocks)
+            assertAppService(service, allowMocks)
         }
     })
 }
 
-export function assertRequestSuppliers(
+export function assertRequestServices(
     name: string,
-    suppliers: unknown
-): asserts suppliers is RequestSupplier[] {
-    if (!Array.isArray(suppliers)) {
+    services: unknown
+): asserts services is RequestService[] {
+    if (!Array.isArray(services)) {
         throw new TypeError(`${name} must be an array`)
     }
-    suppliers.forEach((supplier) => {
-        assertRequestSupplier(supplier)
+    services.forEach((service) => {
+        assertRequestService(service)
     })
 }
 
-export function assertProductSuppliers(
+export function assertAppServices(
     name: string,
-    suppliers: unknown,
+    services: unknown,
     allowMocks: boolean = false
-): asserts suppliers is UnknownProductSupplier[] {
-    if (!Array.isArray(suppliers)) {
+): asserts services is UnknownAppService[] {
+    if (!Array.isArray(services)) {
         throw new TypeError(`${name} must be an array`)
     }
-    suppliers.forEach((supplier) => {
-        assertProductSupplier(supplier, allowMocks)
+    services.forEach((service) => {
+        assertAppService(service, allowMocks)
     })
 }

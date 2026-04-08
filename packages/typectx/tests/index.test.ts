@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { supplier } from "#index"
+import { service } from "#index"
 import { index, once, sleep } from "#utils"
 
 describe("typectx", () => {
@@ -7,30 +7,30 @@ describe("typectx", () => {
         vi.clearAllMocks()
     })
 
-    describe("Request suppliers", () => {
-        it("should add a request supplier and pack it", () => {
-            const $input = supplier("input").request<string>()
+    describe("Request services", () => {
+        it("should add a request service and pack it", () => {
+            const $input = service("input").request<string>()
 
             const pack = $input.pack("test-value")
 
             expect(pack.unpack()).toBe("test-value")
-            expect(pack.supplier.name).toBe("input")
+            expect(pack.service.name).toBe("input")
             expect($input.name).toBe("input")
             expect($input._request).toBe(true)
         })
 
-        it("should allow creating suppliers with the same name independently", () => {
-            const $a = supplier("duplicate").request<string>()
-            const $b = supplier("duplicate").request<string>()
+        it("should allow creating services with the same name independently", () => {
+            const $a = service("duplicate").request<string>()
+            const $b = service("duplicate").request<string>()
 
             expect($a.name).toBe("duplicate")
             expect($b.name).toBe("duplicate")
         })
 
         it("should handle different types correctly", () => {
-            const $string = supplier("string").request<string>()
-            const $number = supplier("number").request<number>()
-            const $object = supplier("object").request<{
+            const $string = service("string").request<string>()
+            const $number = service("number").request<number>()
+            const $object = service("object").request<{
                 name: string
             }>()
 
@@ -42,28 +42,28 @@ describe("typectx", () => {
         })
     })
 
-    describe("Product Suppliers", () => {
-        it("should add a product supplier with no suppliers (resource)", () => {
-            const $resource = supplier("resource").product({
-                factory: () => "resource"
+    describe("App Services", () => {
+        it("should add an app service with no dependencies", () => {
+            const $product = service("product").app({
+                factory: () => "product"
             })
 
-            expect($resource.assemble({}).unpack()).toBe("resource")
-            expect($resource.name).toBe("resource")
-            expect($resource._product).toBe(true)
+            expect($product.assemble({}).unpack()).toBe("product")
+            expect($product.name).toBe("product")
+            expect($product._app).toBe(true)
         })
 
-        it("should add a product supplier with suppliers", () => {
-            const $A = supplier("A").product({
+        it("should add an app service with dependencies", () => {
+            const $A = service("A").app({
                 factory: () => "A"
             })
 
-            const $B = supplier("B").product({
+            const $B = service("B").app({
                 factory: () => "B"
             })
 
-            const $test = supplier("test").product({
-                suppliers: [$A, $B],
+            const $test = service("test").app({
+                services: [$A, $B],
                 factory: ({ A, B }) => {
                     return {
                         A,
@@ -80,17 +80,17 @@ describe("typectx", () => {
     })
 
     describe("Supply Chain", () => {
-        it("should assemble supplies from suppliers", () => {
-            const $A = supplier("A").product({
+        it("should assemble supplies from services", () => {
+            const $A = service("A").app({
                 factory: () => "A"
             })
 
-            const $B = supplier("B").product({
+            const $B = service("B").app({
                 factory: () => "B"
             })
 
-            const $main = supplier("main").product({
-                suppliers: [$A, $B],
+            const $main = service("main").app({
+                services: [$A, $B],
                 factory: ({ A, B }) => {
                     return {
                         A,
@@ -106,12 +106,12 @@ describe("typectx", () => {
         })
 
         it("should respect initial supplies and not override them during assembly", () => {
-            const $resource = supplier("resource").product({
+            const $resource = service("resource").app({
                 factory: () => "resource"
             })
 
-            const $main = supplier("main").product({
-                suppliers: [$resource],
+            const $main = service("main").app({
+                services: [$resource],
                 factory: ({ resource }) => {
                     return {
                         resource
@@ -129,12 +129,12 @@ describe("typectx", () => {
         })
 
         it("should enable context switching by calling ctx() in a factory", () => {
-            const $config = supplier("config").request<string>()
-            const $name = supplier("name").request<string>()
-            const $count = supplier("count").request<number>()
+            const $config = service("config").request<string>()
+            const $name = service("name").request<string>()
+            const $count = service("count").request<number>()
 
-            const $test = supplier("test").product({
-                suppliers: [$config, $name, $count],
+            const $test = service("test").app({
+                services: [$config, $name, $count],
                 factory: ({ config, name, count }) => {
                     return {
                         config,
@@ -144,8 +144,8 @@ describe("typectx", () => {
                 }
             })
 
-            const $main = supplier("main").product({
-                suppliers: [$test],
+            const $main = service("main").app({
+                services: [$test],
                 factory: (deps, ctx) => {
                     const newTestA = ctx($test)
                         .assemble(
@@ -212,7 +212,7 @@ describe("typectx", () => {
     describe("Factory memoization", () => {
         it("should create separate memoization contexts for different assembly calls", () => {
             const factorySpy = vi.fn().mockReturnValue("resource")
-            const $resource = supplier("resource").product({
+            const $resource = service("resource").app({
                 factory: factorySpy
             })
 
@@ -228,12 +228,12 @@ describe("typectx", () => {
 
         it("should memoize factory calls when accessed multiple times within the same assembly context", () => {
             const factorySpy = vi.fn().mockReturnValue("memoized")
-            const $spy = supplier("spy").product({
+            const $spy = service("spy").app({
                 factory: factorySpy
             })
 
-            const $test = supplier("test").product({
-                suppliers: [$spy],
+            const $test = service("test").app({
+                services: [$spy],
                 factory: (deps) => {
                     const spyAccess = deps.spy
                     const spyAccess2 = deps.spy
@@ -249,19 +249,19 @@ describe("typectx", () => {
 
         it("should keep memoization even if multiple dependents are nested", () => {
             const factory1Spy = vi.fn().mockReturnValue("A")
-            const $A = supplier("A").product({
+            const $A = service("A").app({
                 factory: factory1Spy
             })
 
-            const $B = supplier("B").product({
-                suppliers: [$A],
+            const $B = service("B").app({
+                services: [$A],
                 factory: ({ A }) => {
                     return "B"
                 }
             })
 
-            const $test = supplier("test").product({
-                suppliers: [$A, $B],
+            const $test = service("test").app({
+                services: [$A, $B],
                 factory: ({ A, B }) => {
                     return {
                         A,
@@ -279,31 +279,31 @@ describe("typectx", () => {
             expect(factory1Spy).toHaveBeenCalledTimes(1)
         })
 
-        it("should reassemble if dependent suppliers reassembles", async () => {
+        it("should reassemble if dependent services reassembles", async () => {
             // A will be reassembled
-            const $A = supplier("A").product({
+            const $A = service("A").app({
                 factory: () => Date.now()
             })
 
             // B will be reassembled when A reassembles
-            const $B = supplier("B").product({
-                suppliers: [$A],
+            const $B = service("B").app({
+                services: [$A],
                 factory: () => Date.now()
             })
 
             // C - doesn't depend on anything, so it will not be reassembled
-            const $C = supplier("C").product({
+            const $C = service("C").app({
                 factory: () => Date.now()
             })
 
             // D will be reassembled when B reassembles
-            const $D = supplier("D").product({
-                suppliers: [$B],
+            const $D = service("D").app({
+                services: [$B],
                 factory: () => Date.now()
             })
 
-            const $E = supplier("E").product({
-                suppliers: [$A, $B, $C, $D],
+            const $E = service("E").app({
+                services: [$A, $B, $C, $D],
                 factory: ({ A, B, C, D }) => {
                     return {
                         A,
@@ -314,8 +314,8 @@ describe("typectx", () => {
                 }
             })
 
-            const $main = supplier("main").product({
-                suppliers: [$E],
+            const $main = service("main").app({
+                services: [$E],
                 factory: async ({ E }, ctx) => {
                     await sleep(100)
 
@@ -336,30 +336,30 @@ describe("typectx", () => {
         })
     })
     describe("Eager init (prerun) behavior", () => {
-        it("should init eager product suppliers, not lazy ones ", async () => {
+        it("should init eager app services, not lazy ones ", async () => {
             const initedValueSpy = vi
                 .fn<() => "inited">()
                 .mockReturnValue("inited")
             const normalValueSpy = vi.fn().mockReturnValue("normal")
             const lazyValueSpy = vi.fn().mockReturnValue("lazy")
 
-            const $inited = supplier("inited").product({
+            const $inited = service("inited").app({
                 factory: () => initedValueSpy,
                 init: (product) => product()
             })
 
-            const $normal = supplier("normal").product({
+            const $normal = service("normal").app({
                 factory: () => normalValueSpy
             })
 
-            const $lazy = supplier("lazy").product({
+            const $lazy = service("lazy").app({
                 factory: () => lazyValueSpy,
                 init: (product) => product(),
                 lazy: true
             })
 
-            const $main = supplier("main").product({
-                suppliers: [$inited, $normal, $lazy],
+            const $main = service("main").app({
+                services: [$inited, $normal, $lazy],
                 factory: () => {
                     // Don't access any dependencies yet
                     return "main"
@@ -381,13 +381,13 @@ describe("typectx", () => {
                 throw new Error()
             })
 
-            const $error = supplier("error").product({
+            const $error = service("error").app({
                 factory: () => once(errorValueSpy),
                 init: (product) => product()
             })
 
-            const $main = supplier("main").product({
-                suppliers: [$error],
+            const $main = service("main").app({
+                services: [$error],
                 factory: () => {
                     // Don't access $error factory yet
                     return "main"
@@ -403,18 +403,18 @@ describe("typectx", () => {
             expect(errorValueSpy).toHaveBeenCalledTimes(1)
         })
 
-        it("should still throw error when accessing a failed inited supplier's product", async () => {
+        it("should still throw error when accessing a failed inited service's product", async () => {
             const errorValueSpy = vi.fn().mockImplementation(() => {
                 throw new Error()
             })
 
-            const $error = supplier("error").product({
+            const $error = service("error").app({
                 factory: () => once(errorValueSpy),
                 init: (product) => product()
             })
 
-            const $main = supplier("main").product({
-                suppliers: [$error],
+            const $main = service("main").app({
+                services: [$error],
                 factory: ({ error }) => {
                     return "main"
                 }
@@ -430,17 +430,17 @@ describe("typectx", () => {
             const ASpy = vi.fn().mockReturnValue("A")
             const BSpy = vi.fn().mockReturnValue("B")
 
-            const $A = supplier("A").product({
+            const $A = service("A").app({
                 factory: () => once(ASpy),
                 init: (product) => product()
             })
 
-            const $B = supplier("B").product({
+            const $B = service("B").app({
                 factory: () => once(BSpy)
             })
 
-            const $main = supplier("main").product({
-                suppliers: [$A, $B],
+            const $main = service("main").app({
+                services: [$A, $B],
                 factory: () => {
                     return "main"
                 }
@@ -457,15 +457,15 @@ describe("typectx", () => {
     })
 
     describe("Lazy Feature", () => {
-        it("should run factory for non-lazy suppliers during assemble", async () => {
+        it("should run factory for non-lazy services during assemble", async () => {
             const eagerSpy = vi.fn().mockReturnValue("eager")
-            const $eager = supplier("eager").product({
+            const $eager = service("eager").app({
                 factory: eagerSpy,
                 lazy: false // explicitly non-lazy
             })
 
-            const $main = supplier("main").product({
-                suppliers: [$eager],
+            const $main = service("main").app({
+                services: [$eager],
                 factory: () => "main"
             })
 
@@ -475,15 +475,15 @@ describe("typectx", () => {
             expect(eagerSpy).toHaveBeenCalledTimes(1)
         })
 
-        it("should NOT run factory for lazy suppliers during assemble", () => {
+        it("should NOT run factory for lazy services during assemble", () => {
             const lazySpy = vi.fn().mockReturnValue("lazy")
-            const $lazy = supplier("lazy").product({
+            const $lazy = service("lazy").app({
                 factory: lazySpy,
                 lazy: true
             })
 
-            const $main = supplier("main").product({
-                suppliers: [$lazy],
+            const $main = service("main").app({
+                services: [$lazy],
                 factory: () => "main"
             })
 
@@ -493,15 +493,15 @@ describe("typectx", () => {
             expect(lazySpy).toHaveBeenCalledTimes(0)
         })
 
-        it("should run lazy supplier factory only when first accessed", () => {
+        it("should run lazy service factory only when first accessed", () => {
             const lazySpy = vi.fn().mockReturnValue("lazy")
-            const $lazy = supplier("lazy").product({
+            const $lazy = service("lazy").app({
                 factory: lazySpy,
                 lazy: true
             })
 
-            const $main = supplier("main").product({
-                suppliers: [$lazy],
+            const $main = service("main").app({
+                services: [$lazy],
                 factory: ({ lazy }) => {
                     return lazy
                 }
@@ -511,15 +511,15 @@ describe("typectx", () => {
             expect(lazySpy).toHaveBeenCalledTimes(1)
         })
 
-        it("should handle lazy suppliers with reassembly", () => {
+        it("should handle lazy services with reassembly", () => {
             const lazySpy = vi.fn().mockReturnValue("lazy")
-            const $lazy = supplier("lazy").product({
+            const $lazy = service("lazy").app({
                 factory: lazySpy,
                 lazy: true
             })
 
-            const $main = supplier("main").product({
-                suppliers: [$lazy],
+            const $main = service("main").app({
+                services: [$lazy],
                 factory: ({ lazy }, ctx) => {
                     expect(lazySpy).toHaveBeenCalledTimes(1)
 
@@ -537,10 +537,10 @@ describe("typectx", () => {
             expect(lazySpy).toHaveBeenCalledTimes(2)
         })
 
-        it("should handle lazy suppliers with mocks", () => {
+        it("should handle lazy services with mocks", () => {
             const originalSpy = vi.fn().mockReturnValue("original")
             const mockSpy = vi.fn().mockReturnValue("mock")
-            const $original = supplier("original").product({
+            const $original = service("original").app({
                 factory: originalSpy,
                 lazy: true
             })
@@ -550,8 +550,8 @@ describe("typectx", () => {
                 lazy: true
             })
 
-            const $main = supplier("main").product({
-                suppliers: [$original],
+            const $main = service("main").app({
+                services: [$original],
                 factory: ({ original }) => {
                     return original
                 }
@@ -571,13 +571,13 @@ describe("typectx", () => {
 
         it("should default to non-lazy behavior when lazy is not specified", async () => {
             const eagerSpy = vi.fn().mockReturnValue("default-eager")
-            const $default = supplier("default").product({
+            const $default = service("default").app({
                 factory: eagerSpy
                 // lazy not specified, should default to false
             })
 
-            const $main = supplier("main").product({
-                suppliers: [$default],
+            const $main = service("main").app({
+                services: [$default],
                 factory: () => "main"
             })
 
@@ -587,17 +587,17 @@ describe("typectx", () => {
             expect(eagerSpy).toHaveBeenCalledTimes(1)
         })
 
-        it("should not init lazy suppliers even when init is specified", async () => {
+        it("should not init lazy services even when init is specified", async () => {
             const initSpy = vi.fn()
             const factorySpy = vi.fn().mockReturnValue("lazy-with-init")
-            const $lazy = supplier("lazy").product({
+            const $lazy = service("lazy").app({
                 factory: factorySpy,
                 init: initSpy,
                 lazy: true
             })
 
-            const $main = supplier("main").product({
-                suppliers: [$lazy],
+            const $main = service("main").app({
+                services: [$lazy],
                 factory: () => "main"
             })
 
@@ -606,26 +606,26 @@ describe("typectx", () => {
             // Wait a bit for any initing to complete
             await sleep(10)
 
-            // Lazy supplier should not be inited
+            // Lazy service should not be inited
             expect(factorySpy).toHaveBeenCalledTimes(0)
             expect(initSpy).toHaveBeenCalledTimes(0)
 
             // Only when accessed should the factory run
             expect(mainSupply.unpack()).toBe("main")
-            expect(factorySpy).toHaveBeenCalledTimes(0) // Still not called since we don't access the lazy supplier
+            expect(factorySpy).toHaveBeenCalledTimes(0) // Still not called since we don't access the lazy service
         })
 
-        it("should init non-lazy suppliers when init is specified", async () => {
+        it("should init non-lazy services when init is specified", async () => {
             const initSpy = vi.fn()
             const factorySpy = vi.fn().mockReturnValue(() => "eager-with-init")
-            const $eager = supplier("eager").product({
+            const $eager = service("eager").app({
                 factory: factorySpy,
                 init: initSpy,
                 lazy: false
             })
 
-            const $main = supplier("main").product({
-                suppliers: [$eager],
+            const $main = service("main").app({
+                services: [$eager],
                 factory: () => "main"
             })
 
@@ -633,7 +633,7 @@ describe("typectx", () => {
 
             await sleep(10)
 
-            // Eager supplier should be inited
+            // Eager service should be inited
             expect(factorySpy).toHaveBeenCalledTimes(1)
             expect(initSpy).toHaveBeenCalledTimes(1)
             expect(mainSupply.unpack()).toBe("main")
@@ -641,8 +641,8 @@ describe("typectx", () => {
     })
 
     describe("Type Safety and Edge Cases", () => {
-        it("should handle empty suppliers correctly", () => {
-            const $empty = supplier("empty").product({
+        it("should handle empty services correctly", () => {
+            const $empty = service("empty").app({
                 factory: () => "empty"
             })
 
