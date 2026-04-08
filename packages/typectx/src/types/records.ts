@@ -1,10 +1,10 @@
-import type { UnknownProductSupplierPlan } from "#types/internal"
+import type { UnknownAppServicePlan } from "#types/internal"
 import type {
     Supply,
-    Supplier,
-    UnknownProductSupplier,
-    RequestSupplier,
-    ProductSupplier
+    Service,
+    UnknownAppService,
+    RequestService,
+    AppService
 } from "#types/public"
 import type { Merge, UnionToIntersection } from "#utils"
 
@@ -13,18 +13,18 @@ export type MaybeFn<A extends any[], R> = R | ((...args: A) => R)
  * A generic map of supplies
  * @public
  */
-export type SuppliesRecord<SUPPLIER extends Supplier = Supplier> = Record<
+export type SuppliesRecord<SERVICE extends Service = Service> = Record<
     string,
-    MaybeFn<[], Supply<SUPPLIER>>
+    MaybeFn<[], Supply<SERVICE>>
 >
 
 /**
  * A generic map of resolved supplies
  * @public
  */
-export type ResolvedRecord<SUPPLIER extends Supplier = Supplier> = Record<
+export type ResolvedRecord<SERVICE extends Service = Service> = Record<
     string,
-    Supply<SUPPLIER>
+    Supply<SERVICE>
 >
 
 /**
@@ -32,34 +32,34 @@ export type ResolvedRecord<SUPPLIER extends Supplier = Supplier> = Record<
  * @public
  */
 export type SuppliesOrUndefinedRecord<
-    SUPPLIER extends UnknownProductSupplier = UnknownProductSupplier
-> = Record<string, MaybeFn<[], Supply<SUPPLIER>> | undefined>
+    SERVICE extends UnknownAppService = UnknownAppService
+> = Record<string, MaybeFn<[], Supply<SERVICE>> | undefined>
 
 type ToSupplyBase<
-    PLAN extends Pick<UnknownProductSupplierPlan, "optionals"> & {
-        suppliers: Supplier[]
+    PLAN extends Pick<UnknownAppServicePlan, "optionals"> & {
+        services: Service[]
     }
 > = {
-    [SUPPLIER in Extract<
-        PLAN["suppliers"][number],
-        RequestSupplier
-    > as SUPPLIER["name"]]: Supply<SUPPLIER>
+    [SERVICE in Extract<
+        PLAN["services"][number],
+        RequestService
+    > as SERVICE["name"]]: Supply<SERVICE>
 } & {
     [OPTIONAL in
         | PLAN["optionals"][number]
         | Exclude<
-              PLAN["suppliers"][number],
-              RequestSupplier
-          > as OPTIONAL["name"]]?: OPTIONAL extends RequestSupplier ?
+              PLAN["services"][number],
+              RequestService
+          > as OPTIONAL["name"]]?: OPTIONAL extends RequestService ?
         Supply<OPTIONAL>
-    : OPTIONAL extends UnknownProductSupplier ?
+    : OPTIONAL extends UnknownAppService ?
         Supply<
-            ProductSupplier<
+            AppService<
                 OPTIONAL["name"],
                 OPTIONAL["_constraint"],
                 OPTIONAL["_optionalKeys"],
                 OPTIONAL["_known"],
-                Partial<ResolvedRecord<Supplier>>,
+                Partial<ResolvedRecord<Service>>,
                 OPTIONAL["_hired"],
                 OPTIONAL["_mock"],
                 OPTIONAL["_composite"]
@@ -69,13 +69,13 @@ type ToSupplyBase<
 }
 
 type FirstProperty<
-    SUPPLIERS extends Supplier[],
+    SERVICES extends Service[],
     KEY extends "_toSupply" | "_deps",
     NAME extends PropertyKey
 > =
-    SUPPLIERS extends [infer Head, ...infer Tail] ?
-        Tail extends Supplier[] ?
-            Head extends UnknownProductSupplier ?
+    SERVICES extends [infer Head, ...infer Tail] ?
+        Tail extends Service[] ?
+            Head extends UnknownAppService ?
                 NAME extends keyof Head[KEY] ?
                     Head[KEY][NAME]
                 :   FirstProperty<Tail, KEY, NAME>
@@ -84,67 +84,64 @@ type FirstProperty<
     :   never
 
 export type ToSupply<
-    PLAN extends Pick<UnknownProductSupplierPlan, "optionals"> & {
-        suppliers: Supplier[]
+    PLAN extends Pick<UnknownAppServicePlan, "optionals"> & {
+        services: Service[]
     },
-    KNOWN extends ResolvedRecord<Supplier>
+    KNOWN extends ResolvedRecord<Service>
 > =
-    any[] extends PLAN["suppliers"] ? any
+    any[] extends PLAN["services"] ? any
     :   Merge<
             ToSupplyBase<PLAN> & {
                 [NAME in keyof UnionToIntersection<
                     Extract<
-                        PLAN["suppliers"][number],
-                        UnknownProductSupplier
+                        PLAN["services"][number],
+                        UnknownAppService
                     >["_toSupply"]
                 > as NAME extends keyof ToSupplyBase<PLAN> ? never
-                :   NAME]: FirstProperty<PLAN["suppliers"], "_toSupply", NAME>
+                :   NAME]: FirstProperty<PLAN["services"], "_toSupply", NAME>
             },
             Partial<KNOWN>
         >
 
 type DepsBase<
-    PLAN extends Pick<UnknownProductSupplierPlan, "optionals"> & {
-        suppliers: Supplier[]
+    PLAN extends Pick<UnknownAppServicePlan, "optionals"> & {
+        services: Service[]
     }
 > = {
-    [SUPPLIER in
-        | PLAN["suppliers"][number]
-        | PLAN["optionals"][number] as SUPPLIER["name"]]: SUPPLIER extends (
-        PLAN["suppliers"][number]
+    [SERVICE in
+        | PLAN["services"][number]
+        | PLAN["optionals"][number] as SERVICE["name"]]: SERVICE extends (
+        PLAN["services"][number]
     ) ?
-        SUPPLIER["_constraint"]
-    :   SUPPLIER["_constraint"] | undefined
+        SERVICE["_constraint"]
+    :   SERVICE["_constraint"] | undefined
 }
 
 // Same as Resolved, but unpacked from the supply wrapper
 export type Deps<
-    PLAN extends Pick<UnknownProductSupplierPlan, "optionals"> & {
-        suppliers: Supplier[]
+    PLAN extends Pick<UnknownAppServicePlan, "optionals"> & {
+        services: Service[]
     }
 > =
-    any[] extends PLAN["suppliers"] ? any
+    any[] extends PLAN["services"] ? any
     :   DepsBase<PLAN> & {
             [NAME in keyof UnionToIntersection<
-                Extract<
-                    PLAN["suppliers"][number],
-                    UnknownProductSupplier
-                >["_deps"]
+                Extract<PLAN["services"][number], UnknownAppService>["_deps"]
             > as NAME extends keyof DepsBase<PLAN> ? never
-            :   NAME]: FirstProperty<PLAN["suppliers"], "_deps", NAME>
+            :   NAME]: FirstProperty<PLAN["services"], "_deps", NAME>
         }
 
 export type SupplyDeps<
-    TO_SUPPLY extends Partial<ResolvedRecord<Supplier>>,
+    TO_SUPPLY extends Partial<ResolvedRecord<Service>>,
     OPTIONAL_KEYS extends string
 > =
     string extends keyof Required<TO_SUPPLY> ? any
     :   {
             [NAME in keyof TO_SUPPLY]-?: Required<TO_SUPPLY>[NAME] extends (
-                Supply<infer SUPPLIER>
+                Supply<infer SERVICE>
             ) ?
                 NAME extends OPTIONAL_KEYS ?
-                    SUPPLIER["_constraint"] | undefined
-                :   SUPPLIER["_constraint"]
+                    SERVICE["_constraint"] | undefined
+                :   SERVICE["_constraint"]
             :   never
         }

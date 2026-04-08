@@ -10,12 +10,12 @@ import SectionSeparator from "@site/src/components/SectionSeparator"
 
 import styles from "./index.module.css"
 
-const heroCode = `import { index, supplier } from "typectx"
+const heroCode = `import { index, service } from "typectx"
 
-// Define suppliers
-const $session = supplier("session").request<{ userId: string }>()
-const $api = supplier("api").product({
-    suppliers: [$session],
+// Define services
+const $session = service("session").request<{ userId: string }>()
+const $api = service("api").app({
+    services: [$session],
     factory: ({ session }) => new ApiClient(session.userId)
 })
 
@@ -27,19 +27,19 @@ const api = $api
 // Use it!
 const users = await api.getUsers()`
 
-const typeExample = `const $flags = supplier("flags").request<{
+const typeExample = `const $flags = service("flags").request<{
     darkMode: boolean;
 }>();
 
-const $db = supplier("db").product({
+const $db = service("db").app({
     factory: () => new DatabaseClient() // Returns a DatabaseClient instance
 });
 
-const $userService = supplier("userService").product({
-    suppliers: [$flags, $db],
+const $userService = service("userService").app({
+    services: [$flags, $db],
     factory: ({ flags, db }) => {
         // No explicit types needed! They are all inferred.
-        // flags: { darkMode: boolean } (Inferred from the supplier(...).request<T>() definition)
+        // flags: { darkMode: boolean } (Inferred from the service(...).request<T>() definition)
         // db: DatabaseClient (Inferred from the $db's factory return type)
 
         return {
@@ -50,7 +50,7 @@ const $userService = supplier("userService").product({
 });`
 
 const performanceExample = `// An expensive service, lazy-loaded for on-demand performance.
-const $reportGenerator = supplier("reportGenerator").product({
+const $reportGenerator = service("reportGenerator").app({
     factory: () => {
         // This expensive logic runs only ONCE, the first time it's needed.
         console.log("🚀 Initializing Report Generator...");
@@ -59,8 +59,8 @@ const $reportGenerator = supplier("reportGenerator").product({
     lazy: true
 });
 
-const $app = supplier("app").product({
-    suppliers: [$reportGenerator],
+const $app = service("app").app({
+    services: [$reportGenerator],
     factory: (deps) => (userAction: "view_dashboard" | "generate_report") => {
         if (userAction === "generate_report") {
             // The generator is created on first access (deps.reportGenerator is a getter method)
@@ -72,9 +72,9 @@ const $app = supplier("app").product({
     }
 });`
 
-const testingExample = `// A product supplier that depends on a real database.
-const $userProfile = supplier("userProfile").product({
-    suppliers: [$db],
+const testingExample = `// An app service that depends on a real database.
+const $userProfile = service("userProfile").app({
+    services: [$db],
     factory: ({ db }) => ({
         bio: db.fetchBio()
     })
@@ -82,15 +82,15 @@ const $userProfile = supplier("userProfile").product({
 
 // For tests, create a mock with no dependencies.
 const mockUserProfile = $userProfile.mock({
-    suppliers: [], // <-- No database needed!
+    services: [], // <-- No database needed!
     factory: () => ({
         bio: "This is a mock bio for testing."
     })
 });
 
 // The component we want to test.
-const $app = supplier("app").product({
-    suppliers: [$userProfile],
+const $app = service("app").app({
+    services: [$userProfile],
     factory: ({ userProfile }) => \`<div>\${userProfile.bio}</div>\`
 });
 
@@ -320,9 +320,9 @@ function WhySection() {
                         </div>
                         <h3>Intuitive Terminology</h3>
                         <p>
-                            A supply chain metaphor (Supplier, Supply, Product)
-                            that makes dependency injection feel natural and
-                            easier to understand.
+                            App services and request services + the supply chain
+                            metaphor, makes dependency injection feel natural
+                            and easier to understand.
                         </p>
                     </article>
                     <article className={styles.whyCard} role="listitem">
@@ -347,6 +347,12 @@ function FeatureSection({
     code,
     imageAlign = "right",
     variant = "default"
+}: {
+    title: string
+    description: string
+    code: string
+    imageAlign?: "left" | "right"
+    variant?: "default" | "alt"
 }) {
     return (
         <section

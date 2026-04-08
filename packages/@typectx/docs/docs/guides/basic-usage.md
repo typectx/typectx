@@ -1,6 +1,6 @@
 ---
 title: "Basic Usage Guide"
-description: "Learn the basic usage of typectx, a type-safe dependency injection library for TypeScript. Understand request suppliers, products, and the assembly process."
+description: "Learn the basic usage of typectx, a type-safe dependency injection library for TypeScript. Understand request services, app services, and the assembly process."
 keywords:
     - basic usage
     - guide
@@ -10,6 +10,7 @@ keywords:
     - typectx
     - request
     - ctx
+    - app
     - product
     - assemble
 ---
@@ -22,41 +23,41 @@ This guide covers the fundamental concepts of typectx in detail, providing you w
 
 typectx uses a supply chain metaphor to make context injection intuitive. Instead of abstract containers and providers, you work with:
 
-- **Suppliers** - Entities that provide either request data or products
-- **Request data** - Simple data (sessions, request params, etc.) that cannot be derived from other suppliers and provide "context" for other product suppliers.
-- **Products** - Complex services built from request data or other product suppliers
+- **Services** - Entities that provide either request data or factory-built products for other services.
+- **Request data (inputs)** - Simple data (sessions, request params, etc.) that cannot be derived from other services and provide "context" for other app services.
+- **Products** - Complex values built from request data or other products using an app service's factory
 - **Assembly** - The process of building products with their dependencies
 
 Think of it like a real supply chain: raw materials (request data and simple products) are transformed by factories into increasingly complex products.
 
 ## Step 1: Import flat APIs
 
-Every typectx application starts by declaring suppliers directly with `supplier(name).request()` and `supplier(name).product(config)`.
+Every typectx application starts by declaring services directly with `service(name).request()` and `service(name).app(config)`.
 
 ```typescript
-import { supplier } from "typectx"
+import { service } from "typectx"
 ```
 
-## Step 2: Defining Request suppliers
+## Step 2: Defining Request services
 
-Request suppliers are the simplest form of suppliers. Just specify the type of the piece of data from the user's request you need to propagate through your code.
+Request services are the simplest form of services. Just specify the type of the piece of data from the user's request you need to propagate through your code.
 
-### Creating a Request Supplier
+### Creating a Request Service
 
 ```typescript
-const $session = supplier("session").request<{
+const $session = service("session").request<{
     userId: string
     timestamp: number
 }>()
 ```
 
-The `$` prefix is a convention (not required) to distinguish supplier definitions from actual values.
+The `$` prefix is a convention (not required) to distinguish service definitions from actual values.
 
-Names passed to `supplier("...")` can **only** contain digits, letters, underscores or `$` signs and cannot start with a digit, just like any Javascript identifier.
+Names passed to `service("...")` can **only** contain digits, letters, underscores or `$` signs and cannot start with a digit, just like any Javascript identifier.
 
-### Packing Request suppliers with Values
+### Packing Request services with Values
 
-Request suppliers are defined separately from their values. At runtime, you "pack" a request supplier with a concrete value:
+Request services are defined separately from their values. At request time, you "pack" a request service with a concrete value:
 
 ```typescript
 const configSupply = $config.pack({
@@ -76,33 +77,33 @@ console.log(config.apiUrl) // "https://api.example.com"
 
 ### Request Supplies Can Hold Any Type
 
-Request suppliers aren't limited to objects. They can hold any TypeScript type:
+Request services aren't limited to objects. They can hold any TypeScript type:
 
 ```typescript
 // Simple types
-const $apiKey = supplier("apiKey").request<string>()
-const $port = supplier("port").request<number>()
-const $isProduction = supplier("isProduction").request<boolean>()
+const $apiKey = service("apiKey").request<string>()
+const $port = service("port").request<number>()
+const $isProduction = service("isProduction").request<boolean>()
 
 // Complex types
-const $database = supplier("database").request<Database>()
+const $database = service("database").request<Database>()
 
-// Even functions (but usually, you'll use product suppliers in that case)
-const $logger = supplier("logger").request<{
+// Even functions (but usually, you'll use app services in that case)
+const $logger = service("logger").request<{
     log: (message: string) => void
     error: (error: Error) => void
 }>()
 ```
 
-## Step 3: Defining Products suppliers
+## Step 3: Defining App services
 
-Product suppliers are where the real power of typectx shines. Products are factory functions that can depend on other suppliers (both request and other product suppliers) to create services, components, or any complex functionality.
+App services are where the real power of typectx shines. App services define factory functions that can depend on other services (both request and other app services) to create values, products, components, or any complex functionality.
 
-### Basic Product Definition
+### Basic App Service Definition
 
 ```typescript
-const $userService = supplier("userService").product({
-    suppliers: [$config, $database],
+const $userService = service("userService").app({
+    services: [$config, $database],
     factory: ({ config, database }) => {
         return {
             getUser: (id: string) => {
@@ -116,12 +117,12 @@ const $userService = supplier("userService").product({
 ### Understanding the Factory Function
 
 The factory function receives a special `deps` argument that provides access to all declared dependencies via destructuring. The properties
-of the deps object are the names passed to `supplier("...")` at definition time.
+of the deps object are the names passed to `service("...")` at definition time.
 
 ```typescript
-suppliers: [$config, $database]
+services: [$config, $database]
 factory: (deps) => {
-    // Because we did supplier("config") when defining the $config variable above
+    // Because we did service("config") when defining the $config variable above
     const config = deps.config
     // You can do this, but it produces less boilerplate to just destructure deps directly
     // See previous example just above
@@ -132,34 +133,34 @@ factory: (deps) => {
 }
 ```
 
-### Trivial products
+### Trivial app services
 
-Product suppliers don't need to depend on other suppliers! If you have a value available at module-scope in your code, you can load it in your supply chain with a trivial product supplier:
+App services don't need to depend on other services! If you have a value available at module-scope in your code, you can load it in your supply chain with a trivial app service:
 
 ```typescript
 const db = dbConnect(/*...*/)
-const $db = supplier("db").product({
+const $db = service("db").app({
     factory: () => db
 })
 ```
 
-### Products Depending on Other Products
+### App services Depending on Other Services
 
-Products can depend not only on request data, but also on other products, creating a dependency tree:
+App services can depend not only on request data, but also on other app services, creating a dependency tree:
 
 ```typescript
 // Depends on a simple piece of request data
-const $session = supplier("session").product({
-    suppliers: [$token],
+const $session = service("session").app({
+    services: [$token],
     factory: ({ token }) => {
         // Authentication logic
         return { userId: "123", token }
     }
 })
 
-// Depends on the session complex product, on the db trivial product, and on the page request data
-const $userProfile = supplier("userProfile").product({
-    suppliers: [$session, $database, $page],
+// Depends on the "session" complex product, on the "db" trivial product, and on the "page" request data
+const $userProfile = service("userProfile").app({
+    services: [$session, $database, $page],
     factory: ({ session, db, page }) => {
         const user = db.getUser(session.userId)
         if (page === 1) {
@@ -190,8 +191,8 @@ Understanding how and when factories are called is crucial for effective use of 
 **Important:** Your factory function is called exactly **once per `assemble()` call**. This eliminates the need to explicitely configure traditional DI service lifecycles (transient, scoped, singleton).
 
 ```typescript
-const $service = supplier("service").product({
-    suppliers: [],
+const $service = service("service").app({
+    services: [],
     factory: () => {
         console.log("Factory called!")
         return { value: Math.random() }
@@ -215,8 +216,8 @@ const value2 = service3Supply.unpack() // { value: 0.789 } (same instance, no ne
 If you need something that can be called multiple times or needs to run side-effects, return a function from your factory:
 
 ```typescript
-const $userRepository = supplier("userRepository").product({
-    suppliers: [$db],
+const $userRepository = service("userRepository").app({
+    services: [$db],
     factory: ({ db }) => {
         // Setup code runs once
         const cache = new Map()
@@ -247,23 +248,23 @@ repo.getUser("456") // Fetching user 456
 repo.getUser("123") // Cache hit for 123
 ```
 
-### Products Can Return Anything
+### Factories Can Return Anything
 
 Factories can return any TypeScript value, even Promises, so nothing special is required to handle async code.
 
 ```typescript
 // Return objects
-const $api = supplier("api").product({
+const $api = service("api").product({
     factory: () => ({ get: () => {}, post: () => {} })
 })
 
 // Return functions
-const $handler = supplier("handler").product({
+const $handler = service("handler").product({
     factory: () => (request: Request) => new Response()
 })
 
 // Return promises
-const $asyncData = supplier("asyncData").product({
+const $asyncData = service("asyncData").product({
     factory: async () => {
         const data = await fetch("...")
         return data.json()
@@ -271,7 +272,7 @@ const $asyncData = supplier("asyncData").product({
 })
 
 // Return React components
-const $Header = supplier("Header").product({
+const $Header = service("Header").product({
     factory: () => () => <header>My App</header>
 })
 ```
@@ -283,7 +284,7 @@ Assembly is where everything comes together. At your application's entry point, 
 ### Basic Assembly
 
 ```typescript
-const app = $app
+const main = $main
     .assemble({
         [$locale.name]: $locale.pack("en"),
         [$session.name]: $session.pack({ userId: "user-123" })
@@ -295,7 +296,7 @@ This syntax works, but it's verbose. That's why typectx provides the `index()` u
 
 ### Using the `index()` Helper
 
-The `index()` function simplifies assembly by converting an array of packed resources into the object format `assemble()` expects:
+The `index()` function simplifies assembly by converting an array of packed supplies into the object format `assemble()` expects:
 
 ```typescript
 import { index } from "typectx"
@@ -305,15 +306,15 @@ const app = $app
     .unpack()
 ```
 
-The `index()` function automatically maps each resource to its supplier name.
+The `index()` function automatically maps each supply to its service name.
 
 ### Type Safety in Assembly
 
 TypeScript will enforce that you provide all required request data:
 
 ```typescript
-const $service = supplier("service").product({
-    suppliers: [$locale, $session],
+const $service = service("service").app({
+    services: [$locale, $session],
     factory: () => ({
         /* ... */
     })
@@ -333,22 +334,22 @@ $service.assemble(
 
 ### You Only Supply Request Data
 
-Notice that you only provide request data during assembly, not products. Products are automatically "auto-wired" - they assemble themselves by recursively resolving their dependencies.
+Notice that you only provide request data during assembly, not factory products. Products are automatically "auto-wired" - they assemble themselves by recursively resolving their dependencies.
 
 ```typescript
-const $session = supplier("session").request<Session>()
+const $session = service("session").request<Session>()
 
-const $db = supplier("db").product({ factory: () => dbConnect(/*...*/) })
+const $db = service("db").app({ factory: () => dbConnect(/*...*/) })
 
-const $userService = supplier("userService").product({
-    suppliers: [$db, $session],
+const $userService = service("userService").app({
+    services: [$db, $session],
     factory: ({ db, session }) => ({
         /* ... */
     })
 })
 
-const $app = supplier("app").product({
-    suppliers: [$userService],
+const $app = service("app").app({
+    services: [$userService],
     factory: ({ userService }) => {
         return {
             /* ... */
@@ -365,13 +366,13 @@ const app = $app
 
 ## Performance: Eager vs Lazy Loading
 
-By default, typectx eagerly constructs all products in the background and in parallel when you call `assemble()`. This eliminates waterfall loading issues common in traditional DI systems.
+By default, typectx eagerly constructs all inputs and products in the background and in parallel when you call `assemble()`. This eliminates waterfall loading issues common in traditional DI systems.
 
 ### Eager Loading (Default)
 
 ```typescript
-const $eagerService = supplier("eagerService").product({
-    suppliers: [$db],
+const $eagerService = service("eagerService").app({
+    services: [$db],
     factory: ({ db }) => {
         console.log("Eager service factory called")
         return buildService(db)
@@ -379,7 +380,7 @@ const $eagerService = supplier("eagerService").product({
     // lazy: false is the default
 })
 
-const appSupply = $app.assemble(index($database.pack(db)))
+const mainSupply = $main.assemble(index($database.pack(db)))
 // "Eager service factory called" - happens immediately without .unpack()
 ```
 
@@ -388,8 +389,8 @@ const appSupply = $app.assemble(index($database.pack(db)))
 For expensive products that might not always be needed, use lazy loading:
 
 ```typescript
-const $expensiveService = supplier("expensiveService").product({
-    suppliers: [$db],
+const $expensiveService = service("expensiveService").app({
+    services: [$db],
     factory: ({ db }) => {
         console.log("Expensive service factory called")
         return buildExpensiveService(db)
@@ -397,8 +398,8 @@ const $expensiveService = supplier("expensiveService").product({
     lazy: true // Only construct when first accessed
 })
 
-const $app = supplier("app").product({
-    suppliers: [$expensiveService],
+const $app = service("app").app({
+    services: [$expensiveService],
     factory: (deps) => {
         // Factory not called yet
 
@@ -433,23 +434,23 @@ const $app = supplier("app").product({
 Let's put everything together with a realistic example:
 
 ```typescript
-import { index, supplier } from "typectx"
+import { index, service } from "typectx"
 
-// 2. Define request suppliers
-const $req = supplier("req").request<Request>()
-const $config = supplier("config").request<{
+// 2. Define request services
+const $req = service("req").request<Request>()
+const $config = service("config").request<{
     postsPerPage: number
     cacheEnabled: boolean
 }>()
-const $user = supplier("user").request<{
+const $user = service("user").request<{
     id: string
     role: "admin" | "user"
 }>()
 
-// 3. Define products (services)
-const $db = supplier("db").product({ factory: () => dbConnect(/*...*/) })
-const $postsRepository = supplier("postsRepository").product({
-    suppliers: [$db],
+// 3. Define app services
+const $db = service("db").app({ factory: () => dbConnect(/*...*/) })
+const $postsRepository = service("postsRepository").app({
+    services: [$db],
     factory: ({ db }) => {
         return {
             findById: (id: string) => db.posts.findOne({ id }),
@@ -466,8 +467,8 @@ const $postsRepository = supplier("postsRepository").product({
     }
 })
 
-const $authorizationService = supplier("authorizationService").product({
-    suppliers: [$user],
+const $authorizationService = service("authorizationService").app({
+    services: [$user],
     factory: ({ user }) => {
         return {
             canCreate: () => user.role === "admin",
@@ -479,8 +480,8 @@ const $authorizationService = supplier("authorizationService").product({
     }
 })
 
-const $postsService = supplier("postsService").product({
-    suppliers: [$postsRepository, $authorizationService, $config],
+const $postsService = service("postsService").app({
+    services: [$postsRepository, $authorizationService, $config],
     factory: ({
         postsRepository: repo,
         authorizationService: auth,
@@ -522,8 +523,8 @@ const $postsService = supplier("postsService").product({
 })
 
 // 4. Define the API handler
-const $apiHandler = supplier("apiHandler").product({
-    suppliers: [$postsService, $req],
+const $apiHandler = service("apiHandler").app({
+    services: [$postsService, $req],
     factory: async ({ postsService: posts, req }) => {
         const url = new URL(req.url)
         const path = url.pathname
@@ -576,7 +577,7 @@ Notice how:
 
 Now that you understand the basics, explore these advanced features:
 
-- **[Testing and Mocking](testing)** - Learn how to test your products with mocks
+- **[Testing and Mocking](testing)** - Learn how to test your app services with mocks
 - **[Performance Optimization](performance)** - Advanced lazy loading and initialization strategies
 - **[Design Philosophy](design-philosophy)** - Understanding the principles behind typectx
 

@@ -1,5 +1,5 @@
 import { useLayoutEffect, useState, useSyncExternalStore } from "react"
-import type { UnknownProductSupplier, Supply, Supplier } from "typectx"
+import type { UnknownAppService, Supply, Service } from "typectx"
 
 export function useDeps<INIT_DEPS extends Record<string, unknown>>(
     initDeps: INIT_DEPS
@@ -18,34 +18,32 @@ export function useDeps<INIT_DEPS extends Record<string, unknown>>(
     return deps ?? initDeps
 }
 
-export function useAssembleComponent<SUPPLIER extends UnknownProductSupplier>(
-    supplier: SUPPLIER,
-    supplied: SUPPLIER["_toSupply"]
+export function useAssembleComponent<SERVICE extends UnknownAppService>(
+    service: SERVICE,
+    supplied: SERVICE["_toSupply"]
 ) {
     // First render captures the initial assembly.
     // Child components won't be in `components` until they've mounted and
     // initialized their store.
-    const [first] = useState(() => supplier.assemble(supplied))
+    const [first] = useState(() => service.assemble(supplied))
 
-    function isProductSupply(
-        supply: Supply<Supplier>
-    ): supply is Supply<UnknownProductSupplier> {
-        return (
-            "_product" in supply.supplier && supply.supplier._product === true
-        )
+    function isAppSupply(
+        supply: Supply<Service>
+    ): supply is Supply<UnknownAppService> {
+        return "_app" in supply.service && supply.service._app === true
     }
 
     const components = Object.entries(first.supplies).reduce(
         (acc, [key, supply]) => {
-            if (!isProductSupply(supply)) return acc
+            if (!isAppSupply(supply)) return acc
             if (store.has(supply.deps)) return { ...acc, [key]: supply }
             return acc
         },
         store.has(first.deps) ?
             ({
-                [first.supplier.name]: first
-            } as Record<string, Supply<UnknownProductSupplier>>)
-        :   ({} as Record<string, Supply<UnknownProductSupplier>>)
+                [first.service.name]: first
+            } as Record<string, Supply<UnknownAppService>>)
+        :   ({} as Record<string, Supply<UnknownAppService>>)
         // Assertion necessary because intersection of mapped types do not work well with wide types
     )
 
@@ -54,13 +52,13 @@ export function useAssembleComponent<SUPPLIER extends UnknownProductSupplier>(
             if (
                 // This is not the team! Team is transitive, this is just the direct dependencies!
                 ![
-                    ...component.supplier._suppliers,
-                    ...component.supplier._optionals
+                    ...component.service._services,
+                    ...component.service._optionals
                 ].some(
-                    (supplier) =>
-                        supplier.name in supplied &&
-                        supplied[supplier.name] !==
-                            (store.get(component.deps)?.[supplier.name] ??
+                    (service) =>
+                        service.name in supplied &&
+                        supplied[service.name] !==
+                            (store.get(component.deps)?.[service.name] ??
                                 undefined)
                 )
             )
@@ -71,7 +69,7 @@ export function useAssembleComponent<SUPPLIER extends UnknownProductSupplier>(
                 // We need ctx, because supplied here is not necessarily the same
                 // as supplied in the useState() call. This is not necessarily the first render, so supplies here
                 // may lack the ones provided in first render.
-                first._ctx(component.supplier).assemble({
+                first._ctx(component.service).assemble({
                     ...supplied,
                     ...components
                 }).deps

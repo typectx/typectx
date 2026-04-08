@@ -1,24 +1,24 @@
-import { Hire } from "#product/hire"
-import { main } from "#product/main"
-import { Mock } from "#product/mock"
-import { type PartialProductSupplierPlan } from "#types/internal"
+import { Hire } from "#service/hire"
+import { main } from "#service/main"
+import { Mock } from "#service/mock"
+import { type PartialAppServicePlan } from "#types/internal"
 import type { ToSupply } from "#types/records"
-import type { ProductSupplierGuard } from "#types/guards"
-import { assertName, assertProductConfig } from "#validation"
+import type { AppServiceGuard } from "#types/guards"
+import { assertName, assertAppServiceConfig } from "#validation"
 import type {
-    MainSupplier,
-    ProductSupplier,
-    RequestSupplier,
-    Supplier,
+    MainService,
+    AppService,
+    RequestService,
+    Service,
     Supply
 } from "#types/public"
 
-export function supplier<NAME extends string>(name: NAME) {
+export function service<NAME extends string>(name: NAME) {
     return {
-        request<CONSTRAINT = any>(): RequestSupplier<NAME, CONSTRAINT> {
+        request<CONSTRAINT = any>(): RequestService<NAME, CONSTRAINT> {
             return {
                 name,
-                pack<THIS extends Supplier, VALUE extends CONSTRAINT>(
+                pack<THIS extends Service, VALUE extends CONSTRAINT>(
                     this: THIS,
                     value: VALUE
                 ): Supply<THIS> {
@@ -26,7 +26,7 @@ export function supplier<NAME extends string>(name: NAME) {
                         unpack: () => value,
                         deps: {} as never,
                         supplies: {} as never,
-                        supplier: this,
+                        service: this,
                         _ctx: (() => null) as never,
                         _packed: true as const
                     } as any
@@ -37,37 +37,37 @@ export function supplier<NAME extends string>(name: NAME) {
             }
         },
         /**
-         * Creates a product supplier that can assemble complex objects from dependencies.
-         * Product suppliers can depend on other suppliers and have factory functions for creation.
+         * Creates an app service that can assemble complex objects from dependencies.
+         * App services can depend on other services and have factory functions for creation.
          *
-         * @typeParam CONSTRAINT - The type constraint for products this supplier produces
-         * @typeParam SUPPLIERS - Array of suppliers this supplier depends on
-         * @typeParam OPTIONALS - Array of optional request suppliers this supplier may depend on
-         * @param config - Configuration object for the supplier
-         * @param config.suppliers - Array of suppliers this supplier depends on
-         * @param config.optionals - Array of optional request suppliers this supplier may depend on
-         * @param config.factory - Factory function that creates the product from its dependencies
+         * @typeParam CONSTRAINT - The type constraint for values this service produces
+         * @typeParam SERVICES - Array of services this service depends on
+         * @typeParam OPTIONALS - Array of optional request services this service may depend on
+         * @param config - Configuration object for the service
+         * @param config.services - Array of services this service depends on
+         * @param config.optionals - Array of optional request services this service may depend on
+         * @param config.factory - Factory function that creates the value from its dependencies
          * @param config.init - Optional initialization function called after factory
-         * @param config.lazy - Whether the supplier should be lazily evaluated
+         * @param config.lazy - Whether the service should be lazily evaluated
          *
-         * @returns A product supplier with methods like assemble, pack, mock, and hire
+         * @returns An app service with methods like assemble, pack, mock, and hire
          * @public
          */
-        product<
+        app<
             CONSTRAINT,
-            SUPPLIERS extends MainSupplier[] = [],
-            OPTIONALS extends RequestSupplier[] = []
+            SERVICES extends MainService[] = [],
+            OPTIONALS extends RequestService[] = []
         >(
-            config: PartialProductSupplierPlan<CONSTRAINT, SUPPLIERS, OPTIONALS>
-        ): ProductSupplierGuard<
-            ProductSupplier<
+            config: PartialAppServicePlan<CONSTRAINT, SERVICES, OPTIONALS>
+        ): AppServiceGuard<
+            AppService<
                 NAME,
                 CONSTRAINT,
                 OPTIONALS[number]["name"],
                 Record<never, never>,
                 ToSupply<
                     {
-                        suppliers: SUPPLIERS
+                        services: SERVICES
                         optionals: OPTIONALS
                     },
                     Record<never, never>
@@ -75,10 +75,10 @@ export function supplier<NAME extends string>(name: NAME) {
                 [],
                 false
             >,
-            [...SUPPLIERS, ...OPTIONALS]
+            [...SERVICES, ...OPTIONALS]
         > {
             assertName(name)
-            assertProductConfig(name, config)
+            assertAppServiceConfig(name, config)
 
             return {
                 ...main(name, config),
@@ -86,14 +86,14 @@ export function supplier<NAME extends string>(name: NAME) {
                 hire: Hire(),
                 _mock: false as const,
                 _composite: false as const
-            } satisfies ProductSupplier<
+            } satisfies AppService<
                 NAME,
                 CONSTRAINT,
                 OPTIONALS[number]["name"],
                 Record<never, never>,
                 ToSupply<
                     {
-                        suppliers: SUPPLIERS
+                        services: SERVICES
                         optionals: OPTIONALS
                     },
                     Record<never, never>

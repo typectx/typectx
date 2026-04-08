@@ -1,34 +1,34 @@
-import type { PartialProductSupplierPlan } from "#types/internal"
-import { assertProductSuppliers } from "#validation"
-import { assemble } from "#product/assemble"
-import { _build } from "#product/build"
-import { supplier } from "#index"
+import type { PartialAppServicePlan } from "#types/internal"
+import { assertAppServices } from "#validation"
+import { assemble } from "#service/assemble"
+import { _build } from "#service/build"
+import { service } from "#index"
 import type { SupplyDeps, ToSupply } from "#types/records"
-import { dedupe, isProductSupplier } from "#utils"
+import { dedupe, isAppService } from "#utils"
 import type {
-    ProductSupplier,
-    MainSupplier,
-    RequestSupplier,
-    Supplier
+    AppService,
+    MainService,
+    RequestService,
+    Service
 } from "#types/public"
 
 export function main<
     NAME extends string,
     CONSTRAINT,
-    SUPPLIERS extends MainSupplier[] = [],
-    OPTIONALS extends RequestSupplier[] = []
+    SERVICES extends MainService[] = [],
+    OPTIONALS extends RequestService[] = []
 >(
     name: NAME,
-    config: PartialProductSupplierPlan<CONSTRAINT, SUPPLIERS, OPTIONALS>
+    config: PartialAppServicePlan<CONSTRAINT, SERVICES, OPTIONALS>
 ): Omit<
-    ProductSupplier<
+    AppService<
         NAME,
         CONSTRAINT,
         OPTIONALS[number]["name"],
         Record<never, never>,
         ToSupply<
             {
-                suppliers: SUPPLIERS
+                services: SERVICES
                 optionals: OPTIONALS
             },
             Record<never, never>
@@ -37,13 +37,13 @@ export function main<
     >,
     "mock" | "hire" | "_mock" | "_composite"
 > {
-    assertProductSuppliers(name, [], true)
+    assertAppServices(name, [], true)
 
-    const _team = team(name, config.suppliers ?? [], config.optionals ?? [])
+    const _team = team(name, config.services ?? [], config.optionals ?? [])
 
     const _toSupply = null as unknown as ToSupply<
         {
-            suppliers: SUPPLIERS
+            services: SERVICES
             optionals: OPTIONALS
         },
         Record<never, never>
@@ -55,11 +55,11 @@ export function main<
     >
 
     const s = {
-        ...supplier(name).request<CONSTRAINT>(),
+        ...service(name).request<CONSTRAINT>(),
         assemble,
         _factory: config.factory,
         _build,
-        _suppliers: config.suppliers ?? [],
+        _services: config.services ?? [],
         _optionals: config.optionals ?? [],
         _team,
         _hired: [] as [],
@@ -67,7 +67,7 @@ export function main<
         _lazy: config.lazy ?? false,
         _init: config.init,
         _request: false as const,
-        _product: true as const,
+        _app: true as const,
         _constraint: null as unknown as CONSTRAINT,
         _optionalKeys: null as unknown as OPTIONALS[number]["name"],
         _toSupply,
@@ -81,16 +81,16 @@ export function main<
 
 export function team(
     name: string,
-    suppliers: Supplier[],
-    optionals: RequestSupplier[]
+    services: Service[],
+    optionals: RequestService[]
 ) {
     return dedupe(
-        [...suppliers, ...optionals]
-            .flatMap((supplier) => {
-                if (isProductSupplier(supplier)) {
-                    return [supplier, ...supplier._team]
+        [...services, ...optionals]
+            .flatMap((service) => {
+                if (isAppService(service)) {
+                    return [service, ...service._team]
                 }
-                return [supplier]
+                return [service]
             })
             .map((s) => {
                 if (s.name === name) {

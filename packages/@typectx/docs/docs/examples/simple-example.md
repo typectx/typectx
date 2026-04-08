@@ -1,6 +1,6 @@
 ---
 title: "Simple Example"
-description: "View a simple example of a todo app built with typectx, demonstrating basic concepts like markets, request suppliers, products, and assembly for dependency injection."
+description: "View a simple example of a todo app built with typectx, demonstrating basic concepts like markets, request services, app services, and assembly for dependency injection."
 keywords:
     - example
     - simple example
@@ -15,15 +15,15 @@ keywords:
 Dummy todo app built with typectx.
 
 ```typescript
-import { index, supplier } from "typectx"
+import { index, service } from "typectx"
 
-// 1. Define request and product suppliers
-const $session = supplier("session").request<{ userId: string }>()
-const $todosDb = supplier("todosDb").product({
+// 1. Define request and app services
+const $session = service("session").request<{ userId: string }>()
+const $todosDb = service("todosDb").app({
     factory: () => new Map<string, string[]>() // Simple in-memory DB
 })
-const $addTodo = supplier("addTodo").product({
-    suppliers: [$session, $todosDb],
+const $addTodo = service("addTodo").app({
+    services: [$session, $todosDb],
     factory:
         ({ session, todosDb }) =>
         (todo: string) => {
@@ -33,11 +33,11 @@ const $addTodo = supplier("addTodo").product({
         }
 })
 
-/*Here, we define two types of suppliers:
+/*Here, we define two types of services:
 
--   `$session`: A **Request** supplier that will hold the current user's session data.
--   `$todosDb`: A **Product** supplier that provides an in-memory `Map` to act as a database. It has no dependencies.
--   `$addTodo`: A **Product** supplier that creates our main `addTodo` function. It depends on both the `$session` and `$todosDb`. */
+-   `$session`: A **Request** service that will hold the current user's session data.
+-   `$todosDb`: An **App** service that provides an in-memory `Map` to act as a database. It has no dependencies.
+-   `$addTodo`: An **App** service that creates our main `addTodo` function. It depends on both the `$session` and `$todosDb`. */
 
 const session = { userId: "user123" }
 

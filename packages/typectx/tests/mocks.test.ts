@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, expectTypeOf } from "vitest"
-import { index, supplier } from "#index"
+import { index, service } from "#index"
 import { sleep, once } from "#utils"
 import type {
     CircularDependencyError,
@@ -9,16 +9,16 @@ import type { Supply } from "#types/public"
 
 describe("Mocks Feature", () => {
     describe("Mock Method", () => {
-        it("should handle mock with less suppliers", () => {
-            const $input = supplier("input").request<boolean>()
+        it("should handle mock with less services", () => {
+            const $input = service("input").request<boolean>()
 
-            const $base = supplier("base").product({
-                suppliers: [$input],
+            const $base = service("base").app({
+                services: [$input],
                 factory: ({ input }) => ({ base: input })
             })
 
             const $mocked = $base.mock({
-                suppliers: [],
+                services: [],
                 factory: () => ({ base: true, enhanced: true })
             })
 
@@ -28,21 +28,21 @@ describe("Mocks Feature", () => {
             expect(result.enhanced).toBe(true)
         })
 
-        it("should not allow mocks in suppliers array", () => {
-            const $base = supplier("mock").product({
+        it("should not allow mocks in services array", () => {
+            const $base = service("mock").app({
                 factory: () => "base"
             })
 
             const $mock = $base.mock({
-                suppliers: [],
+                services: [],
                 factory: () => "mock"
             })
 
             expect(() => {
-                const $next = supplier("next").product({
+                const $next = service("next").app({
                     factory: () => "next",
-                    //@ts-expect-error - mock in suppliers array
-                    suppliers: [$mock]
+                    //@ts-expect-error - mock in services array
+                    services: [$mock]
                 })
             }).toThrow()
         })
@@ -51,7 +51,7 @@ describe("Mocks Feature", () => {
             const baseSpy = vi.fn().mockReturnValue("base")
             const initedSpy = vi.fn().mockReturnValue("inited")
 
-            const $base = supplier("base").product({
+            const $base = service("base").app({
                 factory: () => baseSpy
             })
 
@@ -60,8 +60,8 @@ describe("Mocks Feature", () => {
                 init: (product) => product()
             })
 
-            const $test = supplier("test").product({
-                suppliers: [$base],
+            const $test = service("test").app({
+                services: [$base],
                 factory: ({ base }) => base
             })
 
@@ -77,21 +77,21 @@ describe("Mocks Feature", () => {
         })
 
         it("should compute precise TOSUPPLY types with mock", () => {
-            const $config = supplier("config").request<string>()
-            const $apiKey = supplier("apiKey").request<string>()
+            const $config = service("config").request<string>()
+            const $apiKey = service("apiKey").request<string>()
 
-            const $logger = supplier("logger").product({
+            const $logger = service("logger").app({
                 factory: () => "logger"
             })
 
             // Base service - return compatible type that can be extended
-            const $base = supplier("base").product({
+            const $base = service("base").app({
                 factory: () => "base"
             })
 
-            // mock with mixed request and product suppliers
+            // mock with mixed request and app services
             const $mocked = $base.mock({
-                suppliers: [$config, $apiKey, $logger],
+                services: [$config, $apiKey, $logger],
                 factory: () => "proto"
             })
 
@@ -107,7 +107,7 @@ describe("Mocks Feature", () => {
 
             // The type system should now know exactly what needs to be supplied:
             // - config and apiKey (request supplies must be provided)
-            // - logger should NOT need to be provided (it's a product supplier)
+            // - logger should NOT need to be provided (it's an app service)
             const supply = $mocked.assemble(
                 index($config.pack("test"), $apiKey.pack("secret-key"))
             )
@@ -117,12 +117,12 @@ describe("Mocks Feature", () => {
         })
 
         it("should detect circular dependencies in mocks", () => {
-            const $A = supplier("A").product({
+            const $A = service("A").app({
                 factory: () => "serviceA"
             })
 
-            const $B = supplier("B").product({
-                suppliers: [$A],
+            const $B = service("B").app({
+                services: [$A],
                 factory: ({ A }) => "serviceB uses " + A
             })
 
@@ -130,7 +130,7 @@ describe("Mocks Feature", () => {
             // This should be caught by the circular dependency detection
             expect(() => {
                 const $mockA = $A.mock({
-                    suppliers: [$B], // This creates a potential circle
+                    services: [$B], // This creates a potential circle
                     factory: ({ B }) => "mockA uses " + B
                 })
 
@@ -140,21 +140,21 @@ describe("Mocks Feature", () => {
     })
 
     describe("Hire Method", () => {
-        it("should allow hiring alternative suppliers for testing", () => {
-            const $db = supplier("db").product({
+        it("should allow hiring alternative services for testing", () => {
+            const $db = service("db").app({
                 factory: () => "real-db"
             })
 
-            const $cache = supplier("cache").product({
+            const $cache = service("cache").app({
                 factory: () => "real-cache"
             })
 
-            const $logger = supplier("logger").product({
+            const $logger = service("logger").app({
                 factory: () => "real-logger"
             })
 
-            const $service = supplier("service").product({
-                suppliers: [$db, $cache, $logger],
+            const $service = service("service").app({
+                services: [$db, $cache, $logger],
                 factory: ({ db, cache, logger }) => ({
                     db,
                     cache,
@@ -162,15 +162,15 @@ describe("Mocks Feature", () => {
                 })
             })
 
-            // Multiple mock suppliers using mock
+            // Multiple mock services using mock
             const $mockDb = $db.mock({
                 factory: () => "mock-db",
-                suppliers: []
+                services: []
             })
 
             const $mockCache = $cache.mock({
                 factory: () => "mock-cache",
-                suppliers: []
+                services: []
             })
 
             const $hired = $service.hire($mockDb, $mockCache)
@@ -181,62 +181,62 @@ describe("Mocks Feature", () => {
             expect(test.logger).toBe("real-logger")
         })
 
-        it("should handle hiring unused suppliers", () => {
-            const $db = supplier("db").product({
+        it("should handle hiring unused services", () => {
+            const $db = service("db").app({
                 factory: () => "db"
             })
 
-            const $main = supplier("main").product({
-                suppliers: [$db],
+            const $main = service("main").app({
+                services: [$db],
                 factory: ({ db }) => "main-" + db
             })
 
-            const $unused = supplier("unused").product({
+            const $unused = service("unused").app({
                 factory: () => "base-extra"
             })
 
             const $unusedMock = $unused.mock({
-                suppliers: [],
+                services: [],
                 factory: () => "extra-service"
             })
 
             const $hired = $main.hire($unusedMock)
             const test = $hired.assemble({}).unpack()
 
-            // The extra supplier is added to the suppliers list, but not to the result
+            // The extra service is added to the services list, but not to the result
             expect(test).toEqual("main-db")
         })
 
         it("should handle empty hire calls gracefully", () => {
-            const $main = supplier("main").product({
+            const $main = service("main").app({
                 factory: () => "main"
             })
 
-            // Hire with no suppliers - should work fine
+            // Hire with no services - should work fine
             const $hired = $main.hire()
             const test = $hired.assemble({}).unpack()
 
             expect(test).toBe("main")
         })
 
-        it("should error on duplicate supplier names in hire", () => {
-            const $db = supplier("db").product({
+        it("should error on duplicate service names in hire", () => {
+            const $db = service("db").app({
                 factory: () => "db"
             })
 
-            const $main = supplier("main").product({
-                suppliers: [$db],
+            const $main = service("main").app({
+                services: [$db],
                 factory: ({ db }) => "main-" + db
             })
 
             const $mockDb1 = $db.mock({
                 factory: () => "mock-db-1",
-                suppliers: []
+                services: []
             })
 
             const $mockDb2 = $db.mock({
                 factory: () => "mock-db-2",
-                suppliers: []
+                services: []
             })
 
             const $hired = $main.hire($mockDb1, $mockDb2)
@@ -244,19 +244,19 @@ describe("Mocks Feature", () => {
             expectTypeOf($hired).toExtend<DuplicateDependencyError>()
         })
 
-        it("should allow assembling multiple suppliers together", () => {
-            const $shared = supplier("shared").request<string>()
-            const $unique = supplier("unique").request<number>()
+        it("should allow assembling multiple services together", () => {
+            const $shared = service("shared").request<string>()
+            const $unique = service("unique").request<number>()
 
-            const $A = supplier("A").product({
-                suppliers: [$shared],
+            const $A = service("A").app({
+                services: [$shared],
                 factory: ({ shared }) => {
                     return "A-" + shared
                 }
             })
 
-            const $B = supplier("B").product({
-                suppliers: [$shared, $unique],
+            const $B = service("B").app({
+                services: [$shared, $unique],
                 factory: ({ shared, unique }) => {
                     return "B-" + shared + "-" + unique
                 }
@@ -272,18 +272,18 @@ describe("Mocks Feature", () => {
         })
 
         it("should type check that all required request supplies are provided", () => {
-            const $db = supplier("db").request<string>()
-            const $cache = supplier("cache").request<string>()
+            const $db = service("db").request<string>()
+            const $cache = service("cache").request<string>()
 
-            const $user = supplier("user").product({
-                suppliers: [$db],
+            const $user = service("user").app({
+                services: [$db],
                 factory: ({ db }) => {
                     return "user-" + db
                 }
             })
 
-            const $session = supplier("session").product({
-                suppliers: [$cache],
+            const $session = service("session").app({
+                services: [$cache],
                 factory: ({ cache }) => {
                     return "session-" + cache
                 }
@@ -308,13 +308,13 @@ describe("Mocks Feature", () => {
         })
 
         it("should handle errors in hire() method gracefully", () => {
-            const $working = supplier("working").product({
+            const $working = service("working").app({
                 factory: () => "working-value"
             })
 
-            const $failing = supplier("failing").product({
+            const $failing = service("failing").app({
                 factory: () => {
-                    throw new Error("Supplier failed")
+                    throw new Error("Service failed")
                     return
                 }
             })
@@ -324,24 +324,24 @@ describe("Mocks Feature", () => {
             expect(() => {
                 // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                 supply.deps[$failing.name]
-            }).toThrow("Supplier failed")
+            }).toThrow("Service failed")
         })
     })
 
     describe("Accessing supplies after ctx.hire() call", () => {
-        it("supplies of supply built with reassemble with Hire parameters should contain only the hired suppliers' supplies properly typed", () => {
-            const $supplier = supplier("supplier").product({
-                factory: () => "supplier-value"
+        it(".supplies should contain the hired services' supplies properly typed", () => {
+            const $service = service("service").app({
+                factory: () => "service-value"
             })
 
-            const $contextual = supplier("contextual").product({
+            const $contextual = service("contextual").app({
                 factory: () => "contextual-value"
             })
 
-            const $main = supplier("main").product({
-                suppliers: [$supplier],
+            const $main = service("main").app({
+                services: [$service],
                 factory: (deps, ctx) => {
-                    const supply = ctx($supplier).hire($contextual).assemble({})
+                    const supply = ctx($service).hire($contextual).assemble({})
 
                     const contextualSupply = supply.supplies[$contextual.name]
                     expectTypeOf(contextualSupply).not.toEqualTypeOf<any>()

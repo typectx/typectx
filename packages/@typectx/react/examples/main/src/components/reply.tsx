@@ -1,10 +1,10 @@
 import { req } from "@/req"
 import type { Reply } from "@/api"
 import { useDeps } from "@typectx/react"
-import { supplier } from "typectx"
+import { service } from "typectx"
 
-export const $Reply = supplier("Reply").product({
-    suppliers: [req.$post, req.$session],
+export const $Reply = service("Reply").app({
+    services: [req.$post, req.$session],
     factory: (initDeps) =>
         function Reply({ reply }: { reply: Reply }) {
             const {

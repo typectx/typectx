@@ -1,11 +1,11 @@
 import type { Post, User } from "@/api"
-import { supplier } from "typectx"
+import { service } from "typectx"
 
 export const req = {
-    $defaultUser: supplier("defaultUser").request<string>(),
+    $defaultUser: service("defaultUser").request<string>(),
     $session:
-        supplier("session").request<
+        service("session").request<
             [User | undefined, (user: User | undefined) => void]
         >(),
-    $post: supplier("post").request<Post>()
+    $post: service("post").request<Post>()
 }

@@ -1,8 +1,8 @@
 import type {
-    ProductSupply,
-    Supplier,
+    AppSupply,
+    Service,
     Supply,
-    UnknownProductSupplier
+    UnknownAppService
 } from "#types/public"
 
 /**
@@ -37,46 +37,46 @@ export function once<F extends (...args: any[]) => any>(func: F): F {
     } as F
 }
 
-export function dedupe(suppliers: Supplier[]) {
-    const deduped: Record<string, Supplier> = {}
-    for (const supplier of suppliers) {
-        deduped[supplier.name] = supplier
+export function dedupe(services: Service[]) {
+    const deduped: Record<string, Service> = {}
+    for (const service of services) {
+        deduped[service.name] = service
     }
     return Object.values(deduped)
 }
 
 /**
- * Transforms an array of supplies into a map keyed by supplier names.
- * This provides type-safe access to assembled supplies by their supplier names.
+ * Transforms an array of supplies into a map keyed by service names.
+ * This provides type-safe access to assembled supplies by their service names.
  *
- * @typeParam LIST - An array type where each element has a `supplier` property with a `name`
+ * @typeParam LIST - An array type where each element has a `service` property with a `name`
  * @param list - Array of supplies to index
- * @returns A map where keys are supplier names and values are the supplies
+ * @returns A map where keys are service names and values are the supplies
  * @public
  */
-export function index<LIST extends { supplier: { name: string } }[]>(
+export function index<LIST extends { service: { name: string } }[]>(
     ...list: LIST
 ) {
     return list.reduce(
-        (acc, r) => ({ ...acc, [r.supplier.name]: r }),
+        (acc, r) => ({ ...acc, [r.service.name]: r }),
         {}
     ) as MapFromList<LIST>
 }
 
 /**
  * Converts an array of objects with name properties into a map where keys are the names.
- * This is used internally to create lookup maps from supplier arrays for type-safe access.
+ * This is used internally to create lookup maps from service arrays for type-safe access.
  *
  * @typeParam LIST - An array of objects that have a `name` property
  * @returns A map type where each key is a name from the list and values are the corresponding objects
  * @public
  */
-export type MapFromList<LIST extends { supplier: { name: string } }[]> =
+export type MapFromList<LIST extends { service: { name: string } }[]> =
     LIST extends [] ? Record<string, never>
     :   UnionToIntersection<
             {
                 [K in keyof LIST]: {
-                    [NAME in LIST[K]["supplier"]["name"]]: LIST[K]
+                    [NAME in LIST[K]["service"]["name"]]: LIST[K]
                 }
             }[number]
         >
@@ -91,24 +91,24 @@ export function sleep(ms: number) {
 }
 
 /**
- * Type guard to check if a supplier is a ProductSupplier.
- * @param supplier - The supplier to check
- * @returns True if the supplier is a ProductSupplier, false if it's a RequestSupplier
+ * Type guard to check if a service is an app service.
+ * @param service - The service to check
+ * @returns True if the service is an app service, false if it's a request service
  * @internal
  */
-export function isProductSupplier<SUPPLIER extends UnknownProductSupplier>(
-    supplier: SUPPLIER | Supplier
-): supplier is SUPPLIER {
-    return "_product" in supplier && supplier._product === true
+export function isAppService<SERVICE extends UnknownAppService>(
+    service: SERVICE | Service
+): service is SERVICE {
+    return "_app" in service && service._app === true
 }
 
-export function isProductSupply<SUPPLY extends Supply<Supplier>>(
+export function isAppSupply<SUPPLY extends Supply<Service>>(
     supply: SUPPLY
-): supply is Extract<SUPPLY, ProductSupply<UnknownProductSupplier>> {
-    return "supplier" in supply && isProductSupplier(supply.supplier)
+): supply is Extract<SUPPLY, AppSupply<UnknownAppService>> {
+    return "service" in supply && isAppService(supply.service)
 }
 
-export function isPacked(supply: Supply<Supplier>) {
+export function isPacked(supply: Supply<Service>) {
     return "_packed" in supply && supply._packed === true
 }
 

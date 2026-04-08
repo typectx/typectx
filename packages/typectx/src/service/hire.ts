@@ -1,41 +1,41 @@
-import { team } from "#product/main"
-import type { ProductSupplierGuard } from "#types/guards"
-import type { ProductSupplier } from "#types/public"
-import type { Supply, UnknownProductSupplier } from "#types/public"
+import { team } from "#service/main"
+import type { AppServiceGuard } from "#types/guards"
+import type { AppService } from "#types/public"
+import type { Supply, UnknownAppService } from "#types/public"
 import type { SupplyDeps } from "#types/records"
 import type { MergeStringTuples } from "#types/utils"
 import type { Merge } from "#utils"
-import { assertProductSuppliers } from "#validation"
+import { assertAppServices } from "#validation"
 
 /**
- * Hires additional suppliers into the dependency chain of this product supplier.
- * This allows replacing or adding suppliers composition-root style for testing,
- * mocking, or batch assembly. Hired suppliers override suppliers with matching
+ * Hires additional services into the dependency chain of this app service.
+ * This allows replacing or adding services composition-root style for testing,
+ * mocking, or batch assembly. Hired services override services with matching
  * names in the transitive dependency tree.
  *
- * @param hiredSuppliers - Product suppliers to hire (replace/add to the team)
- * @returns A new product supplier with the hired suppliers merged into the team
+ * @param hiredServices - App services to hire (replace/add to the team)
+ * @returns A new app service with the hired services merged into the team
  * @public
  */
 export function Hire() {
     return function hire<
-        THIS extends Omit<UnknownProductSupplier, "_hired" | "_composite"> & {
+        THIS extends Omit<UnknownAppService, "_hired" | "_composite"> & {
             _hired: string[]
             _composite: boolean
         },
-        HIRED extends UnknownProductSupplier[] = []
+        HIRED extends UnknownAppService[] = []
     >(
         this: THIS,
         ...hired: [...HIRED]
-    ): ProductSupplierGuard<
-        ProductSupplier<
+    ): AppServiceGuard<
+        AppService<
             THIS["name"],
             THIS["_constraint"],
             THIS["_optionalKeys"],
             THIS["_known"],
             Merge<
                 {
-                    [SUPPLIER in HIRED[number] as SUPPLIER["name"]]?: Supply<SUPPLIER>
+                    [SERVICE in HIRED[number] as SERVICE["name"]]?: Supply<SERVICE>
                 },
                 Merge<
                     Omit<
@@ -56,12 +56,12 @@ export function Hire() {
         >,
         HIRED
     > {
-        assertProductSuppliers(this.name, hired, true)
-        const mergedSuppliers = [
-            ...this._suppliers.filter(
-                (oldSupplier) =>
+        assertAppServices(this.name, hired, true)
+        const mergedServices = [
+            ...this._services.filter(
+                (oldService) =>
                     !hired.some(
-                        (newSupplier) => newSupplier.name === oldSupplier.name
+                        (newService) => newService.name === oldService.name
                     )
             ),
             ...hired
@@ -70,9 +70,9 @@ export function Hire() {
         const mergedHired = [
             ...this._hired.filter(
                 (oldName) =>
-                    !hired.some((newSupplier) => newSupplier.name === oldName)
+                    !hired.some((newService) => newService.name === oldName)
             ),
-            ...hired.map((newSupplier) => newSupplier.name)
+            ...hired.map((newService) => newService.name)
         ] as MergeStringTuples<
             THIS["_hired"],
             {
@@ -82,7 +82,7 @@ export function Hire() {
 
         const _toSupply = null as unknown as Merge<
             {
-                [SUPPLIER in HIRED[number] as SUPPLIER["name"]]?: Supply<SUPPLIER>
+                [SERVICE in HIRED[number] as SERVICE["name"]]?: Supply<SERVICE>
             },
             Merge<
                 Omit<THIS["_toSupply"], keyof HIRED[number]["_oldToSupply"]>,
@@ -96,23 +96,23 @@ export function Hire() {
 
         return {
             ...this,
-            _suppliers: mergedSuppliers,
+            _services: mergedServices,
             _hired: mergedHired,
-            _team: team(this.name, mergedSuppliers, this._optionals),
+            _team: team(this.name, mergedServices, this._optionals),
             _toSupply,
             _deps,
             _oldToSupply: _toSupply,
             _oldDeps: _deps,
             _mock: false as const,
             _composite: true as const
-        } satisfies ProductSupplier<
+        } satisfies AppService<
             THIS["name"],
             THIS["_constraint"],
             THIS["_optionalKeys"],
             THIS["_known"],
             Merge<
                 {
-                    [SUPPLIER in HIRED[number] as SUPPLIER["name"]]?: Supply<SUPPLIER>
+                    [SERVICE in HIRED[number] as SERVICE["name"]]?: Supply<SERVICE>
                 },
                 Merge<
                     Omit<

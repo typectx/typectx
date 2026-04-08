@@ -3,10 +3,10 @@ import { $Post } from "@/components/post"
 import { useQuery } from "@tanstack/react-query"
 import { useDeps } from "@typectx/react"
 import { useAssertStable } from "@/hooks"
-import { supplier } from "typectx"
+import { service } from "typectx"
 
-export const $Feed = supplier("Feed").product({
-    suppliers: [$postsQuery, $Post],
+export const $Feed = service("Feed").app({
+    services: [$postsQuery, $Post],
     factory: (initDeps) =>
         function Feed() {
             const { postsQuery, Post } = useDeps(initDeps)

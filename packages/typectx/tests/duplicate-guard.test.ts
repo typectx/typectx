@@ -1,15 +1,15 @@
 import { describe, it, expectTypeOf } from "vitest"
-import { supplier } from "#index"
+import { service } from "#index"
 import type { DuplicateDependencyError } from "#types/guards"
 
 describe("Duplicate Guard", () => {
-    it("returns DuplicateDependencyError type for duplicate suppliers", () => {
-        const $dep = supplier("dep").product({
+    it("returns DuplicateDependencyError type for duplicate services", () => {
+        const $dep = service("dep").app({
             factory: () => "dep"
         })
 
-        const $withDuplicate = supplier("withDuplicate").product({
-            suppliers: [$dep, $dep],
+        const $withDuplicate = service("withDuplicate").app({
+            services: [$dep, $dep],
             factory: () => "main"
         })
 

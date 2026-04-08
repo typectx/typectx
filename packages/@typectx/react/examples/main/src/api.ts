@@ -1,5 +1,5 @@
 import { queryClient } from "@/query"
-import { supplier, sleep } from "typectx"
+import { service, sleep } from "typectx"
 
 // Simple wireframe types with minimal IDs
 export interface User {
@@ -73,7 +73,7 @@ const populatedPosts = mockPosts.map((post) => {
 
 // React Query hooks
 
-export const $userQuery = supplier("userQuery").product({
+export const $userQuery = service("userQuery").app({
     factory: () => (id: string) => {
         return {
             queryKey: ["user", id],
@@ -89,8 +89,8 @@ export const $userQuery = supplier("userQuery").product({
     }
 })
 
-export const $usersQuery = supplier("usersQuery").product({
-    suppliers: [$userQuery],
+export const $usersQuery = service("usersQuery").app({
+    services: [$userQuery],
     factory: () => {
         return {
             queryKey: ["users"],
@@ -108,7 +108,7 @@ export const $usersQuery = supplier("usersQuery").product({
     }
 })
 
-export const $repliesQuery = supplier("repliesQuery").product({
+export const $repliesQuery = service("repliesQuery").app({
     factory: () => (commentId: string) => {
         return {
             queryKey: ["replies", commentId],
@@ -122,7 +122,7 @@ export const $repliesQuery = supplier("repliesQuery").product({
     }
 })
 
-export const $commentsQuery = supplier("commentsQuery").product({
+export const $commentsQuery = service("commentsQuery").app({
     factory: () => (postId: string) => {
         return {
             queryKey: ["comments", postId],
@@ -136,8 +136,8 @@ export const $commentsQuery = supplier("commentsQuery").product({
     }
 })
 
-export const $postsQuery = supplier("postsQuery").product({
-    suppliers: [$commentsQuery, $repliesQuery],
+export const $postsQuery = service("postsQuery").app({
+    services: [$commentsQuery, $repliesQuery],
     factory: () => {
         return {
             queryKey: ["posts"],

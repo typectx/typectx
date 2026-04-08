@@ -6,7 +6,7 @@ The purpose of this library is mainly as a proof-of-concept that dependency inje
 
 ## Features
 
-- **Dependency Injection for React**: Define components as `typectx` products and inject dependencies (request data or other components).
+- **Dependency Injection for React**: Define components as `typectx` app services and inject dependencies (request data or other components).
 - **Referential Integrity**: Components assembled via `useAssembleComponent` maintain referential equality across re-renders, preventing unnecessary React tree updates.
 - **Efficient Updates**: Uses `useSyncExternalStore` and an internal event store to propagate updates only to components that actually depend on changed resources, similar to how React Context works.
 
@@ -40,11 +40,11 @@ Usage:
 
 ```typescript
 const Component = useAssembleComponent(
-    // The supplier to assemble
+    // The service to assemble
     ctx($Component).hire($Dependency),
     // The pieces of context to supply
     index(
-        $ctxSupplier.pack(value)
+        $ctxService.pack(value)
     )
 ).unpack();
 
@@ -53,33 +53,33 @@ return <Component />;
 
 ## Usage Example
 
-### 1. Define Request Suppliers
+### 1. Define Request Services
 
-Define your request data using `supplier(name).request<T>()`.
+Define your request data using `service(name).request<T>()`.
 
 ```typescript
 // req.ts
-import { supplier } from "typectx"
+import { service } from "typectx"
 
 export const req = {
-    $theme: supplier("theme").request<"light" | "dark">(),
-    $user: supplier("user").request<{ name: string } | null>()
+    $theme: service("theme").request<"light" | "dark">(),
+    $user: service("user").request<{ name: string } | null>()
 }
 ```
 
 ### 2. Define Components
 
-Define your components as products using `supplier(name).product(config)`.
+Define your components with app services using `service(name).app(config)`.
 
 ```typescript
 // components.ts
-import { supplier, index } from "typectx";
+import { service, index } from "typectx";
 import { useDeps, useAssembleComponent } from "@typectx/react";
 import { req } from "./req";
 
 // A child component that consumes 'theme'
-export const $Button = supplier("Button").product({
-    suppliers: [req.$theme],
+export const $Button = service("Button").app({
+    services: [req.$theme],
     // Name the function component so you can understand your component tree in React DevTools
     factory: (initDeps) => function Button({ children }) {
         const { theme } = useDeps(initDeps);
@@ -94,7 +94,7 @@ export const $Button = supplier("Button").product({
 
 // A parent component that assembles the child
 // No call to useDeps since it has no dependencies in this example
-export const $App = supplier("App").product({
+export const $App = service("App").app({
     factory: (initDeps, ctx) => function App() {
         // Assemble the Button component with the current theme
         const Button = useAssembleComponent(
@@ -155,7 +155,7 @@ root.render(<App />);
 ```
 
 - **React Context alternative** - All you can achieve with React Context can be achieved using @typectx/react's API:
-    - `createContext()` → equivalent to defining a new piece of data with `supplier(...).request()` or `supplier(...).product(...)`
+    - `createContext()` → equivalent to defining a new piece of data with `service(...).request()` or `service(...).app(...)`
     - `useContext()` → equivalent to useDeps(initDeps).someData
     - `<Provider >` → equivalent to useAssembleComponent() with a new value for the supplied context.
 
@@ -164,7 +164,7 @@ root.render(<App />);
 - **Preload pattern** - All factories are eagerly prerun in parallel by default, so preloading is very easy. To preload data, look at file src/api.ts in the demo to see how data prefetching has been achieved with react-query to avoid waterfall loading. The following example shows how to use the preload pattern with @typectx/react.
 
 ```tsx
-supplier("Component").product({
+service("Component").app({
     factory: (initDeps, ctx) =>
         React.memo((props) => {
             // return jsx

@@ -1,16 +1,16 @@
-import type { Supplier, Supply, UnknownProductSupplier } from "#types/public"
+import type { Service, Supply, UnknownAppService } from "#types/public"
 import type { ResolvedRecord, SuppliesRecord } from "#types/records"
-import { isPacked, isProductSupplier, isProductSupply, once } from "#utils"
+import { isPacked, isAppService, isAppSupply, once } from "#utils"
 import { assertPlainObject } from "#validation"
 
-export function assemble<THIS extends UnknownProductSupplier>(
+export function assemble<THIS extends UnknownAppService>(
     this: THIS,
     supplied: THIS["_toSupply"]
 ) {
     assertPlainObject("supplied", supplied)
 
     // Stores the supplies that can be preserved to optimize reassemble
-    const preserved: ResolvedRecord<Supplier> = {}
+    const preserved: ResolvedRecord<Service> = {}
 
     for (const [name, supply] of Object.entries(this._known)) {
         // Do not preserve supplies from newly hired
@@ -19,15 +19,15 @@ export function assemble<THIS extends UnknownProductSupplier>(
             continue
         }
 
-        // Do not preserve if some of the suppliers's team members
+        // Do not preserve if some of the services's team members
         // depend on newly hired or supplied (unless packed supplies
         // which are preserved if not directly overwritten by supplied)
         if (
             supply &&
             !isPacked(supply) &&
-            isProductSupply(supply) &&
-            supply.supplier._team.some(
-                (t: Supplier) =>
+            isAppSupply(supply) &&
+            supply.service._team.some(
+                (t: Service) =>
                     t.name in supplied ||
                     this._hired.some((hname) => hname === t.name)
             )
@@ -38,18 +38,18 @@ export function assemble<THIS extends UnknownProductSupplier>(
         preserved[name] = supply
     }
 
-    const definedSupplied: ResolvedRecord<Supplier> = Object.fromEntries(
+    const definedSupplied: ResolvedRecord<Service> = Object.fromEntries(
         Object.entries(supplied).filter(
-            (entry): entry is [string, Supply<Supplier>] =>
+            (entry): entry is [string, Supply<Service>] =>
                 entry[1] !== undefined
         )
     )
 
     const supplies: SuppliesRecord = { ...preserved, ...definedSupplied }
 
-    for (const sup of this._team) {
-        if (!isProductSupplier(sup) || sup.name in supplies) continue
-        supplies[sup.name] = once(() => sup._build(supplies))
+    for (const service of this._team) {
+        if (!isAppService(service) || service.name in supplies) continue
+        supplies[service.name] = once(() => service._build(supplies))
     }
 
     return this._build(supplies)

@@ -2,10 +2,10 @@ import { $usersQuery } from "@/api"
 import { req } from "@/req"
 import { useQuery } from "@tanstack/react-query"
 import { useDeps } from "@typectx/react"
-import { supplier } from "typectx"
+import { service } from "typectx"
 
-export const $SelectSession = supplier("SelectSession").product({
-    suppliers: [$usersQuery, req.$session],
+export const $SelectSession = service("SelectSession").app({
+    services: [$usersQuery, req.$session],
     optionals: [req.$post],
     factory: (initDeps) =>
         function SelectSession() {

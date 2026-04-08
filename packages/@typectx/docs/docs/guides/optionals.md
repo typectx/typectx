@@ -1,21 +1,23 @@
 ---
 title: "Optional Dependencies"
-description: "Learn how to use optional dependencies in typectx. Handle resources that may not always be present, such as feature flags or authentication contexts, with type safety."
+description: "Learn how to use optional dependencies in typectx. Handle request data that may not always be present, such as feature flags or authentication contexts, with type safety."
 keywords:
-    - optionals
-    - optional dependencies
-    - dependency injection
-    - typescript
-    - typectx
-    - feature flags
-    - authentication
+    [
+        "optionals",
+        "optional dependencies",
+        "dependency injection",
+        "typescript",
+        "typectx",
+        "feature flags",
+        "authentication"
+    ]
 ---
 
 # Optionals
 
-Optionals are request suppliers that a product _may_ depend on, but doesn't _require_ to function. When you declare a request supplier in the `optionals` array instead of the `suppliers` array, you're telling typectx that:
+Optionals are request services that a factory _may_ depend on, but doesn't _require_ to function. When you declare a request service in the `optionals` array instead of the `services` array, you're telling typectx that:
 
-1. The product can be assembled without providing this request data
+1. The factory can be run without providing this request data
 2. The request data will be `undefined` if not provided
 3. TypeScript will enforce proper undefined checks when accessing the optional
 
@@ -26,13 +28,13 @@ This is particularly useful for feature flags, authentication contexts, caching 
 Here's a simple example of using an optional resource:
 
 ```typescript
-import { index, supplier } from "typectx"
+import { index, service } from "typectx"
 
 // Define an optional apiKey
-const $apiKey = supplier("apiKey").request<string>()
+const $apiKey = service("apiKey").request<string>()
 
 // Use it as an optional dependency
-const $apiClient = supplier("apiClient").product({
+const $apiClient = service("apiClient").app({
     optionals: [$apiKey],
     // apiKey will be typed string | undefined
     factory: ({ apiKey }) => {
@@ -67,13 +69,13 @@ const authenticatedClient = $apiClient
 Create services that work differently for authenticated vs. anonymous users:
 
 ```typescript
-const $user = supplier("user").request<{
+const $user = service("user").request<{
     userId: string
     name:string
     token: string
 }>()
 
-const $app = supplier("app").product({
+const $app = service("app").app({
     optionals: [$user],
     factory: ({ user }) => {
         if (!user) {

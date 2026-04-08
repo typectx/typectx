@@ -23,7 +23,7 @@
         "url": "https://github.com/typectx/typectx/issues"
     },
     "scripts": {
-        "dev": "fuser -k 3001/tcp && vite",
+        "dev": "fuser -k 3001/tcp || true; vite",
         "start": "vite",
         "build": "tsc && vite build",
         "preview": "vite preview",

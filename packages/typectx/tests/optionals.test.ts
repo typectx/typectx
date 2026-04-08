@@ -1,12 +1,12 @@
 import { describe, it, expect, assertType } from "vitest"
-import { index, supplier } from "#index"
+import { index, service } from "#index"
 
 describe("Optionals Feature", () => {
     describe("Basic Optional Usage", () => {
-        it("should allow defining optional request suppliers in product supplier config", () => {
-            const $optional = supplier("optional").request<string>()
+        it("should allow defining optional request services in app service config", () => {
+            const $optional = service("optional").request<string>()
 
-            const $product = supplier("product").product({
+            const $product = service("product").app({
                 optionals: [$optional],
                 factory: ({ optional }) => {
                     assertType<string | undefined>(optional)
@@ -26,11 +26,11 @@ describe("Optionals Feature", () => {
         })
 
         it("should work when optional is NOT provided", () => {
-            const $config = supplier("config").request<string>()
-            const $optional = supplier("optional").request<number>()
+            const $config = service("config").request<string>()
+            const $optional = service("optional").request<number>()
 
-            const $product = supplier("product").product({
-                suppliers: [$config],
+            const $product = service("product").app({
+                services: [$config],
                 optionals: [$optional],
                 factory: ({ config, optional }) => {
                     return {
@@ -53,13 +53,13 @@ describe("Optionals Feature", () => {
         })
 
         it("should support multiple optionals", () => {
-            const $required = supplier("required").request<string>()
-            const $opt1 = supplier("opt1").request<number>()
-            const $opt2 = supplier("opt2").request<boolean>()
-            const $opt3 = supplier("opt3").request<string>()
+            const $required = service("required").request<string>()
+            const $opt1 = service("opt1").request<number>()
+            const $opt2 = service("opt2").request<boolean>()
+            const $opt3 = service("opt3").request<string>()
 
-            const $product = supplier("product").product({
-                suppliers: [$required],
+            const $product = service("product").app({
+                services: [$required],
                 optionals: [$opt1, $opt2, $opt3],
                 factory: ({ required, opt1, opt2, opt3 }) => {
                     return {
@@ -87,14 +87,14 @@ describe("Optionals Feature", () => {
 
     describe("Type Safety with Optionals", () => {
         it("should make optional supplies nullable in deps type", () => {
-            const $required = supplier("required").request<string>()
-            const $optional = supplier("optional").request<number>()
+            const $required = service("required").request<string>()
+            const $optional = service("optional").request<number>()
 
-            const $product = supplier("product").product({
-                suppliers: [$required],
+            const $product = service("product").app({
+                services: [$required],
                 optionals: [$optional],
                 factory: ({ required, optional }) => {
-                    // Required supplier should be non-nullable in deps type
+                    // Required service should be non-nullable in deps type
                     assertType<string>(required)
                     assertType<number | undefined>(optional)
                     return "result"
@@ -108,12 +108,12 @@ describe("Optionals Feature", () => {
             $product.assemble(index($required.pack("test"), $optional.pack(42)))
         })
 
-        it("should require all required suppliers in ToSupply", () => {
-            const $required = supplier("required").request<string>()
-            const $optional = supplier("optional").request<number>()
+        it("should require all required services in ToSupply", () => {
+            const $required = service("required").request<string>()
+            const $optional = service("optional").request<number>()
 
-            const $product = supplier("product").product({
-                suppliers: [$required],
+            const $product = service("product").app({
+                services: [$required],
                 optionals: [$optional],
                 factory: ({ required, optional }) => {
                     assertType<string>(required)
@@ -122,9 +122,7 @@ describe("Optionals Feature", () => {
                 }
             })
 
-            type test = Parameters<typeof $product.assemble>[0]
-
-            // @ts-expect-error - missing required supplier
+            // @ts-expect-error - missing required service
             $product.assemble(index($optional.pack(42))).unpack()
 
             // Should work without optional
@@ -132,14 +130,14 @@ describe("Optionals Feature", () => {
         })
     })
 
-    describe("Request supplier in ctx wrapper", () => {
-        it("should just return request supplier (noop)", () => {
-            const $input = supplier("input").request<string>()
-            const $contextual = supplier("contextual").product({
+    describe("Request service in ctx wrapper", () => {
+        it("should just return request service (noop)", () => {
+            const $input = service("input").request<string>()
+            const $contextual = service("contextual").app({
                 factory: () => "assembled"
             })
 
-            const $product = supplier("product").product({
+            const $product = service("product").app({
                 optionals: [$input],
                 factory: (deps, ctx) => {
                     // Both should be in ctx
@@ -153,16 +151,16 @@ describe("Optionals Feature", () => {
     })
 
     describe("Optionals with Nested Dependencies", () => {
-        it("should handle optionals in nested product supplier chains", () => {
-            const $optionalConfig = supplier("optionalConfig").request<{
+        it("should handle optionals in nested app service chains", () => {
+            const $optionalConfig = service("optionalConfig").request<{
                 apiKey: string
             }>()
-            const $baseConfig = supplier("baseConfig").request<{
+            const $baseConfig = service("baseConfig").request<{
                 url: string
             }>()
 
-            const $api = supplier("api").product({
-                suppliers: [$baseConfig],
+            const $api = service("api").app({
+                services: [$baseConfig],
                 optionals: [$optionalConfig],
                 factory: ({ baseConfig, optionalConfig }) => {
                     return {
@@ -172,8 +170,8 @@ describe("Optionals Feature", () => {
                 }
             })
 
-            const $app = supplier("app").product({
-                suppliers: [$api],
+            const $app = service("app").app({
+                services: [$api],
                 factory: ({ api }) => {
                     return `Connecting to ${api.url} with ${api.apiKey}`
                 }
@@ -204,17 +202,17 @@ describe("Optionals Feature", () => {
         })
 
         it("should propagate optionals through transitive dependencies in types", () => {
-            const $optional = supplier("optional").request<string>()
+            const $optional = service("optional").request<string>()
 
-            const $child = supplier("child").product({
+            const $child = service("child").app({
                 optionals: [$optional],
                 factory: ({ optional }) => {
                     return optional ?? "default"
                 }
             })
 
-            const $parent = supplier("parent").product({
-                suppliers: [$child],
+            const $parent = service("parent").app({
+                services: [$child],
                 factory: ({ child }) => {
                     return child
                 }
@@ -239,12 +237,12 @@ describe("Optionals Feature", () => {
 
     describe("Optionals with Mocks", () => {
         it("should allow mocks to have different optionals", () => {
-            const $required = supplier("required").request<string>()
-            const $optional1 = supplier("optional1").request<number>()
-            const $optional2 = supplier("optional2").request<number>()
+            const $required = service("required").request<string>()
+            const $optional1 = service("optional1").request<number>()
+            const $optional2 = service("optional2").request<number>()
 
-            const $base = supplier("base").product({
-                suppliers: [$required],
+            const $base = service("base").app({
+                services: [$required],
                 optionals: [$optional1],
                 factory: ({ required, optional1 }) => {
                     return {
@@ -255,7 +253,7 @@ describe("Optionals Feature", () => {
             })
 
             const $mocked = $base.mock({
-                suppliers: [$required],
+                services: [$required],
                 optionals: [$optional2],
                 factory: ({ required, optional2 }) => {
                     return {
@@ -276,11 +274,11 @@ describe("Optionals Feature", () => {
         })
 
         it("should handle optionals with hire method", () => {
-            const $config = supplier("config").request<string>()
-            const $optional = supplier("optional").request<number>()
+            const $config = service("config").request<string>()
+            const $optional = service("optional").request<number>()
 
-            const $dependency = supplier("dependency").product({
-                suppliers: [$config],
+            const $dependency = service("dependency").app({
+                services: [$config],
                 optionals: [$optional],
                 factory: ({ optional }) => {
                     const opt = optional
@@ -288,8 +286,8 @@ describe("Optionals Feature", () => {
                 }
             })
 
-            const $main = supplier("main").product({
-                suppliers: [$dependency],
+            const $main = service("main").app({
+                services: [$dependency],
                 factory: ({ dependency }) => dependency
             })
 
@@ -306,12 +304,12 @@ describe("Optionals Feature", () => {
 
     describe("Optionals with Reassemble", () => {
         it("should allow reassembling with optional when it was initially provided", () => {
-            const $config = supplier("config").request<string>()
-            const $optional1 = supplier("optional1").request<number>()
-            const $optional2 = supplier("optional2").request<number>()
+            const $config = service("config").request<string>()
+            const $optional1 = service("optional1").request<number>()
+            const $optional2 = service("optional2").request<number>()
 
-            const $service = supplier("service").product({
-                suppliers: [$config],
+            const $service = service("service").app({
+                services: [$config],
                 optionals: [$optional1, $optional2],
                 factory: ({ config, optional1, optional2 }) => {
                     return {
@@ -322,8 +320,8 @@ describe("Optionals Feature", () => {
                 }
             })
 
-            const $main = supplier("main").product({
-                suppliers: [$service],
+            const $main = service("main").app({
+                services: [$service],
                 factory: ({ service }, ctx) => {
                     const initial = service
                     expect(initial).toEqual({
@@ -344,11 +342,11 @@ describe("Optionals Feature", () => {
         })
 
         it("should allow removing optional in reassemble", () => {
-            const $config = supplier("config").request<string>()
-            const $optional = supplier("optional").request<number>()
+            const $config = service("config").request<string>()
+            const $optional = service("optional").request<number>()
 
-            const $service = supplier("service").product({
-                suppliers: [$config],
+            const $service = service("service").app({
+                services: [$config],
                 optionals: [$optional],
                 factory: ({ config, optional }) => ({
                     config,
@@ -356,8 +354,8 @@ describe("Optionals Feature", () => {
                 })
             })
 
-            const $main = supplier("main").product({
-                suppliers: [$service],
+            const $main = service("main").app({
+                services: [$service],
                 factory: ({ service }, ctx) => {
                     const initial = service
                     expect(initial).toEqual({
@@ -383,17 +381,17 @@ describe("Optionals Feature", () => {
 
     describe("Optionals with .hire() Method", () => {
         it("should handle optionals when using .hire() for batch assembly", () => {
-            const $optional1 = supplier("optional1").request<string>()
-            const $optional2 = supplier("optional2").request<string>()
+            const $optional1 = service("optional1").request<string>()
+            const $optional2 = service("optional2").request<string>()
 
-            const $service1 = supplier("service1").product({
+            const $service1 = service("service1").app({
                 optionals: [$optional1],
                 factory: ({ optional1 }) => {
                     return `S1: ${optional1 ?? "none"}`
                 }
             })
 
-            const $service2 = supplier("service2").product({
+            const $service2 = service("service2").app({
                 optionals: [$optional2],
                 factory: ({ optional2 }) => {
                     return `S2: ${optional2 ?? "none"}`
@@ -411,10 +409,10 @@ describe("Optionals Feature", () => {
 
     describe("Edge Cases and Error Handling", () => {
         it("should handle empty optionals array", () => {
-            const $config = supplier("config").request<string>()
+            const $config = service("config").request<string>()
 
-            const $product = supplier("product").product({
-                suppliers: [$config],
+            const $product = service("product").app({
+                services: [$config],
                 optionals: [],
                 factory: ({ config }) => config
             })
@@ -425,11 +423,11 @@ describe("Optionals Feature", () => {
             expect(result).toBe("test")
         })
 
-        it("should handle product with only optionals (no required suppliers)", () => {
-            const $optional1 = supplier("optional1").request<string>()
-            const $optional2 = supplier("optional2").request<number>()
+        it("should handle app service with only optionals (no required services)", () => {
+            const $optional1 = service("optional1").request<string>()
+            const $optional2 = service("optional2").request<number>()
 
-            const $product = supplier("product").product({
+            const $product = service("product").app({
                 optionals: [$optional1, $optional2],
                 factory: ({ optional1, optional2 }) => {
                     return {
@@ -466,10 +464,10 @@ describe("Optionals Feature", () => {
         })
 
         it("should handle init function with optionals", () => {
-            const $optional = supplier("optional").request<number>()
+            const $optional = service("optional").request<number>()
             let optStore: number | undefined = undefined
 
-            const $product = supplier("product").product({
+            const $product = service("product").app({
                 optionals: [$optional],
                 factory: ({ optional }) => {
                     return optional ?? 10
@@ -491,18 +489,18 @@ describe("Optionals Feature", () => {
 
     describe("Real-World Use Cases", () => {
         it("Feature flag example", () => {
-            const $featureFlag = supplier("featureFlag").request<boolean>()
+            const $featureFlag = service("featureFlag").request<boolean>()
 
-            const $session = supplier("session").request<string>()
+            const $session = service("session").request<string>()
 
-            const $optionalFeature = supplier("optionalFeature").product({
-                suppliers: [$session],
+            const $optionalFeature = service("optionalFeature").app({
+                services: [$session],
                 factory: ({ session }) => {
                     return session
                 }
             })
 
-            const $main = supplier("main").product({
+            const $main = service("main").app({
                 optionals: [$featureFlag],
                 factory: ({ featureFlag }, ctx) => {
                     const enabled = featureFlag
@@ -529,17 +527,17 @@ describe("Optionals Feature", () => {
         })
 
         it("should support optional authentication/authorization context", () => {
-            const $publicData = supplier("publicData").request<{
+            const $publicData = service("publicData").request<{
                 title: string
             }>()
 
-            const $userAuth = supplier("userAuth").request<{
+            const $userAuth = service("userAuth").request<{
                 userId: string
                 token: string
             }>()
 
-            const $api = supplier("api").product({
-                suppliers: [$publicData],
+            const $api = service("api").app({
+                services: [$publicData],
                 optionals: [$userAuth],
                 factory: ({ publicData, userAuth }) => {
                     const data = publicData
@@ -580,14 +578,14 @@ describe("Optionals Feature", () => {
         })
 
         it("should support optional caching/performance optimization context", () => {
-            const $config = supplier("config").request<{
+            const $config = service("config").request<{
                 apiUrl: string
             }>()
 
-            const $cache = supplier("cache").request<Map<string, unknown>>()
+            const $cache = service("cache").request<Map<string, unknown>>()
 
-            const $dataService = supplier("dataService").product({
-                suppliers: [$config],
+            const $dataService = service("dataService").app({
+                services: [$config],
                 optionals: [$cache],
                 factory: ({ config, cache }) => {
                     return {

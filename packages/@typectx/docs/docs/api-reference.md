@@ -1,13 +1,12 @@
 ---
 title: "API Reference"
-description: "Detailed API reference for typectx. Learn about supplier(name).request(), supplier(name).product(config), and core functions for type-safe dependency injection in TypeScript."
+description: "Detailed API reference for typectx. Learn about service(name).request(), service(name).app(config), and core functions for type-safe dependency injection in TypeScript."
 keywords:
     - api
     - reference
     - typectx
-    - product
-    - product
     - request
+    - app
     - assemble
     - dependency injection
     - typescript
@@ -15,73 +14,73 @@ keywords:
 
 # API Reference
 
-### `supplier(name).request<T>()`
+### `service(name).request<T>()`
 
-Creates a supplier for a value from the user's request (request params, cookies, etc.) with type T.
+Creates a service for a value from the user's request (request params, cookies, etc.) with type T.
 
 ```ts
-const $session = supplier("session").request<Session>()
+const $session = service("session").request<Session>()
 ```
 
-### `supplier(name).product(config)`
+### `service(name).app(config)`
 
-Creates a product supplier.
+Creates an app service.
 
 ```ts
-const $product = supplier("product").product({
-    suppliers: [$supplier1, $supplier2], // Suppliers
+const $product = service("product").app({
+    services: [$service1, $service2], // Services
     lazy: boolean, // Eager (false) or lazy (true)
     init: (value, deps) => void // Run a function right after construction
     factory: (deps, ctx) => {
         // Factory function
         // deps = dependencies received, can be destructured
-        // ctx = Function to contextualize suppliers used in the factory
+        // ctx = Function to contextualize services used in the factory
         return serviceImplementation
     }
 })
 ```
 
-### `$supplier.pack(value)`
+### `$service.pack(value)`
 
-Provides a concrete value for a supplier, bypassing the factory in the case of products.
+Provides a concrete value for a service, bypassing the factory in the case of app services.
 
 ```ts
-const requestData = $request.pack(value)
-const mockProduct = $product.pack(mockValue) // For testing
+const requestData = $requestService.pack(value)
+const mockProduct = $appService.pack(mockValue) // For testing
 ```
 
-### `$supplier.assemble(supplies)`
+### `$service.assemble(supplies)`
 
-Resolves all dependencies and creates the product.
+Resolves all dependencies and creates the service's product.
 
 ```ts
 const supply = $product.assemble(suppliesObject)
-const value = supply.unpack()
+const product = supply.unpack()
 ```
 
-### `$supplier.mock(options)`
+### `$service.mock(options)`
 
 Creates an alternative implementation.
 
 ```ts
-const $alternative = $originalSupplier.mock({
-    suppliers: [$differentDeps],
+const $alternative = $originalService.mock({
+    services: [$differentDeps],
     factory: (deps, ctx) => {
         /*... alternativeImplementationBody*/
     }
 })
 ```
 
-### `$supplier.hire(...hiredSuppliers)`
+### `$service.hire(...hiredServices)`
 
-Composition root method to wire additional suppliers. Hired suppliers replace originals
+Composition root method to wire additional services. Hired services replace originals
 with the same name across the entire dependency chain.
 
 ```ts
-const $modified = $originalSupplier.hire($mockSupplier)
+const $modified = $originalService.hire($mockService)
 ```
 
-You can also hire additional original suppliers to batch-assemble multiple products together. You access these resolved values through the returned supply's `deps`.
+You can also hire additional original services to batch-assemble multiple app services together. You access these resolved values through the returned supply's `deps`.
 
 ```ts
 const ASupply = $A.hire($B, $C).assemble({})
@@ -93,7 +92,7 @@ const C = ASupply.deps.C
 
 ### `supply.deps`
 
-Access resolved dependencies from outside a factory. See example above in `$supplier.hire()` section. TypeScript only exposes dependencies it can prove are present for that assembled supplier context.
+Access resolved dependencies from outside a factory. See example above in `$service.hire()` section. TypeScript only exposes dependencies it can prove are present for that assembled service context.
 
 ### `index(...supplies)`
 
@@ -101,12 +100,12 @@ Utility to convert supply array to indexed object.
 
 ```ts
 const suppliesObject = index(supply1, supply2, supply3)
-// Equivalent to: { [supply1.supplier.name]: supply1, [supply2.supplier.name]: supply2, ... }
+// Equivalent to: { [supply1.service.name]: supply1, [supply2.service.name]: supply2, ... }
 ```
 
 ## Factory Function (`factory`)
 
 The factory function is where your service logic lives. It receives two arguments:
 
-- **`deps`**: An object of dependencies of the form: `{[supplier.name]: value}`
-- **`ctx($supplier)`**: A function to access contextualized suppliers in a factory and reassemble them with additional or overridden request data.
+- **`deps`**: An object of dependencies of the form: `{[service.name]: value}`
+- **`ctx($service)`**: A function to access contextualized services in a factory and reassemble them with additional or overridden request data.

@@ -12,48 +12,52 @@ keywords:
 
 # Context Propagation
 
-Context propagation is how typectx creates nested sub-contexts without global state. The core primitive is `ctx($supplier).assemble(...)`:
+Context propagation is how typectx creates nested sub-contexts without global state. The core primitive is `ctx($service).assemble(...)`:
 
 - `ctx(...)` keeps the current context and any hired replacements.
 - `.assemble(...)` lets you add or override request supplies deeper in the call stack.
 
 ## The mental model
 
-A complex app often has "sub-requests" inside a request (for example, one `postId` per feed item). You can model each sub-request by reassembling a supplier with extra request data, while still inheriting parent context (session, db, feature flags, etc.).
+A complex app often has "sub-requests" inside a request (for example, one `postId` per feed item). You can model each sub-request by reassembling a service with extra request data, while still inheriting parent context (session, db, feature flags, etc.).
 
 ```tsx
-const $session = supplier("session").request<Session>()
-const $postId = supplier("postId").request<string>()
-const $db = supplier("db").product({ factory: () => connectDb() })
+const $session = service("session").request<Session>()
+const $postId = service("postId").request<string>()
+const $db = service("db").app({ factory: () => connectDb() })
 
-const $Post = supplier("Post").product({
-    suppliers: [$db, $postId, $session],
-    factory: ({ db, postId, session }) => () => {
-        const post = db.getPost(postId)
-        return (
-            <article>
-                <h2>{post.title}</h2>
-                <p>Hi {session.name}</p>
-            </article>
-        )
-    }
+const $Post = service("Post").app({
+    services: [$db, $postId, $session],
+    factory:
+        ({ db, postId, session }) =>
+        () => {
+            const post = db.getPost(postId)
+            return (
+                <article>
+                    <h2>{post.title}</h2>
+                    <p>Hi {session.name}</p>
+                </article>
+            )
+        }
 })
 
-const $Feed = supplier("Feed").product({
-    suppliers: [$db, $session],
-    factory: ({ db }, ctx) => () => {
-        const ids = db.getPostIds()
-        return (
-            <>
-                {ids.map((id) => {
-                    const Post = ctx($Post)
-                        .assemble(index($postId.pack(id)))
-                        .unpack()
-                    return <Post key={id} />
-                })}
-            </>
-        )
-    }
+const $Feed = service("Feed").app({
+    services: [$db, $session],
+    factory:
+        ({ db }, ctx) =>
+        () => {
+            const ids = db.getPostIds()
+            return (
+                <>
+                    {ids.map((id) => {
+                        const Post = ctx($Post)
+                            .assemble(index($postId.pack(id)))
+                            .unpack()
+                        return <Post key={id} />
+                    })}
+                </>
+            )
+        }
 })
 ```
 
@@ -64,15 +68,15 @@ Using `ctx(...)` inside factories is important for two reasons:
 1. It respects hires/mocks from upstream composition roots.
 2. It narrows `assemble(...)` requirements to only what is not already known in the current context.
 
-Calling module-scope suppliers directly inside factories bypasses those guarantees.
+Calling module-scope services directly inside factories bypasses those guarantees.
 
 ## Reassemble an already-used dependency
 
 You can also reassemble an existing dependency with new request data:
 
 ```ts
-const $sendMoney = supplier("sendMoney").product({
-    suppliers: [$addWalletEntry, $session],
+const $sendMoney = service("sendMoney").app({
+    services: [$addWalletEntry, $session],
     factory: ({ addWalletEntry }, ctx) => {
         return (toUserId: string, amount: number) => {
             addWalletEntry(-amount)
@@ -91,7 +95,7 @@ This pattern keeps the same business logic but runs it in a different nested con
 
 ## Batch nested assembly with `hire(...)`
 
-If multiple products need the same new context, batch them in one contextual assembly:
+If multiple services need the same new context, batch them in one contextual assembly:
 
 ```tsx
 const PostSupply = ctx($Post)

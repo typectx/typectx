@@ -1,19 +1,19 @@
 import type {
-    MainSupplier,
-    RequestSupplier,
-    Supplier,
+    MainService,
+    RequestService,
+    Service,
     Supply,
-    UnknownProductSupplier
+    UnknownAppService
 } from "#types/public"
 import type { Deps, ToSupply } from "#types/records"
 import type { Merge } from "#utils"
 
-export interface BaseSupplier<
+export interface BaseService<
     NAME extends string = string,
     CONSTRAINT = unknown
 > {
     name: NAME
-    pack: <THIS extends Supplier, VALUE extends CONSTRAINT>(
+    pack: <THIS extends Service, VALUE extends CONSTRAINT>(
         this: THIS,
         value: VALUE
     ) => Supply<THIS>
@@ -22,82 +22,82 @@ export interface BaseSupplier<
 
 export type Factory<
     CONSTRAINT,
-    SUPPLIERS extends MainSupplier[] = [],
-    OPTIONALS extends RequestSupplier[] = []
+    SERVICES extends MainService[] = [],
+    OPTIONALS extends RequestService[] = []
 > = (
     deps: Deps<{
-        suppliers: SUPPLIERS
+        services: SERVICES
         optionals: OPTIONALS
     }>,
     ctx: Ctx<{
-        suppliers: SUPPLIERS
+        services: SERVICES
         optionals: OPTIONALS
     }>
 ) => CONSTRAINT
 
 type Init<
     CONSTRAINT,
-    SUPPLIERS extends MainSupplier[] = [],
-    OPTIONALS extends RequestSupplier[] = []
+    SERVICES extends MainService[] = [],
+    OPTIONALS extends RequestService[] = []
 > = (
     value: CONSTRAINT,
     deps: Deps<{
-        suppliers: SUPPLIERS
+        services: SERVICES
         optionals: OPTIONALS
     }>
 ) => void
 
-export type PartialProductSupplierPlan<
+export type PartialAppServicePlan<
     CONSTRAINT,
-    SUPPLIERS extends MainSupplier[] = [],
-    OPTIONALS extends RequestSupplier[] = []
+    SERVICES extends MainService[] = [],
+    OPTIONALS extends RequestService[] = []
 > = {
-    suppliers?: [...SUPPLIERS]
+    services?: [...SERVICES]
     optionals?: [...OPTIONALS]
-    factory: Factory<CONSTRAINT, SUPPLIERS, OPTIONALS>
-    init?: Init<CONSTRAINT, SUPPLIERS, OPTIONALS>
+    factory: Factory<CONSTRAINT, SERVICES, OPTIONALS>
+    init?: Init<CONSTRAINT, SERVICES, OPTIONALS>
     lazy?: boolean
 }
 
-export type ProductSupplierPlan<
+export type AppServicePlan<
     CONSTRAINT,
-    SUPPLIERS extends MainSupplier[],
-    OPTIONALS extends RequestSupplier[]
+    SERVICES extends MainService[],
+    OPTIONALS extends RequestService[]
 > = {
-    suppliers: [...SUPPLIERS]
+    services: [...SERVICES]
     optionals: [...OPTIONALS]
-    factory: Factory<CONSTRAINT, SUPPLIERS, OPTIONALS>
-    init: Init<CONSTRAINT, SUPPLIERS, OPTIONALS>
+    factory: Factory<CONSTRAINT, SERVICES, OPTIONALS>
+    init: Init<CONSTRAINT, SERVICES, OPTIONALS>
     lazy: boolean
 }
 
-export type UnknownProductSupplierPlan = ProductSupplierPlan<
+export type UnknownAppServicePlan = AppServicePlan<
     unknown,
-    MainSupplier[],
-    RequestSupplier[]
+    MainService[],
+    RequestService[]
 >
 
 /**
- * ctx transforms suppliers into contextualized suppliers that can be assembled again with new request supplies.
- * This enables dynamic dependency injection within a supplier's factory.
- * @typeParam SUPPLIER - The current product supplier providing context
- * @returns A function that takes a supplier and returns it with a contextualized assemble method
+ * ctx transforms services into contextualized services that can be assembled again with new request supplies.
+ * This enables dynamic dependency injection within a service's factory.
+ * @typeParam SERVICE - The current service providing context
+ * @returns A function that takes a service and returns it with a contextualized assemble method
  * @public
  */
 export type Ctx<
-    PLAN extends Pick<UnknownProductSupplierPlan, "optionals" | "suppliers">,
+    PLAN extends Pick<UnknownAppServicePlan, "optionals" | "services">,
     KNOWN extends Required<ToSupply<PLAN, Record<never, never>>> = Required<
         ToSupply<PLAN, Record<never, never>>
     >
-> = <SUPPLIER extends Supplier>(
-    supplier: SUPPLIER & (UnknownProductSupplier | Supplier)
-) => SUPPLIER extends UnknownProductSupplier ?
+> = <SERVICE extends Service>(
+    service: SERVICE & (UnknownAppService | Service)
+) => SERVICE extends UnknownAppService ?
     Merge<
-        SUPPLIER,
+        SERVICE,
         {
             _known: KNOWN
-            _toSupply: Omit<SUPPLIER["_toSupply"], keyof KNOWN> & Partial<KNOWN>
-            _deps: SUPPLIER["_deps"]
+            _toSupply: Omit<SERVICE["_toSupply"], keyof KNOWN> & Partial<KNOWN>
+            _deps: SERVICE["_deps"]
         }
     >
-:   SUPPLIER & RequestSupplier // simply returns the supplier itself if it's a request supplier (noop)
+:   SERVICE & RequestService // simply returns the service itself if it's a request service (noop)

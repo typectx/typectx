@@ -1,7 +1,7 @@
-import type { Ctx, UnknownProductSupplierPlan } from "#types/internal"
-import type { Supplier, Supply, UnknownProductSupplier } from "#types/public"
+import type { Ctx, UnknownAppServicePlan } from "#types/internal"
+import type { Service, Supply, UnknownAppService } from "#types/public"
 import type { SuppliesRecord, ToSupply } from "#types/records"
-import { isProductSupplier, once } from "#utils"
+import { isAppService, once } from "#utils"
 
 function createResolver(supplies: SuppliesRecord) {
     return once(() => {
@@ -20,9 +20,9 @@ function createResolver(supplies: SuppliesRecord) {
     })
 }
 
-function prerun(supplier: { _team: Supplier[] }, deps: Record<string, any>) {
-    // Prerun supplier factories in the background (non-blocking)
-    for (const member of supplier._team) {
+function prerun(service: { _team: Service[] }, deps: Record<string, any>) {
+    // Prerun service factories in the background (non-blocking)
+    for (const member of service._team) {
         if ("_lazy" in member && member._lazy) continue
 
         // If prerun fails, we don't want to break the entire supply chain
@@ -37,17 +37,17 @@ function prerun(supplier: { _team: Supplier[] }, deps: Record<string, any>) {
 }
 
 export function Ctx<
-    PLAN extends Pick<UnknownProductSupplierPlan, "suppliers" | "optionals">
+    PLAN extends Pick<UnknownAppServicePlan, "services" | "optionals">
 >(
     plan: PLAN,
     resolved: Required<ToSupply<PLAN, Record<never, never>>>
 ): Ctx<PLAN> {
-    return <SUPPLIER extends Supplier>(supplier: SUPPLIER): any => {
+    return <SERVICE extends Service>(service: SERVICE): any => {
         const actual =
-            plan.suppliers.find((member) => member.name === supplier.name) ??
-            supplier
+            plan.services.find((member) => member.name === service.name) ??
+            service
 
-        if (!isProductSupplier(actual)) {
+        if (!isAppService(actual)) {
             return actual
         }
 
@@ -64,13 +64,13 @@ export function Ctx<
  * reassembly and recursive dependency resolution. It creates the factory
  * closure with the deps and ctx accessors and handles initialization.
  *
- * @param this - The product supplier building the supply
+ * @param this - The app service building the supply
  * @param supplies - The supply map providing resolved dependencies
  * @returns A supply instance with unpack(), deps, supplies, and ctx methods
  * @internal
  */
 
-export function _build<THIS extends UnknownProductSupplier>(
+export function _build<THIS extends UnknownAppService>(
     this: THIS,
     supplies: SuppliesRecord
 ): Supply<THIS> {
@@ -105,11 +105,11 @@ export function _build<THIS extends UnknownProductSupplier>(
         }
     )
 
-    // Prerun supplier factories in the background (non-blocking)
+    // Prerun service factories in the background (non-blocking)
     prerun(this, deps)
 
     const ctx = Ctx(
-        { suppliers: this._suppliers, optionals: this._optionals },
+        { services: this._services, optionals: this._optionals },
         resolved
     )
 
@@ -123,7 +123,7 @@ export function _build<THIS extends UnknownProductSupplier>(
         }),
         deps,
         supplies: resolved,
-        supplier: this,
+        service: this,
         _ctx: ctx,
         _packed: false as const
     }

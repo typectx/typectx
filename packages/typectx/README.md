@@ -1,6 +1,6 @@
 # typectx
 
-Fully type-inferred Context and DI container for Typescript! Dependency injection (DI) and context propagation without reflect-metadata, decorators, annotations or compiler magic, just simple functions!
+Fully type-inferred Context and Pure DI library for Typescript! Dependency injection (DI) and context propagation without reflect-metadata, decorators, annotations or compiler magic, just simple functions!
 
 ## Why typectx?
 
@@ -29,28 +29,28 @@ npm install typectx
 - **Microservices** that need shared context propagation
 - **Testing scenarios** requiring easy mocking and dependency swapping
 - **A/B testing**, feature flagging and prototyping.
-- **Any project** wanting DI without the complexity of traditional containers
+- **Any project** wanting DI without the complexity of traditional containers and OOP syntax
 
 ## Performance
 
-- **Hyper-minimalistic bundle size**: ~5KB minified, ~2KB minzipped. Most of the package is type definitions.
-- **Tree-shakable and code-splittable architecture**: Helps you create hyper-specialized suppliers: One function or piece of data per supplier
+- **Hyper-minimalistic bundle size**: ~5KB minified, ~2KB minzipped.
+- **Tree-shakable and code-splittable architecture**: Helps you create hyper-specialized services: One function or piece of data per service
 - **Memory usage**: Smart memoization prevents duplicate dependency resolution
-- **Options to optimize dependency chain waterfalls**: Define suppliers as lazy or eager, call init() to preload some values as soon as possible.
+- **Options to optimize dependency chain waterfalls**: Define services as lazy or eager, call init() to preload some values as soon as possible.
 
 ## Quick Example
 
 ```ts
-import { index, supplier } from "typectx"
+import { index, service } from "typectx"
 
-// 1. Define request and product suppliers
-const $session = supplier("session").request<{ userId: string }>()
-const $todosDb = supplier("todosDb").product({
-    suppliers: [],
+// 1. Define request and product services
+const $session = service("session").request<{ userId: string }>()
+const $todosDb = service("todosDb").app({
+    services: [],
     factory: () => new Map<string, string[]>() // Simple in-memory DB
 })
-const $addTodo = supplier("addTodo").product({
-    suppliers: [$session, $todosDb],
+const $addTodo = service("addTodo").app({
+    services: [$session, $todosDb],
     factory:
         ({ session, todosDb }) =>
         (todo: string) => {
@@ -71,18 +71,20 @@ console.log(addTodo("Build app")) // ["Learn typectx", "Build app"]
 
 ## Intuitive, opinionated terminology
 
-typectx uses an intuitive supply chain metaphor to make dependency injection easier to understand. You create fully-decoupled, hyper-specialized **suppliers** that exchange **supplies** in a free-market fashion to assemble new, more complex products.
+typectx uses an intuitive supply chain metaphor to make dependency injection easier to understand. You create fully-decoupled, hyper-specialized **services** that exchange **supplies** in a free-market fashion to assemble new, more complex products.
 
-| Term                                                              | Classical DI Equivalent        | Description                                                                                                             |
-| ----------------------------------------------------------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
-| **`supplier(name).request()` / `supplier(name).product(config)`** | `createContainer()+register()` | Declare suppliers directly with explicit names and config.                                                              |
-| **Supplier**                                                      | Service                        | Provides dependencies to other suppliers. Node in your dependency graph.                                                |
-| **Request Supplier**                                              | Value Service                  | Supplier for a value from the user's request (request params, cookies, etc.)                                            |
-| **Product Supplier**                                              | Factory Service                | Supplier for a value derived from other product or request suppliers via a factory function                             |
-| **Supply or Pack**                                                | Proxy                          | Value wrapper for type-checking and transport across suppliers                                                          |
-| **Supplies**                                                      | Container / Context            | The collection of resolved dependencies, but still within their supply or pack wrapper.                                 |
-| **`assemble()`**                                                  | `resolve()`                    | Gathers all required request supplies (product supplies are auto-wired) and injects them in product supplier factories. |
-| **Deps**                                                          | Values                         | The collection of resolved unpacked dependencies a factory receives                                                     |
+| Term                                                        | Classical DI Equivalent        | Description                                                                                                      |
+| ----------------------------------------------------------- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| **`service(name).request()` / `service(name).app(config)`** | `createContainer()+register()` | Declare services directly with explicit names and config.                                                        |
+| **Service**                                                 | Service                        | Provides dependencies to other services. Node in your dependency graph.                                          |
+| **Request Service**                                         | Value Service                  | Service for a value from the user's request (request params, cookies, etc.)                                      |
+| **Input**                                                   | Value                          | Name for the value returned by a request service                                                                 |
+| **App Service**                                             | Factory Service                | Service for a value computed by your app from other app or request services via a factory function               |
+| **Product**                                                 | Value                          | Name for the value returned by an app service's factory                                                          |
+| **Supply**                                                  | Proxy                          | Value wrapper (pack) for type-checking and transport across services                                             |
+| **Supplies**                                                | Container / Context            | The collection of resolved dependencies, but still within their supply wrapper (pack).                           |
+| **`assemble()`**                                            | `resolve()`                    | Gathers all required request supplies (app supplies are auto-wired) and injects them in app services' factories. |
+| **Deps**                                                    | Values                         | The collection of resolved unpacked dependencies a factory receives                                              |
 
 ## Full features list
 
@@ -97,47 +99,47 @@ typectx uses an intuitive supply chain metaphor to make dependency injection eas
 - Functions only - No classes, decorators, annotations, or compiler magic.
 - Declarative, immutable, functionally pure.
 - Stateless - Dependencies are resolved via closures, not state. Some memoized state is kept for validation and optimization purposes only.
-- Auto-wired - All products are built by the Supply Chain and resolve their dependencies automatically.
-- Maximal colocation - All product suppliers are registered right next to the factory that uses them, not at the entry point.
+- Auto-wired - All app service are built by the Supply Chain and resolve their dependencies automatically.
+- Maximal colocation - All app services are registered right next to the factory that uses them, not at the entry point.
 
 📦 Context Propagation
 
 - Shared context - Assemble the context once at the entry point, access everywhere without prop-drilling.
 - Smart memoization - Dependencies injected once per assemble() context for optimal performance.
-- Context switching - Override context anywhere in the call stack with `ctx($supplier).assemble(...)`.
-- Context enrichment - Add new context and products deep in the call stack with contextual assembly and `hire(...)`.
+- Context switching - Override context anywhere in the call stack with `ctx($service).assemble(...)`.
+- Context enrichment - Add new inputs and products deep in the call stack with contextual assembly and `hire(...)`.
 
 ⚡ Waterfall Management
 
 - Eager loading - Use lazy: false for immediate background construction of all supplies in parallel in assemble() call (default).
-- Lazy loading - Use lazy: true for on-demand call of the product supplier's factory when it's first accessed in another factory.
+- Lazy loading - Use lazy: true for on-demand call of the app service's factory when it's first accessed in another factory.
 
 🧪 Testing and Packing
 
-- You can override any supplier with `pack()`, which uses the provided value directly and bypasses the supplier factory.
+- You can override any service with `pack()`, which uses the provided value directly and overrides the request service's previous value or bypasses the service's factory.
 - For more complex mocks which would benefit from a factory, see mock() below.
 
 🚀 Mocking and A/B testing
 
-- Use `mock()` to create alternative implementations of a product supplier, that may depend on different suppliers than the original.
-- Mock factories must return products of the same type as the original product factory.
-- Define mock or alternative suppliers to `hire()` at the entry-point of your app
+- Use `mock()` to create alternative implementations of an app service, that may depend on different services than the original.
+- Mock factories must return products of the same type as the original app service factory.
+- Define mock or alternative services to `hire()` at the entry-point of your app
 - For example, you can easily hire different versions of a UI component for A/B testing.
 
 ## Basic Usage
 
-### 1. Declare suppliers directly
+### 1. Declare services directly
 
-Suppliers are declared directly using `supplier(name).request()` and `supplier(name).product(config)`.
+Services are declared directly using `service(name).request()` and `service(name).app(config)`.
 Names can **only** contain digits, letters, underscores or `$` signs and cannot start with a digit, just like any Javascript identifier.
 
-### 2. Define Request Suppliers
+### 2. Define Request Services
 
-Request suppliers are used to wire the data you get from the user's request, and that cannot be derived from other request or product suppliers, like sessions or request params. You define a `$request` supplier and then `.pack()` it with a value at request time. The value can be anything you want, just specify its type.
+Request services are used to wire the data you get from the user's request, and that cannot be derived from other request or app services, like sessions or request params. You define a `$request` service and then `.pack()` it with a value at request time. The value can be anything you want, just specify its type.
 
 ```tsx
-// I like calling suppliers with $ prefix, but this is up to you.
-const $session = supplier("session").request<{
+// I like calling services with $ prefix, but this is up to you.
+const $session = service("session").request<{
     userId: string
 }>()
 
@@ -148,16 +150,16 @@ const session = $session
     .unpack()
 ```
 
-### 3. Define Product Suppliers
+### 3. Define App Services
 
-Product suppliers are your application's services, components or features. They are factory functions that can depend on other products or request data. Factories can return anything: simple values, promises or other functions.
+App services are your application's components or features. They are factory functions that can depend on other app services or request data. Factories can return anything: simple values, promises or other functions.
 
 Dependencies are accessed via the 1st argument of the factory (deps).
 
 ```tsx
-const $user = supplier("user").product({
-    suppliers: [$session, $db], // Depends on session and db suppliers.
-    // properties of deps are the names provided to supplier("...").
+const $user = service("user").app({
+    services: [$session, $db], // Depends on session and db services.
+    // properties of deps are the names provided to service("...").
     factory: ({ session, db }) => {
         return db.getUser(session.userId) // query the db to retrieve the user.
     }
@@ -172,8 +174,8 @@ const $user = supplier("user").product({
 
 ```ts
 // ✅ Good: Factory called once, returns a function for multiple calls or side-effects
-const $createUser = supplier("createUser").product({
-    suppliers: [$db],
+const $createUser = service("createUser").app({
+    services: [$db],
     factory: ({ db }) => {
         // This setup code runs only once per assemble()
         const cache = new Map()
@@ -196,31 +198,31 @@ const user2 = createUser("123") // Cached result
 
 #### Lazy vs Eager Loading
 
-By default, all products are constructed on `assemble()` call immediately in the background and in parallel, no matter how deep in the supply chain. This means no waterfalls happen. You can disable this for specific products with `lazy: true`.
+By default, all products are constructed on `assemble()` call immediately in the background and in parallel, no matter how deep in the supply chain. This means no waterfalls happen. You can disable this for specific app services with `lazy: true`.
 
 ```ts
 // Eager loading - constructed immediately when assemble() is called
-const $eagerService = supplier("eagerService").product({
-    suppliers: [$db],
+const $eagerService = service("eagerService").app({
+    services: [$db],
     factory: ({ db }) => buildExpensiveService(db)
     lazy: false // default
 })
 
 // Lazy loading - constructed only when accessed
-const $lazyService = supplier("lazyService").product({
-    suppliers: [$db],
+const $lazyService = service("lazyService").app({
+    services: [$db],
     factory: ({db}) => buildExpensiveService(db),
     lazy: true // Loaded when first accessed via deps
 })
 ```
 
-### 4. Define Your Application
+### 4. Define Your Main service
 
-Your Application is just a product like the other ones. It's the main, most complex product at the top of the supply chain.
+Your Main service is just an app service like the other ones. It's the most complex app service at the very end of your supply chain.
 
 ```tsx
-const $app = supplier("app").product({
-    suppliers: [$user], // Depends on User product
+const $main = service("main").app({
+    services: [$user], // Depends on user
     // Destructure the user value.
     // Its type will be automatically inferred from $user's factory's inferred return type.
     factory: ({ user }) => {
@@ -231,13 +233,13 @@ const $app = supplier("app").product({
 
 ### 5. Assemble at Entry Point
 
-At your application's entry point, you `assemble` your main $app, providing just the request data (not the products) requested recursively by the $app's suppliers chain. Typescript will tell you if any request data is missing.
+At your application's entry point, you `assemble` your $main service, providing just the request data (not the products) requested recursively by the $main service's supply chain. Typescript will tell you if any request data is missing.
 
 ```tsx
 
 const req = //...Get the current http request
 
-// Assemble the App, providing the Session and Db resources.
+// Assemble the Main product, providing the Session and Db inputs.
 // Bad but working syntax for demonstration purposes only. See index() below for syntactic sugar.
 const app = $app.assemble({
     [$session.name]: $session.pack({
@@ -249,11 +251,11 @@ const app = $app.assemble({
 // Return or render app...
 ```
 
-The flow of the assemble call is as follows: request data is obtained, which is provided to `$request` suppliers using pack(). Then those request data are supplied to `$app`'s suppliers recursively, which assemble their own product, and pass them up along the supply chain until they reach `$app`, which assembles the final `app` product. All this work happens in the background, no matter the complexity of your application.
+The flow of the assemble call is as follows: request data is obtained, which is provided to `$request` services using pack(). Then those inputs are supplied to `$main`'s services recursively, which assemble their own product, and pass them up along the supply chain until they reach `$main`, which assembles the final `main` product. All this work happens in the background, no matter the complexity of your application.
 
 To simplify the assemble() call, you should use the index() utility, which just transforms an array like
-`...[req1, product1]` into an indexed object like
-`{[req1.name]: req1, [product1.name]: product1}`. I unfortunately did not find a way to merge index() with assemble() without losing assemble's type-safety, because typescript doesn't have an unordered tuple type.
+`...[input1, product1]` into an indexed object like
+`{[input1.name]: input1, [product1.name]: product1}`. I unfortunately did not find a way to merge index() with assemble() without losing assemble's type-safety, because typescript doesn't have an unordered tuple type.
 
 ```tsx
 import { index } from "typectx"
@@ -272,13 +274,13 @@ const app = $app
 
 ## Optionals
 
-Sometimes a product can work with or without certain dependencies. For these cases, use the `optionals` parameter alongside `suppliers`. Optional values may be `undefined` at runtime, and TypeScript will enforce proper undefined checks. You can also use optionals if a piece of request data is not yet known at the entry point of the application, so you don't want Typescript to enforce it being supplied in the assemble() call.
+Sometimes a service can work with or without certain dependencies. For these cases, use the `optionals` parameter alongside `services`. Optional values may be `undefined` at runtime, and TypeScript will enforce proper undefined checks. You can also use optionals if a piece of request data is not yet known at the entry point of the application, so you don't want Typescript to enforce it being supplied in the assemble() call.
 
 [Learn more about optionals →](https://typectx.github.io/typectx/docs/guides/optionals)
 
 ## Context Propagation
 
-Context propagation is typectx's flagship capability. It lets you reassemble products deeper in the call stack by using `ctx($supplier).assemble(...)` with additional or overridden request supplies. This creates nested sub-contexts without global state and keeps dependency resolution type-safe end to end.
+Context propagation is typectx's flagship capability. It lets you reassemble services deeper in the call stack by using `ctx($service).assemble(...)` with additional or overridden request supplies. This creates nested sub-contexts without global state and keeps dependency resolution type-safe end to end.
 
 [Learn more about context propagation →](https://typectx.github.io/typectx/docs/guides/context-propagation)
 
@@ -286,18 +288,18 @@ Context propagation is typectx's flagship capability. It lets you reassemble pro
 
 ### 1. Mocking in tests with `.pack()`
 
-You usually use `pack()` to provide request data to `assemble()`, but you can also use `pack()` on products. This allows to provide a value for that product directly, bypassing its factory. Perfect to override a product's implementation with a mock for testing.
+You usually use `pack()` to provide request data to `assemble()`, but you can also use `pack()` for products. This allows to provide a value for that product directly, bypassing its factory. Perfect to override a product's implementation with a mock for testing.
 
 ```tsx
-const $profile = supplier("profile").product({
-    suppliers: [$user],
+const $profile = service("profile").app({
+    services: [$user],
     factory: ({ user }) => {
         return <h1>Profile of {user.name}</h1>
     }
 })
 
-const $user = supplier("user").product({
-    suppliers: [$db, $session],
+const $user = service("user").app({
+    services: [$db, $session],
     factory: ({db,session}) => {
         return db.findUserById(session.userId)
     }
@@ -325,22 +327,22 @@ const profile = $profile.assemble(
 For more complete alternative implementations, with complex dependency needs, you can use `.mock()` and `.hire()` instead of `.pack()` to access the whole power of your supply chain. The same example as above could be:
 
 ```tsx
-const $profile = supplier("profile").product({
-    suppliers: [$user],
+const $profile = service("profile").app({
+    services: [$user],
     factory: ({ user }) => {
         return <h1>Profile of {user.name}</h1>
     }
 })
 
-const $user = supplier("user").product({
-    suppliers: [$db, $session],
+const $user = service("user").app({
+    services: [$db, $session],
     factory: ({ db, session }) => {
         return db.findUserById(session.userId)
     }
 })
 
 const $userMock = $user.mock({
-    suppliers: [],
+    services: [],
     factory: () => "John Doe"
 })
 
@@ -356,11 +358,11 @@ profile === <h1>Profile of John Doe</h1>
 
 DI containers have always felt abstract, technical, almost magical in how they work. Like a black box, you often have to dig into the source code of a third-party library to understand how data flows in your own application. It feels like you lose control of your own data when you use one, and your entire app becomes dependent on the container to even work. typectx aims to make DI cool again! The pattern has real power, even if current implementations on the open-source market hide that power under a lot of complexity.
 
-DI was complex to achieve in pure OOP world because of the absence of first-class functions. But in more functional languages, DI should be easier, since DI itself is a functional pattern. However, TypeScript DI frameworks currently available seem to have been built by imitating how they were built in OOP languages...
+DI was complex to achieve in OOP world because of the absence of first-class functions. But in more functional languages, DI should be easier, since DI itself is a functional pattern. However, TypeScript DI frameworks currently available seem to have been built by imitating how they were built in OOP languages...
 
 The problem DI was solving in OOP still exists in a more functional world. In OOP, DI helped inject data and services freely within deeply nested class hierarchies and architectures. With only functions though, DI achieves a similar purpose: inject data and services freely in deeply nested function calls. Deeply nested function calls naturally emerge when trying to decouple and implement SOLID principles in medium to highly complex applications. Without DI, you cannot achieve maximal decoupling. Even if in principle you can reuse a function elsewhere, the function is still bound in some way to the particular call stack in which it finds itself, simply by the fact that it can only be called from a parent function that has access to all the data and dependencies it needs.
 
-typectx's Context containers can do everything DI containers do, and more! It also achieves it in a more elegant, simpler, and easier-to-reason-about manner.
+typectx can do everything DI containers do, and more! It also achieves it in a more elegant, simpler, and easier-to-reason-about manner.
 
 ## How it Works Under the Hood
 
@@ -369,13 +371,13 @@ Injection happens statelessly via a memoized, recursive, self-referential, lazy 
 ```typescript
 const supplies = {
     // request data is provided directly
-    reqA,
-    reqB,
+    inputA,
+    inputB,
 
     // Products are wrapped in a function to be lazily evaluated and memoized.
     // The supplies object is passed to assemble, creating a recursive structure.
-    productA: once(() => productA.supplier.assemble(supplies)),
-    productB: once(() => productB.supplier.assemble(supplies))
+    productA: once(() => productA.service.assemble(supplies)),
+    productB: once(() => productB.service.assemble(supplies))
     // ...
 }
 ```

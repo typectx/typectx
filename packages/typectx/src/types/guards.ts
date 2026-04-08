@@ -1,12 +1,12 @@
-import type { Supplier, UnknownProductSupplier } from "#types/public"
+import type {
+    Service,
+    UnknownAppService as UnknownAppService
+} from "#types/public"
 
-type FindDuplicateName<
-    SUPPLIERS extends Supplier[],
-    SEEN extends string[] = []
-> =
-    any[] extends SUPPLIERS ? never
-    : SUPPLIERS extends (
-        [infer FIRST extends Supplier, ...infer REST extends Supplier[]]
+type FindDuplicateName<SERVICES extends Service[], SEEN extends string[] = []> =
+    any[] extends SERVICES ? never
+    : SERVICES extends (
+        [infer FIRST extends Service, ...infer REST extends Service[]]
     ) ?
         string extends FIRST["name"] ? never
         : FIRST["name"] extends SEEN[number] ? FIRST["name"]
@@ -18,37 +18,37 @@ export interface DuplicateDependencyError {
 }
 
 export type DuplicateDependencyGuard<
-    SUPPLIER extends UnknownProductSupplier,
-    SUPPLIERS extends Supplier[]
+    SERVICE extends UnknownAppService,
+    SERVICES extends Service[]
 > =
-    [FindDuplicateName<SUPPLIERS>] extends [never] ? SUPPLIER
+    [FindDuplicateName<SERVICES>] extends [never] ? SERVICE
     :   DuplicateDependencyError
 
 /**
- * Checks if a supplier has a circular dependency by seeing if its name appears
- * in the transitive dependencies of its own suppliers.
+ * Checks if a service has a circular dependency by seeing if its name appears
+ * in the transitive dependencies of its own services.
  * @public
  */
 
-export type CircularDependencyGuard<SUPPLIER extends UnknownProductSupplier> =
-    string extends SUPPLIER["name"] ? SUPPLIER
-    : string extends keyof SUPPLIER["_toSupply"] ? SUPPLIER
-    : SUPPLIER["name"] extends (
-        keyof Omit<SUPPLIER["_toSupply"], keyof SUPPLIER["_known"]>
+export type CircularDependencyGuard<SERVICE extends UnknownAppService> =
+    string extends SERVICE["name"] ? SERVICE
+    : string extends keyof SERVICE["_toSupply"] ? SERVICE
+    : SERVICE["name"] extends (
+        keyof Omit<SERVICE["_toSupply"], keyof SERVICE["_known"]>
     ) ?
         CircularDependencyError
-    :   SUPPLIER
+    :   SERVICE
 
 export type CircularDependencyError = {
     ERROR: "Circular dependency detected"
 }
 
-export type ProductSupplierGuard<
-    SUPPLIER extends UnknownProductSupplier,
-    SUPPLIERS extends Supplier[]
+export type AppServiceGuard<
+    SERVICE extends UnknownAppService,
+    SERVICES extends Service[]
 > =
-    DuplicateDependencyGuard<SUPPLIER, SUPPLIERS> extends (
+    DuplicateDependencyGuard<SERVICE, SERVICES> extends (
         DuplicateDependencyError
     ) ?
         DuplicateDependencyError
-    :   CircularDependencyGuard<SUPPLIER>
+    :   CircularDependencyGuard<SERVICE>

@@ -19,30 +19,30 @@ typectx makes testing easy by providing two powerful mocking strategies, allowin
 
 ## Method 1: Mocking with `.pack()`
 
-The simplest way to mock a dependency is to use `.pack()` on a **Product Supplier**. This provides a direct value or object for that dependency, completely bypassing its factory function and its own dependencies.
+The simplest way to mock a dependency is to use `.pack()` on an **App Service**. This provides a direct value or object for that dependency, completely bypassing its factory function and its own dependencies.
 
 **Use this for:** Simple mocks with simple known values
 
 ```typescript
 // Production services
-const $db = supplier("db").product({
+const $db = service("db").app({
     factory: () => {
         return {
-            async findUser(id:string) {
+            async findUser(id: string) {
                 /*... Complex implementation...*/
             }
         }
     }
 })
-const $userRepo = supplier("userRepo").product({
-    suppliers: [$db],
+const $userRepo = service("userRepo").app({
+    services: [$db],
     factory: ({ db }) => new UserRepo(db)
 })
 
 // In your test file
 it("should return user data", async () => {
     const mockDb = {
-        async findUser(id:string) {
+        async findUser(id: string) {
             /*... Simple implementation*/
         }
     }
@@ -61,7 +61,7 @@ it("should return user data", async () => {
 
 ## Method 2: Mocking with `.mock()` and `.hire()`
 
-For more complex scenarios where your mock needs its own logic, state, or dependencies, you can create a **mock**. A mock is a complete, alternative implementation of a product supplier.
+For more complex scenarios where your mock needs its own logic, state, or dependencies, you can create a **mock**. A mock is a complete, alternative implementation of an app service.
 
 **Use this for:**
 
@@ -70,23 +70,23 @@ For more complex scenarios where your mock needs its own logic, state, or depend
 - A/B testing and feature flagging.
 
 ```typescript
-// Production user supplier
-const $user = supplier("user").product({
-    suppliers: [$db, $session],
+// Production user service
+const $user = service("user").app({
+    services: [$db, $session],
     factory: ({ db, session }) => db.findUserById(session.userId)
 })
 
 // Create a mock with a different factory and NO dependencies
 const $userMock = $user.mock({
-    suppliers: [], // No dependencies for this mock
+    services: [], // No dependencies for this mock
     // Return type of mock factory must extend return type of original factory
     // Otherwise Typescript will complain.
     factory: () => ({ name: "Mock John Doe" })
 })
 
-// The product supplier to test
-const $profile = supplier("profile").product({
-    suppliers: [$user],
+// The app service to test
+const $profile = service("profile").app({
+    services: [$user],
     factory: ({ user }) => `<h1>Profile of ${user.name}</h1>`
 })
 
