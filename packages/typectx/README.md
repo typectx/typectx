@@ -43,7 +43,7 @@ npm install typectx
 ```ts
 import { index, service } from "typectx"
 
-// 1. Define request and product services
+// 1. Define request and app services
 const $session = service("session").request<{ userId: string }>()
 const $todosDb = service("todosDb").app({
     services: [],
@@ -99,7 +99,7 @@ typectx uses an intuitive supply chain metaphor to make dependency injection eas
 - Functions only - No classes, decorators, annotations, or compiler magic.
 - Declarative, immutable, functionally pure.
 - Stateless - Dependencies are resolved via closures, not state. Some memoized state is kept for validation and optimization purposes only.
-- Auto-wired - All app service are built by the Supply Chain and resolve their dependencies automatically.
+- Auto-wired - All app services are built by the Supply Chain and resolve their dependencies automatically.
 - Maximal colocation - All app services are registered right next to the factory that uses them, not at the entry point.
 
 📦 Context Propagation
@@ -241,14 +241,14 @@ const req = //...Get the current http request
 
 // Assemble the Main product, providing the Session and Db inputs.
 // Bad but working syntax for demonstration purposes only. See index() below for syntactic sugar.
-const app = $app.assemble({
+const main = $main.assemble({
     [$session.name]: $session.pack({
         userId: req.userId
     }),
     [$params.name]: params.pack(req.params)
 }).unpack()
 
-// Return or render app...
+// Return or render main...
 ```
 
 The flow of the assemble call is as follows: request data is obtained, which is provided to `$request` services using pack(). Then those inputs are supplied to `$main`'s services recursively, which assemble their own product, and pass them up along the supply chain until they reach `$main`, which assembles the final `main` product. All this work happens in the background, no matter the complexity of your application.
@@ -260,7 +260,7 @@ To simplify the assemble() call, you should use the index() utility, which just 
 ```tsx
 import { index } from "typectx"
 
-const app = $app
+const main = $main
     .assemble(
         index(
             $session.pack({
@@ -288,7 +288,7 @@ Context propagation is typectx's flagship capability. It lets you reassemble ser
 
 ### 1. Mocking in tests with `.pack()`
 
-You usually use `pack()` to provide request data to `assemble()`, but you can also use `pack()` for products. This allows to provide a value for that product directly, bypassing its factory. Perfect to override a product's implementation with a mock for testing.
+You usually use `pack()` to provide request data to `assemble()`, but you can also use `pack()` on app services. This allows to provide a value for that product directly, bypassing its factory. Perfect to override a product's implementation with a mock for testing.
 
 ```tsx
 const $profile = service("profile").app({
