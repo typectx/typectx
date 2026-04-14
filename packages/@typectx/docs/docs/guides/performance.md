@@ -15,7 +15,7 @@ keywords:
 
 # Performance
 
-typectx is designed for optimal performance, featuring a minimal bundle size, smart memory management, and eager/lazy execution controls.
+typectx is designed for optimal performance, featuring a minimal bundle size, upfront service preparation, automatic lifecycle management, and eager/lazy execution controls.
 
 ## Bundle Size & Footprint
 
@@ -25,7 +25,7 @@ typectx is designed for optimal performance, featuring a minimal bundle size, sm
 
 ## Factory Lifecycle & Memoization
 
-**Important**: Your factory function will only ever be called **once per `assemble()` call**. This eliminates the need for traditional DI service lifecycles (transient, scoped, singleton, etc.).
+**Important**: Your factory function will be called a maximum of **one time per `assemble()` call**. If the service do not depend on request data, its factory will ever run once at server boot time and be cached for the remainder of the server's up time.
 
 - **Need something called multiple times, or run side-effects?** Return a function from your factory instead of a value
 
@@ -34,7 +34,6 @@ typectx is designed for optimal performance, featuring a minimal bundle size, sm
 const $createUser = service("createUser").app({
     services: [$db],
     factory: ({ db }) => {
-        // This setup code runs only once per assemble()
         const cache = new Map()
 
         // Return a function that can be called multiple times
@@ -55,17 +54,61 @@ const user2 = createUser("123") // Cached result
 
 ## Factories run in parallel
 
+### Automatic lifecycle management
+
+Services that do not not depend on request data are cached across requests. Otherwise, they are rebuilt on every request, or on nested request data changes.
+
+In other words:
+
+- Request-free app services behave like long-lived cached singletons.
+- App services with request dependencies behave like transient per-request scoped values.
+- Nested `ctx(...).assemble(...)` calls only rebuild the services that the new request data invalidates.
+
+```typescript
+const $session = service("session").request<{ userId: string }>()
+
+const $db = service("db").app({
+    factory: () => connectDb()
+})
+
+const $currentUser = service("currentUser").app({
+    services: [$db, $session],
+    factory: ({ db, session }) => db.findUser(session.userId)
+})
+
+const $dashboard = service("dashboard").app({
+    services: [$db, $currentUser],
+    factory: ({ db, currentUser }) => {
+        return {
+            user: currentUser,
+            notifications: db.getNotifications(currentUser.id)
+        }
+    }
+})
+
+export async function handleRequest(req: Request) {
+    const session = await readSession(req)
+
+    return $dashboard.assemble(index($session.pack(session))).unpack()
+}
+
+// On each request, only the request-scoped branch is rebuilt:
+// - `db` can be preserved because it is request-free.
+// - `currentUser` is rebuilt because it depends on `session`.
+// - `dashboard` is rebuilt because it depends on `currentUser`.
+```
+
 ### Eager loading by default
 
 By default, all products are constructed in parallel and cached as soon as `.assemble()` is called. This is the best strategy for optimal performance in most cases, especially in the presence of async factories.
 
 ```typescript
 // Both of these services will be constructed immediately and in parallel
-const $dbPromise = service("dbPromise").product({
+const $dbPromise = service("dbPromise").app({
     // Async factories are possible
     factory: async () => await db.connect()
 })
-const $cache = service("cache").product({
+const $cache = service("cache").app({
     factory: () => new Map()
 })
 
@@ -110,7 +153,7 @@ For example, you can eagerly warm a memoized function:
 ```typescript
 const $profile = service("profile").app({
     services: [$currentUser],
-    factory: () => memo((userId) => db.profiles.get(userId))
+    factory: () => memo((userId) => db.profiles.get(userId)),
     init: (getProfile, { currentUser }) => {
         // Pre-warm the current user's profile in the memoization cache.
         getProfile(currentUser)

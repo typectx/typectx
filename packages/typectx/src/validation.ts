@@ -94,15 +94,15 @@ export function assertFunction(
 }
 
 /**
- * Validates the configuration object for app services.
+ * Validates the plan object for app services.
  * @param name - Service name, used in error messages
- * @param config - The configuration object to validate
+ * @param plan - The plan object to validate
  * @internal
- * @throws TypeError if the configuration is invalid
+ * @throws TypeError if the plan is invalid
  */
-export function assertAppServiceConfig(
+export function assertAppServicePlan(
     name: string,
-    config: {
+    plan: {
         services?: unknown
         optionals?: unknown
         factory?: unknown
@@ -110,25 +110,25 @@ export function assertAppServiceConfig(
         lazy?: unknown
     }
 ) {
-    assertPlainObject(name, config)
-    assertHasProperty(name, config, "factory")
-    if (config.factory !== undefined) {
-        assertFunction(name, config.factory)
+    assertPlainObject(name, plan)
+    assertHasProperty(name, plan, "factory")
+    if (plan.factory !== undefined) {
+        assertFunction(name, plan.factory)
     }
 
-    const services = config.services ?? []
-    const optionals = config.optionals ?? []
+    const services = plan.services ?? []
+    const optionals = plan.optionals ?? []
 
     assertServices(name, services)
     assertRequestServices(name, optionals)
 
-    if (config.init !== undefined) {
-        assertFunction(name, config.init)
+    if (plan.init !== undefined) {
+        assertFunction(name, plan.init)
     }
 
-    if (config.lazy !== undefined && typeof config.lazy !== "boolean") {
+    if (plan.lazy !== undefined && typeof plan.lazy !== "boolean") {
         throw new TypeError(
-            `${name}.lazy must be a boolean, got ${typeof config.lazy}`
+            `${name}.lazy must be a boolean, got ${typeof plan.lazy}`
         )
     }
 }

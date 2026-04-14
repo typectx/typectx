@@ -61,8 +61,7 @@ type ToSupplyBase<
                 OPTIONAL["_known"],
                 Partial<ResolvedRecord<Service>>,
                 OPTIONAL["_hired"],
-                OPTIONAL["_mock"],
-                OPTIONAL["_composite"]
+                OPTIONAL["_mock"]
             >
         >
     :   never

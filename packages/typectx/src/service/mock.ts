@@ -1,7 +1,7 @@
 import { main } from "#service/main"
 import type { AppServiceGuard } from "#types/guards"
 import type { PartialAppServicePlan } from "#types/internal"
-import { assertAppServiceConfig } from "#validation"
+import { assertAppServicePlan } from "#validation"
 import type {
     MainService,
     RequestService,
@@ -18,12 +18,12 @@ import type {
  * @typeParam CONSTRAINT - The type constraint for the mock
  * @typeParam SERVICES - Dependencies for the mock (can be different from the original)
  * @typeParam OPTIONALS - Array of optional request services for the mock
- * @param config - Configuration for the mock
- * @param config.factory - Factory function for the mock
- * @param config.services - Dependencies for the mock (can be different from the original)
- * @param config.optionals - Optional dependencies for the mock
- * @param config.init - Optional initialization function for the mock
- * @param config.lazy - Whether the mock should be lazily evaluated
+ * @param plan - Plan for the mock
+ * @param plan.factory - Factory function for the mock
+ * @param plan.services - Dependencies for the mock (can be different from the original)
+ * @param plan.optionals - Optional dependencies for the mock
+ * @param plan.init - Optional initialization function for the mock
+ * @param plan.lazy - Whether the mock should be lazily evaluated
  * @returns A mock app service with mock flag set to true
  * @public
  */
@@ -38,20 +38,19 @@ export function Mock<NAME extends string, CONSTRAINT>() {
             name: NAME
             _constraint: CONSTRAINT
         },
-        config: PartialAppServicePlan<CONSTRAINT2, SERVICES2, OPTIONALS2>
+        plan: PartialAppServicePlan<CONSTRAINT2, SERVICES2, OPTIONALS2>
     ): AppServiceGuard<
         MockType<THIS, CONSTRAINT2, SERVICES2, OPTIONALS2>,
         [...SERVICES2, ...OPTIONALS2]
     > {
-        assertAppServiceConfig(this.name, config)
-        const mock = main(this.name, config)
+        assertAppServicePlan(this.name, plan)
+        const mock = main(this.name, plan)
 
         return {
             ...this,
             ...mock,
             hired: [] as [],
             _mock: true as const,
-            _composite: false as const,
             _oldToSupply: this._toSupply,
             _oldDeps: this._deps
         } satisfies MockType<THIS, CONSTRAINT2, SERVICES2, OPTIONALS2> as any

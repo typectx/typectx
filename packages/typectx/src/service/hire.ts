@@ -19,9 +19,8 @@ import { assertAppServices } from "#validation"
  */
 export function Hire() {
     return function hire<
-        THIS extends Omit<UnknownAppService, "_hired" | "_composite"> & {
+        THIS extends Omit<UnknownAppService, "_hired"> & {
             _hired: string[]
-            _composite: boolean
         },
         HIRED extends UnknownAppService[] = []
     >(
@@ -51,8 +50,7 @@ export function Hire() {
                     [K in keyof HIRED]: HIRED[K]["name"]
                 }
             >,
-            false,
-            true
+            THIS["_mock"]
         >,
         HIRED
     > {
@@ -103,8 +101,7 @@ export function Hire() {
             _deps,
             _oldToSupply: _toSupply,
             _oldDeps: _deps,
-            _mock: false as const,
-            _composite: true as const
+            _mock: false as const
         } satisfies AppService<
             THIS["name"],
             THIS["_constraint"],
@@ -128,8 +125,7 @@ export function Hire() {
                     [K in keyof HIRED]: HIRED[K]["name"]
                 }
             >,
-            false,
-            true
+            THIS["_mock"]
         > as any
     }
 }

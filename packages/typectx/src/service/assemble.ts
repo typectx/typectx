@@ -1,11 +1,17 @@
-import type { Service, Supply, UnknownAppService } from "#types/public"
+import type {
+    AppSupply,
+    Service,
+    Supply,
+    UnknownAppService
+} from "#types/public"
 import type { ResolvedRecord, SuppliesRecord } from "#types/records"
 import { isPacked, isAppService, isAppSupply, once } from "#utils"
 import { assertPlainObject } from "#validation"
 
 export function assemble<THIS extends UnknownAppService>(
     this: THIS,
-    supplied: THIS["_toSupply"]
+    supplied: THIS["_toSupply"],
+    preparing: boolean = false
 ) {
     assertPlainObject("supplied", supplied)
 
@@ -52,5 +58,32 @@ export function assemble<THIS extends UnknownAppService>(
         supplies[service.name] = once(() => service._build(supplies))
     }
 
-    return this._build(supplies)
+    const supply = this._build(supplies)
+    if (!preparing) {
+        prerun(supply)
+    }
+    return supply
+}
+
+function prerun(supply: AppSupply<UnknownAppService>) {
+    // Prerun service factories in the background (non-blocking)
+    for (const member of supply.service._team) {
+        if ("_lazy" in member && member._lazy) continue
+
+        // If prerun fails, we don't want to break the entire supply chain
+        // The error will be thrown again when the dependency is actually needed
+        Promise.resolve()
+            .then(() => supply.deps[member.name])
+            .catch(() => {
+                // Silently catch errors during prerun
+                // The error will be thrown again when the dependency is actually accessed
+            })
+    }
+
+    Promise.resolve()
+        .then(() => supply.unpack())
+        .catch(() => {
+            // Silently catch errors during prerun
+            // The error will be thrown again when the dependency is actually accessed
+        })
 }

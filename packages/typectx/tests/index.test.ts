@@ -335,6 +335,46 @@ describe("typectx", () => {
             await $main.assemble({}).unpack()
         })
     })
+
+    describe("Automatic lifecycle management", () => {
+        it("should preserve referential identity for services without request dependencies", () => {
+            const $session = service("session").request<{ userId: string }>()
+
+            const $db = service("db").app({
+                factory: () => ({ connection: Symbol("db") })
+            })
+
+            const $currentUser = service("currentUser").app({
+                services: [$db, $session],
+                factory: ({ db, session }) => ({
+                    db,
+                    userId: session.userId
+                })
+            })
+
+            const $main = service("main").app({
+                services: [$db, $currentUser],
+                factory: ({ db, currentUser }) => ({
+                    db,
+                    currentUser
+                })
+            })
+
+            const first = $main
+                .assemble(index($session.pack({ userId: "user-a" })))
+                .unpack()
+
+            const second = $main
+                .assemble(index($session.pack({ userId: "user-b" })))
+                .unpack()
+
+            expect(first.db).toBe(second.db)
+            expect(first.currentUser).not.toBe(second.currentUser)
+            expect(first.currentUser.userId).toBe("user-a")
+            expect(second.currentUser.userId).toBe("user-b")
+            expect(first).not.toBe(second)
+        })
+    })
     describe("Eager init (prerun) behavior", () => {
         it("should init eager app services, not lazy ones ", async () => {
             const initedValueSpy = vi
