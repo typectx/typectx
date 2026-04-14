@@ -4,14 +4,16 @@ import { Mock } from "#service/mock"
 import { type PartialAppServicePlan } from "#types/internal"
 import type { ToSupply } from "#types/records"
 import type { AppServiceGuard } from "#types/guards"
-import { assertName, assertAppServiceConfig } from "#validation"
+import { assertName, assertAppServicePlan } from "#validation"
 import type {
     MainService,
     AppService,
     RequestService,
     Service,
-    Supply
+    Supply,
+    UnknownAppService
 } from "#types/public"
+import { assemble } from "#service/assemble"
 
 export function service<NAME extends string>(name: NAME) {
     return {
@@ -43,12 +45,12 @@ export function service<NAME extends string>(name: NAME) {
          * @typeParam CONSTRAINT - The type constraint for values this service produces
          * @typeParam SERVICES - Array of services this service depends on
          * @typeParam OPTIONALS - Array of optional request services this service may depend on
-         * @param config - Configuration object for the service
-         * @param config.services - Array of services this service depends on
-         * @param config.optionals - Array of optional request services this service may depend on
-         * @param config.factory - Factory function that creates the value from its dependencies
-         * @param config.init - Optional initialization function called after factory
-         * @param config.lazy - Whether the service should be lazily evaluated
+         * @param plan - Plan for the service
+         * @param plan.services - Array of services this service depends on
+         * @param plan.optionals - Array of optional request services this service may depend on
+         * @param plan.factory - Factory function that creates the value from its dependencies
+         * @param plan.init - Optional initialization function called after factory
+         * @param plan.lazy - Whether the service should be lazily evaluated
          *
          * @returns An app service with methods like assemble, pack, mock, and hire
          * @public
@@ -58,7 +60,7 @@ export function service<NAME extends string>(name: NAME) {
             SERVICES extends MainService[] = [],
             OPTIONALS extends RequestService[] = []
         >(
-            config: PartialAppServicePlan<CONSTRAINT, SERVICES, OPTIONALS>
+            plan: PartialAppServicePlan<CONSTRAINT, SERVICES, OPTIONALS>
         ): AppServiceGuard<
             AppService<
                 NAME,
@@ -78,14 +80,13 @@ export function service<NAME extends string>(name: NAME) {
             [...SERVICES, ...OPTIONALS]
         > {
             assertName(name)
-            assertAppServiceConfig(name, config)
+            assertAppServicePlan(name, plan)
 
-            return {
-                ...main(name, config),
+            const s = {
+                ...main(name, plan),
                 mock: Mock<NAME, CONSTRAINT>(),
                 hire: Hire(),
-                _mock: false as const,
-                _composite: false as const
+                _mock: false as const
             } satisfies AppService<
                 NAME,
                 CONSTRAINT,
@@ -100,7 +101,18 @@ export function service<NAME extends string>(name: NAME) {
                 >,
                 [],
                 false
-            > as any
+            >
+
+            const supply = assemble.call(
+                s as unknown as UnknownAppService,
+                {},
+                true
+            )
+
+            return {
+                ...s,
+                _known: supply.supplies
+            } as any
         }
     }
 }

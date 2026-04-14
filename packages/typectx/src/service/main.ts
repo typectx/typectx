@@ -19,7 +19,7 @@ export function main<
     OPTIONALS extends RequestService[] = []
 >(
     name: NAME,
-    config: PartialAppServicePlan<CONSTRAINT, SERVICES, OPTIONALS>
+    plan: PartialAppServicePlan<CONSTRAINT, SERVICES, OPTIONALS>
 ): Omit<
     AppService<
         NAME,
@@ -35,11 +35,11 @@ export function main<
         >,
         []
     >,
-    "mock" | "hire" | "_mock" | "_composite"
+    "mock" | "hire" | "_mock"
 > {
     assertAppServices(name, [], true)
 
-    const _team = team(name, config.services ?? [], config.optionals ?? [])
+    const _team = team(name, plan.services ?? [], plan.optionals ?? [])
 
     const _toSupply = null as unknown as ToSupply<
         {
@@ -54,18 +54,18 @@ export function main<
         OPTIONALS[number]["name"]
     >
 
-    const s = {
+    return {
         ...service(name).request<CONSTRAINT>(),
         assemble,
-        _factory: config.factory,
+        _factory: plan.factory,
         _build,
-        _services: config.services ?? [],
-        _optionals: config.optionals ?? [],
+        _services: plan.services ?? [],
+        _optionals: plan.optionals ?? [],
         _team,
         _hired: [] as [],
         _known: {},
-        _lazy: config.lazy ?? false,
-        _init: config.init,
+        _lazy: plan.lazy ?? false,
+        _init: plan.init,
         _request: false as const,
         _app: true as const,
         _constraint: null as unknown as CONSTRAINT,
@@ -75,8 +75,6 @@ export function main<
         _oldToSupply: _toSupply,
         _oldDeps: _deps
     }
-
-    return s
 }
 
 export function team(

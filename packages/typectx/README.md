@@ -36,6 +36,7 @@ npm install typectx
 - **Hyper-minimalistic bundle size**: ~5KB minified, ~2KB minzipped.
 - **Tree-shakable and code-splittable architecture**: Helps you create hyper-specialized services: One function or piece of data per service
 - **Memory usage**: Smart memoization prevents duplicate dependency resolution
+- **Automatic lifecycle management**: Services that do not not depend on request data are cached across requests. Otherwise, they are rebuilt on every request, or on request data changes.
 - **Options to optimize dependency chain waterfalls**: Define services as lazy or eager, call init() to preload some values as soon as possible.
 
 ## Quick Example
@@ -168,7 +169,7 @@ const $user = service("user").app({
 
 #### Factory Lifecycle & Memoization
 
-**Important**: Your factory function will only ever be called **once per `assemble()` call**. This eliminates the need for traditional DI service lifecycles (transient, scoped, singleton, etc.).
+**Important**: Your factory function will be called a maximum of **one time per `assemble()` call**. If the service do not depend on request data, its factory will ever run once at boot time and be cached for the remainder of the server's up time.
 
 - **Need something called multiple times, or to run side-effects?** Return a function from your factory instead of a value
 

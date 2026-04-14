@@ -20,22 +20,6 @@ function createResolver(supplies: SuppliesRecord) {
     })
 }
 
-function prerun(service: { _team: Service[] }, deps: Record<string, any>) {
-    // Prerun service factories in the background (non-blocking)
-    for (const member of service._team) {
-        if ("_lazy" in member && member._lazy) continue
-
-        // If prerun fails, we don't want to break the entire supply chain
-        // The error will be thrown again when the dependency is actually needed
-        Promise.resolve()
-            .then(() => deps[member.name])
-            .catch(() => {
-                // Silently catch errors during prerun
-                // The error will be thrown again when the dependency is actually accessed
-            })
-    }
-}
-
 export function Ctx<
     PLAN extends Pick<UnknownAppServicePlan, "services" | "optionals">
 >(
@@ -104,9 +88,6 @@ export function _build<THIS extends UnknownAppService>(
             resolved: {}
         }
     )
-
-    // Prerun service factories in the background (non-blocking)
-    prerun(this, deps)
 
     const ctx = Ctx(
         { services: this._services, optionals: this._optionals },

@@ -25,8 +25,7 @@ export interface AppService<
     KNOWN extends ResolvedRecord<Service>,
     TO_SUPPLY extends Partial<ResolvedRecord<Service>>,
     HIRED extends string[],
-    MOCK extends boolean = boolean,
-    COMPOSITE extends boolean = boolean
+    MOCK extends boolean = boolean
 > extends BaseService<NAME, CONSTRAINT> {
     /** Assembles the service by providing request supplies and auto-wiring app dependencies */
     assemble: <THIS extends UnknownAppService>(
@@ -44,15 +43,13 @@ export interface AppService<
         OPTIONALS2 extends RequestService[] = []
     >(
         this: THIS,
-        config: PartialAppServicePlan<CONSTRAINT2, SERVICES2, OPTIONALS2>
+        plan: PartialAppServicePlan<CONSTRAINT2, SERVICES2, OPTIONALS2>
     ) => AppServiceGuard<
         Mock<THIS, CONSTRAINT2, SERVICES2, OPTIONALS2>,
         [...SERVICES2, ...OPTIONALS2]
     >
     hire: <
-        THIS extends UnknownAppService & {
-            _composite: boolean
-        },
+        THIS extends UnknownAppService,
         HIRED extends UnknownAppService[] = []
     >(
         this: THIS,
@@ -81,8 +78,7 @@ export interface AppService<
                     [K in keyof HIRED]: HIRED[K]["name"]
                 }
             >,
-            false,
-            true
+            THIS["_mock"]
         >,
         HIRED
     >
@@ -112,7 +108,6 @@ export interface AppService<
     /** Whether this service should be lazily evaluated */
     _lazy?: boolean
     _mock: MOCK
-    _composite: COMPOSITE
 }
 
 export type Service = UnknownAppService | RequestService
@@ -151,10 +146,9 @@ export type Mock<
         [],
         true
     >,
-    "_mock" | "_composite" | "_oldResolved" | "_oldToSupply" | "_oldDeps"
+    "_mock" | "_oldResolved" | "_oldToSupply" | "_oldDeps"
 > & {
     _mock: true
-    _composite: false
     _oldToSupply: SERVICE["_toSupply"]
     _oldDeps: SERVICE["_deps"]
 }

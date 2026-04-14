@@ -186,9 +186,23 @@ const $userProfile = service("userProfile").app({
 
 Understanding how and when factories are called is crucial for effective use of typectx.
 
-### One Factory Call Per Assembly
+### Service Preparation Happens Up Front
 
-**Important:** Your factory function is called exactly **once per `assemble()` call**. This eliminates the need to explicitely configure traditional DI service lifecycles (transient, scoped, singleton).
+When you declare an app service with `service(name).app(...)`, typectx prepares its dependency graph immediately.
+
+That preparation step validates the graph and builds a reusable assembly blueprint, but it does **not** execute your `factory` or `init` yet. Those only run later, when that service instance is actually needed in an `assemble()` call.
+
+### One Factory Call Per Constructed Instance
+
+**Important:** Your factory function is called at most **once per constructed service instance**.
+
+typectx manages those instances automatically:
+
+- Request-free app services can be preserved across multiple assemblies.
+- Request-bound app services are rebuilt when their request data changes.
+- Nested `ctx(...).assemble(...)` calls preserve unaffected services and only rebuild invalidated branches.
+
+This removes the need to manually configure transient/scoped/singleton lifecycles.
 
 ```typescript
 const $service = service("service").app({
@@ -199,17 +213,18 @@ const $service = service("service").app({
     }
 })
 
-const $service1 = $service.assemble({})
-console.log($service1.unpack()) // Factory called! { value: 0.123 }
+const service1Supply = $service.assemble({})
+console.log(service1Supply.unpack()) // Factory called! { value: 0.123 }
 
-const $service2 = $service.assemble({})
-console.log($service2.unpack()) // Factory called! { value: 0.456 }
+const service2Supply = $service.assemble({})
+console.log(service2Supply.unpack()) // { value: 0.123 } (same instance can be preserved)
 
-// But within the same assembly:
-const service3Supply = $service.assemble({})
-const value1 = service3Supply.unpack() // Factory called! { value: 0.789 }
-const value2 = service3Supply.unpack() // { value: 0.789 } (same instance, no new call)
+// Within the same assembly:
+const value1 = service1Supply.unpack() // { value: 0.123 }
+const value2 = service1Supply.unpack() // { value: 0.123 } (same instance, no new call)
 ```
+
+If `$service` depended on request data, the factory would rebuild whenever that request-dependent part of the context changes.
 
 ### Returning Functions for Multiple Calls
 

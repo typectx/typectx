@@ -70,6 +70,18 @@ Using `ctx(...)` inside factories is important for two reasons:
 
 Calling module-scope services directly inside factories bypasses those guarantees.
 
+## Automatic lifecycle management in nested contexts
+
+Nested assembly also benefits from typectx's automatic lifecycle management.
+
+When you call `ctx($service).assemble(...)`, typectx preserves any already-known app services that are still valid for the new sub-context, and only rebuilds the branches affected by:
+
+- newly supplied request data
+- overridden values
+- newly hired services
+
+In the feed example above, a request-free dependency like `$db` can be reused for every post card, while `$Post` is rebuilt for each different `postId`.
+
 ## Reassemble an already-used dependency
 
 You can also reassemble an existing dependency with new request data:
