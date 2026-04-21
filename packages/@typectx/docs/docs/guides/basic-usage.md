@@ -379,70 +379,9 @@ const app = $app
     .unpack()
 ```
 
-## Performance: Eager vs Lazy Loading
+## Performance: Eager, lazy, and warmed factories
 
-By default, typectx eagerly constructs all inputs and products in the background and in parallel when you call `assemble()`. This eliminates waterfall loading issues common in traditional DI systems.
-
-### Eager Loading (Default)
-
-```typescript
-const $eagerService = service("eagerService").app({
-    services: [$db],
-    factory: ({ db }) => {
-        console.log("Eager service factory called")
-        return buildService(db)
-    }
-    // lazy: false is the default
-})
-
-const mainSupply = $main.assemble(index($database.pack(db)))
-// "Eager service factory called" - happens immediately without .unpack()
-```
-
-### Lazy Loading
-
-For expensive products that might not always be needed, use lazy loading:
-
-```typescript
-const $expensiveService = service("expensiveService").app({
-    services: [$db],
-    factory: ({ db }) => {
-        console.log("Expensive service factory called")
-        return buildExpensiveService(db)
-    },
-    lazy: true // Only construct when first accessed
-})
-
-const $app = service("app").app({
-    services: [$expensiveService],
-    factory: (deps) => {
-        // Factory not called yet
-
-        return (useExpensive: boolean) => {
-            if (useExpensive) {
-                // NOW the factory is called
-                // deps is an object of js getters, so accessing the
-                // expensiveService prop is what triggers the factory.
-                // Thus if you need lazy loading, do not destructure deps
-                // in the factory args!
-                return deps.expensiveService.doWork()
-            }
-            return "Skipped expensive work"
-        }
-    }
-})
-```
-
-**When to use lazy loading:**
-
-- The product is expensive to construct
-- The product might not be needed in every execution path
-- You want to defer initialization until actual use
-
-**When to use eager loading (default):**
-
-- The product will likely be needed
-- You want to parallelize construction
+See **[Performance Optimization](performance)** for examples of patterns to follow to create eager, lazy or warmed-up factories, useful to optimize your app's performance and avoid slowdowns due to waterfall loading..
 
 ## Practical Example: Building a Blog API
 
@@ -593,7 +532,7 @@ Notice how:
 Now that you understand the basics, explore these advanced features:
 
 - **[Testing and Mocking](testing)** - Learn how to test your app services with mocks
-- **[Performance Optimization](performance)** - Advanced lazy loading and initialization strategies
+- **[Performance Optimization](performance)** - Eager, lazy, and warmed-up factory patterns
 - **[Design Philosophy](design-philosophy)** - Understanding the principles behind typectx
 
 For more advanced patterns:

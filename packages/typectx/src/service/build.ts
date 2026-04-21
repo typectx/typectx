@@ -97,8 +97,8 @@ export function _build<THIS extends UnknownAppService>(
     const supply = {
         unpack: once(() => {
             const value = this._factory(deps, ctx)
-            if (this._init) {
-                this._init(value, deps)
+            if (this._warmup) {
+                this._warmup(value, deps)
             }
             return value
         }),

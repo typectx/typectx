@@ -57,6 +57,6 @@ const supplies = {
 }
 ```
 
-The `assemble()` call builds the above supplies object, each product now ready to be injected and built right away if eager, or on-demand if lazy.
+The `assemble()` call builds the above supplies object, each product now ready to be injected and built.
 
 This functional approach allows typescript to follow the types across the entirety of the dependency chain, which it cannot do for traditional stateful containers.

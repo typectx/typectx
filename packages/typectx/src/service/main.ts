@@ -33,7 +33,8 @@ export function main<
             },
             Record<never, never>
         >,
-        []
+        [],
+        boolean
     >,
     "mock" | "hire" | "_mock"
 > {
@@ -64,8 +65,7 @@ export function main<
         _team,
         _hired: [] as [],
         _known: {},
-        _lazy: plan.lazy ?? false,
-        _init: plan.init,
+        _warmup: plan.warmup,
         _request: false as const,
         _app: true as const,
         _constraint: null as unknown as CONSTRAINT,

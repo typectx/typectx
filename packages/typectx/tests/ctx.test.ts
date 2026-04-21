@@ -633,8 +633,7 @@ describe("Context Propagation", () => {
 
             const $AMock = $A.mock({
                 services: [$input],
-                factory: () => "AMock-value",
-                lazy: true
+                factory: () => "AMock-value"
             })
 
             const $main = service("main").app({

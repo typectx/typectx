@@ -1,6 +1,6 @@
 ---
 title: "Performance Optimization"
-description: "Learn about performance in typectx, including its small bundle size, memoization, and eager vs. lazy loading strategies for optimal TypeScript dependency injection."
+description: "Learn about performance in typectx, including its small bundle size, memoization, and eager, lazy, and warmed factory patterns for optimal TypeScript dependency injection."
 keywords:
     - performance
     - optimization
@@ -15,7 +15,7 @@ keywords:
 
 # Performance
 
-typectx is designed for optimal performance, featuring a minimal bundle size, upfront service preparation, automatic lifecycle management, and eager/lazy execution controls.
+typectx is designed for optimal performance, featuring a minimal bundle size, upfront service preparation, automatic lifecycle management, and factory patterns for eager, lazy, or pre-warmed work.
 
 ## Bundle Size & Footprint
 
@@ -128,35 +128,58 @@ const $app = service("app").app({
 const appSupply = $app.assemble({}) // Starts constructing both dbPromise and cache in parallel
 ```
 
-### Lazy Loading with `lazy: true`
+#### Eager, lazy, and warmed-up factories
 
-For expensive services that are only used in certain situations (e.g., an admin panel service or a PDF export tool), you can enable lazy loading by setting `lazy: true`. The product will only be constructed the first time its value is accessed via `unpack()`.
+1. **Eager factory** — By default, all products are constructed on `assemble()` call immediately in the background and in parallel, no matter how deep in the supply chain. This means no waterfalls happen.
 
-```typescript
-const $lazy = service("lazy").app({
+```ts
+const $eagerService = service("eagerService").app({
     services: [$db],
-    // Will only be loaded when `deps.lazy` is called in another factory,
-    // or when `$lazy.assemble({...}).unpack()` is called directly.
-    factory: ({ db }) => new ExpensiveService(db),
-    lazy: true
+    factory: ({ db }) => buildExpensiveService(db)
 })
 ```
 
-## Initialization with `init()`
+2. **Lazy factory** — For factories that perform expensive or optional work, you can instead return a **memoized function** (a lodash like `once(() => ...)` utility is provided by typectx if you want) from the factory. The expensive work will only be performed the first time you actually call the inner function in some other service.
 
-For products that need to perform side-effects upon creation (like connecting to a database or logging), you can use `init`. It runs immediately after the `factory` function returns, and receives the constructed product and deps as arguments.
+```ts
+const $lazyService = service("lazyService").app({
+    services: [$db],
+    factory: ({ db }) =>
+        once(() => {
+            return buildExpensiveService(db)
+        })
+})
+```
 
-This is useful for pre-warming caches or running setup logic without cluttering your factory.
+3. **Warmed-up factory** — For performance optimization and testing, sometimes you may need to often switch between eager or lazy factories. Refactoring this is a bit tedious as you'd need to update all use sites of a service from a property access to a function call. Instead, you can use the warmed-up factory pattern, which allows to switch easily from eager to lazy behavior without needing to refactor anything. You can also conditionally warmup the factory based on some flag.
 
-For example, you can eagerly warm a memoized function:
+```ts
+const lazy = true
+const $warmedService = service("warmedService").app({
+    services: [$db],
+    factory: ({ db }) => once(() => buildExpensiveService(db)),
+    warmup: (lazyExpensiveService, { db }) => {
+        if (lazy) return
+        lazyExpensiveService()
+    }
+})
+```
+
+You can also use the warmup function for products that need to perform side-effects upon creation (like connecting to a database, logging, or pre-warming caches, orrunning setup logic without cluttering the factory). Warmup runs once immediately after the `factory` function returns, and receives the constructed product and deps as arguments.
+
+For example, you can easily populate an external cache, or perform logging.
 
 ```typescript
+import { once, service } from "typectx"
+
+const cache = {}
 const $profile = service("profile").app({
-    services: [$currentUser],
-    factory: () => memo((userId) => db.profiles.get(userId)),
-    init: (getProfile, { currentUser }) => {
-        // Pre-warm the current user's profile in the memoization cache.
-        getProfile(currentUser)
+    services: [$session],
+    factory: () => once((userId: string) => db.profiles.get(userId)),
+    warmup: (getProfile, { session }) => {
+        const profile = getProfile(session.user.id)
+        cache[session.user.id] = profile
+        console.log(`${session.useer.name}'s profile successfully loaded`)
     }
 })
 ```

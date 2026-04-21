@@ -26,19 +26,18 @@ const $session = service("session").request<Session>()
 
 Creates an app service.
 
-App services are automatically prepared when declared: typectx validates the dependency graph and builds a reusable assembly blueprint up front. This preparation step does **not** run `factory` or `init` yet.
+App services are automatically prepared when declared: typectx validates the dependency graph and builds a reusable assembly blueprint up front. This preparation step does **not** run `factory` or `warmup` yet.
 
 ```ts
 const $product = service("product").app({
     services: [$service1, $service2], // Services
-    lazy: boolean, // Eager (false) or lazy (true)
-    init: (value, deps) => void, // Run a function right after construction
     factory: (deps, ctx) => {
         // Factory function
         // deps = dependencies received, can be destructured
         // ctx = Function to contextualize services used in the factory
         return serviceImplementation
-    }
+    },
+    warmup: (value, deps) => void, // Optional; runs right after factory returns
 })
 ```
 

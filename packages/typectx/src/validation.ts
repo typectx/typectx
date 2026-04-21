@@ -106,8 +106,7 @@ export function assertAppServicePlan(
         services?: unknown
         optionals?: unknown
         factory?: unknown
-        init?: unknown
-        lazy?: unknown
+        warmup?: unknown
     }
 ) {
     assertPlainObject(name, plan)
@@ -122,14 +121,8 @@ export function assertAppServicePlan(
     assertServices(name, services)
     assertRequestServices(name, optionals)
 
-    if (plan.init !== undefined) {
-        assertFunction(name, plan.init)
-    }
-
-    if (plan.lazy !== undefined && typeof plan.lazy !== "boolean") {
-        throw new TypeError(
-            `${name}.lazy must be a boolean, got ${typeof plan.lazy}`
-        )
+    if (plan.warmup !== undefined) {
+        assertFunction(name, plan.warmup)
     }
 }
 

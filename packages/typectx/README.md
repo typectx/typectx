@@ -37,7 +37,7 @@ npm install typectx
 - **Tree-shakable and code-splittable architecture**: Helps you create hyper-specialized services: One function or piece of data per service
 - **Memory usage**: Smart memoization prevents duplicate dependency resolution
 - **Automatic lifecycle management**: Services that do not not depend on request data are cached across requests. Otherwise, they are rebuilt on every request, or on request data changes.
-- **Options to optimize dependency chain waterfalls**: Define services as lazy or eager, call init() to preload some values as soon as possible.
+- **Options to optimize dependency chain waterfalls**: Choose an eager, lazy, or warmed-up factory pattern
 
 ## Quick Example
 
@@ -112,8 +112,9 @@ typectx uses an intuitive supply chain metaphor to make dependency injection eas
 
 ⚡ Waterfall Management
 
-- Eager loading - Use lazy: false for immediate background construction of all supplies in parallel in assemble() call (default).
-- Lazy loading - Use lazy: true for on-demand call of the app service's factory when it's first accessed in another factory.
+- **Eager factory** — Return the product directly from the factory. It is built when that service is resolved (by default, `assemble()` warms the dependency graph in the background and in parallel).
+- **Lazy factory** — Return a memoized function from the factory (for example with `once()`), and put the real work inside that function so it runs only when invoked.
+- **Warmed-up factory** — Same as lazy, plus an optional `warmup` callback that calls the memoized function right after the factory returns, so you can flip between eager-style preloading and true laziness without changing call sites.
 
 🧪 Testing and Packing
 
@@ -129,14 +130,11 @@ typectx uses an intuitive supply chain metaphor to make dependency injection eas
 
 ## Basic Usage
 
-### 1. Declare services directly
-
-Services are declared directly using `service(name).request()` and `service(name).app(config)`.
-Names can **only** contain digits, letters, underscores or `$` signs and cannot start with a digit, just like any Javascript identifier.
-
-### 2. Define Request Services
+### 1. Define Request Services
 
 Request services are used to wire the data you get from the user's request, and that cannot be derived from other request or app services, like sessions or request params. You define a `$request` service and then `.pack()` it with a value at request time. The value can be anything you want, just specify its type.
+
+Service names can **only** contain digits, letters, underscores or `$` signs and cannot start with a digit, just like any Javascript identifier.
 
 ```tsx
 // I like calling services with $ prefix, but this is up to you.
@@ -151,7 +149,7 @@ const session = $session
     .unpack()
 ```
 
-### 3. Define App Services
+### 2. Define App Services
 
 App services are your application's components or features. They are factory functions that can depend on other app services or request data. Factories can return anything: simple values, promises or other functions.
 
@@ -169,7 +167,7 @@ const $user = service("user").app({
 
 #### Factory Lifecycle & Memoization
 
-**Important**: Your factory function will be called a maximum of **one time per `assemble()` call**. If the service do not depend on request data, its factory will ever run once at boot time and be cached for the remainder of the server's up time.
+**Important**: Your factory function will be called a maximum of **one time per `assemble()` call**. If the service do not depend on request data, its factory will only ever run once at boot time and be cached for the remainder of the server's up time.
 
 - **Need something called multiple times, or to run side-effects?** Return a function from your factory instead of a value
 
@@ -197,23 +195,40 @@ const user1 = createUser("123") // Fresh call
 const user2 = createUser("123") // Cached result
 ```
 
-#### Lazy vs Eager Loading
+#### Eager, lazy, and warmed-up factories
 
-By default, all products are constructed on `assemble()` call immediately in the background and in parallel, no matter how deep in the supply chain. This means no waterfalls happen. You can disable this for specific app services with `lazy: true`.
+1. **Eager factory** — By default, all products are constructed on `assemble()` call immediately in the background and in parallel, no matter how deep in the supply chain. This means no waterfalls happen.
 
 ```ts
-// Eager loading - constructed immediately when assemble() is called
 const $eagerService = service("eagerService").app({
     services: [$db],
     factory: ({ db }) => buildExpensiveService(db)
-    lazy: false // default
 })
+```
 
-// Lazy loading - constructed only when accessed
+2. **Lazy factory** — For factories that perform expensive or optional work, you can instead return a **memoized function** (a lodash like `once(() => ...)` utility is provided by typectx if you want) from the factory. The expensive work will only be performed the first time you actually call the inner function in some other service.
+
+```ts
 const $lazyService = service("lazyService").app({
     services: [$db],
-    factory: ({db}) => buildExpensiveService(db),
-    lazy: true // Loaded when first accessed via deps
+    factory: ({ db }) =>
+        once(() => {
+            return buildExpensiveService(db)
+        })
+})
+```
+
+3. **Warmed-up factory** — For performance optimization and testing, sometimes you may need to often switch between eager or lazy factories. Refactoring this is a bit tedious as you'd need to update all use sites of a service from a property access to a function call. Instead, you can use the warmed-up factory pattern, which allows to switch easily from eager to lazy behavior without needing to refactor anything. You can also conditionally warmup the factory based on some flag.
+
+```ts
+const lazy = true
+const $warmedService = service("warmedService").app({
+    services: [$db],
+    factory: ({ db }) => once(() => buildExpensiveService(db)),
+    warmup: (lazyExpensiveService, { db }) => {
+        if (lazy) return
+        lazyExpensiveService()
+    }
 })
 ```
 
@@ -383,7 +398,7 @@ const supplies = {
 }
 ```
 
-The `assemble()` call builds the above supplies object, each product now ready to be injected and built right away if eager, or on-demand if lazy.
+The `assemble()` call builds the above supplies object, each product now ready to be injected and built.
 
 This functional approach allows typescript to follow the types across the entirety of the dependency chain, which it cannot do for traditional stateful containers.
 

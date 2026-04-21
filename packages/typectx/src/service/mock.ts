@@ -22,8 +22,7 @@ import type {
  * @param plan.factory - Factory function for the mock
  * @param plan.services - Dependencies for the mock (can be different from the original)
  * @param plan.optionals - Optional dependencies for the mock
- * @param plan.init - Optional initialization function for the mock
- * @param plan.lazy - Whether the mock should be lazily evaluated
+ * @param plan.warmup - Optional function called after the mock factory returns
  * @returns A mock app service with mock flag set to true
  * @public
  */

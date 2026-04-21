@@ -49,8 +49,7 @@ export function service<NAME extends string>(name: NAME) {
          * @param plan.services - Array of services this service depends on
          * @param plan.optionals - Array of optional request services this service may depend on
          * @param plan.factory - Factory function that creates the value from its dependencies
-         * @param plan.init - Optional initialization function called after factory
-         * @param plan.lazy - Whether the service should be lazily evaluated
+         * @param plan.warmup - Optional function called after the factory returns (see README for eager / lazy / warmed patterns)
          *
          * @returns An app service with methods like assemble, pack, mock, and hire
          * @public

@@ -100,13 +100,11 @@ export interface AppService<
     /** Factory function that creates the service's value from its dependencies */
     _factory: (deps: any, ctx: Ctx<any, any>) => any
     /** Optional initialization function called after factory */
-    _init?: (value: any, deps: any) => void
+    _warmup?: (value: any, deps: any) => void
     _build: <THIS extends UnknownAppService>(
         this: THIS,
         supplies: SuppliesRecord
     ) => Supply<THIS>
-    /** Whether this service should be lazily evaluated */
-    _lazy?: boolean
     _mock: MOCK
 }
 
