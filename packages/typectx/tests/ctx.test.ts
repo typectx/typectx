@@ -365,34 +365,28 @@ describe("Context Propagation", () => {
 
     it("should support hire() method with contextual replacement", async () => {
         const originalSpy = vi.fn().mockReturnValue("original")
-        const hiredSpy = vi.fn().mockReturnValue("hired")
+        const mockSpy = vi.fn().mockReturnValue("mocked")
 
-        const $originalAssembler = service("original").app({
+        const $original = service("original").app({
             factory: originalSpy
         })
 
-        const $originalAssemblerMock = $originalAssembler.mock({
-            factory: hiredSpy
+        const $mock = $original.mock({
+            factory: mockSpy
         })
         const $base = service("base").app({
             factory: (deps, ctx) => {
-                return ctx($originalAssembler).assemble({}).unpack()
+                return ctx($original).assemble({}).unpack()
             }
         })
 
-        const $hired = $base.hire($originalAssemblerMock)
-
-        const result = $hired.assemble({}).unpack()
+        const result = $base.hire($mock).assemble({}).unpack()
 
         await sleep(10)
 
-        expect(result).toBe("hired")
-        expect(originalSpy).toHaveBeenCalledTimes(0)
-        // Eager loading, called on both assemble() calls
-        // Because nothing is preserved between contextual assemble() calls
-        // because the value is reached through a contextualized path
-        // Just a weird, but normal edge case
-        expect(hiredSpy).toHaveBeenCalledTimes(2)
+        expect(result).toBe("mocked")
+        expect(originalSpy).toHaveBeenCalledTimes(2)
+        expect(mockSpy).toHaveBeenCalledTimes(3)
     })
 
     it("should support empty contextual dependency setup in mocks", () => {
@@ -640,8 +634,10 @@ describe("Context Propagation", () => {
                 factory: (deps, ctx) => {
                     const hired = ctx($B).hire($AMock)
 
-                    // @ts-expect-error - input supply is not supplied
-                    hired.assemble({}).unpack()
+                    expect(() => {
+                        // @ts-expect-error - input supply is not supplied
+                        hired.assemble({}).unpack()
+                    }).toThrow()
                     expect(
                         hired
                             .assemble(index($input.pack("input-value")))

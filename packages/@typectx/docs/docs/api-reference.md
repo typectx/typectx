@@ -26,7 +26,7 @@ const $session = service("session").request<Session>()
 
 Creates an app service.
 
-App services are automatically prepared when declared: typectx validates the dependency graph and builds a reusable assembly blueprint up front. This preparation step does **not** run `factory` or `warmup` yet.
+App services are automatically prepared when declared: typectx validates the dependency graph, builds a reusable assembly blueprint up front, and attempts an initial background assembly with whatever dependencies are already known. Request-free services can therefore pre-build at startup. If request data is still missing, the unresolved supply keeps a memoized error until that branch is accessed without the missing data.
 
 ```ts
 const $product = service("product").app({
@@ -54,7 +54,7 @@ const mockProduct = $appService.pack(mockValue) // For testing
 
 Resolves all dependencies and creates the service's product.
 
-During assembly, typectx automatically preserves already-prepared app services when they are still valid for the new context, and only rebuilds branches invalidated by new request supplies or `hire(...)`.
+During assembly, typectx automatically preserves already-prepared app services when they are still valid for the new context, only rebuilds branches invalidated by new request supplies or `hire(...)`, and background-warms the whole reachable graph in parallel.
 
 ```ts
 const supply = $product.assemble(suppliesObject)

@@ -8,6 +8,7 @@ import type {
     UnknownAppService,
     Mock as MockType
 } from "#types/public"
+import { assemble } from "#service/assemble"
 
 /**
  * Creates a mock version of this app service with different dependencies.
@@ -45,7 +46,7 @@ export function Mock<NAME extends string, CONSTRAINT>() {
         assertAppServicePlan(this.name, plan)
         const mock = main(this.name, plan)
 
-        return {
+        const s = {
             ...this,
             ...mock,
             hired: [] as [],
@@ -53,5 +54,12 @@ export function Mock<NAME extends string, CONSTRAINT>() {
             _oldToSupply: this._toSupply,
             _oldDeps: this._deps
         } satisfies MockType<THIS, CONSTRAINT2, SERVICES2, OPTIONALS2> as any
+
+        const supply = assemble.call(s as unknown as UnknownAppService, {})
+
+        return {
+            ...s,
+            _known: { ...supply.supplies, [this.name]: supply }
+        } as any
     }
 }

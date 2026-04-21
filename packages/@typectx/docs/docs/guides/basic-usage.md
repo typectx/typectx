@@ -188,13 +188,15 @@ Understanding how and when factories are called is crucial for effective use of 
 
 ### Service Preparation Happens Up Front
 
-When you declare an app service with `service(name).app(...)`, typectx prepares its dependency graph immediately.
+When you declare an app service with `service(name).app(...)`, typectx prepares its dependency graph immediately and attempts an initial background assembly with whatever dependencies are already known.
 
-That preparation step validates the graph and builds a reusable assembly blueprint, but it does **not** execute your `factory` or `init` yet. Those only run later, when that service instance is actually needed in an `assemble()` call.
+That preparation step validates the graph, builds a reusable assembly blueprint, and lets request-free services finish building as early as startup. If a service still needs request data, the background attempt stores the missing-dependency error on that unresolved supply instead of throwing immediately.
 
-### One Factory Call Per Constructed Instance
+### One Factory Call Per Assembly
 
-**Important:** Your factory function is called at most **once per constructed service instance**.
+**Important**: Your factory functions will be called only **one time per assembly** for performance purposes. All app services are assembled by default in the background before the first request, so that all request independent services are built, cached and ready to handle the first request. They stay cached for the remainder of the server's uptime. Then, a factory reruns only if its service is directly assembled, or if it depends on new request data provided when you call .assemble() or ctx().assemble() later in your program.
+
+- **Need to control when something is called, to call something multiple times, or to run side-effects?** Return a function from your factory.
 
 typectx manages those instances automatically:
 
@@ -203,28 +205,6 @@ typectx manages those instances automatically:
 - Nested `ctx(...).assemble(...)` calls preserve unaffected services and only rebuild invalidated branches.
 
 This removes the need to manually configure transient/scoped/singleton lifecycles.
-
-```typescript
-const $service = service("service").app({
-    services: [],
-    factory: () => {
-        console.log("Factory called!")
-        return { value: Math.random() }
-    }
-})
-
-const service1Supply = $service.assemble({})
-console.log(service1Supply.unpack()) // Factory called! { value: 0.123 }
-
-const service2Supply = $service.assemble({})
-console.log(service2Supply.unpack()) // { value: 0.123 } (same instance can be preserved)
-
-// Within the same assembly:
-const value1 = service1Supply.unpack() // { value: 0.123 }
-const value2 = service1Supply.unpack() // { value: 0.123 } (same instance, no new call)
-```
-
-If `$service` depended on request data, the factory would rebuild whenever that request-dependent part of the context changes.
 
 ### Returning Functions for Multiple Calls
 
@@ -381,7 +361,7 @@ const app = $app
 
 ## Performance: Eager, lazy, and warmed factories
 
-See **[Performance Optimization](performance)** for examples of patterns to follow to create eager, lazy or warmed-up factories, useful to optimize your app's performance and avoid slowdowns due to waterfall loading..
+See **[Performance Optimization](performance)** for examples of patterns to follow to create eager, lazy or warmed-up factories, useful to optimize your app's performance and avoid slowdowns due to waterfall loading.
 
 ## Practical Example: Building a Blog API
 

@@ -10,8 +10,7 @@ import { assertPlainObject } from "#validation"
 
 export function assemble<THIS extends UnknownAppService>(
     this: THIS,
-    supplied: THIS["_toSupply"],
-    preparing: boolean = false
+    supplied: THIS["_toSupply"]
 ) {
     assertPlainObject("supplied", supplied)
 
@@ -59,9 +58,8 @@ export function assemble<THIS extends UnknownAppService>(
     }
 
     const supply = this._build(supplies)
-    if (!preparing) {
-        warmup(supply)
-    }
+    warmup(supply)
+
     return supply
 }
 

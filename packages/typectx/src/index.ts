@@ -102,15 +102,11 @@ export function service<NAME extends string>(name: NAME) {
                 false
             >
 
-            const supply = assemble.call(
-                s as unknown as UnknownAppService,
-                {},
-                true
-            )
+            const supply = assemble.call(s as unknown as UnknownAppService, {})
 
             return {
                 ...s,
-                _known: supply.supplies
+                _known: { ...supply.supplies, [name]: supply }
             } as any
         }
     }

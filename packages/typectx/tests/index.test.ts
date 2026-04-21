@@ -406,8 +406,8 @@ describe("typectx", () => {
 
             await sleep(10)
 
-            expect(eagerFactorySpy).toHaveBeenCalledTimes(1)
-            expect(warmProductSpy).toHaveBeenCalledTimes(1)
+            expect(eagerFactorySpy).toHaveBeenCalledTimes(2)
+            expect(warmProductSpy).toHaveBeenCalledTimes(2)
             expect(lazyProductSpy).toHaveBeenCalledTimes(0)
             expect(main).toBe("main")
         })
@@ -435,7 +435,7 @@ describe("typectx", () => {
                     // This should not throw error, as error products are not accessed by the factory
                     // Counter-intuitively, errorWarm throws when accessed from deps, even if not called, because warmup memoizes the error
                     // On access, unpack is called, which calls the warmup function. The warmup function does not run, because it is memoized,
-                    // But the memoized error gets thrown.
+                    // But the memoized error it returned from cache, so it gets thrown.
                     return "main"
                 }
             })
@@ -445,11 +445,11 @@ describe("typectx", () => {
             await sleep(10)
 
             expect(main).toBe("main")
-            expect(errorFactorySpy).toHaveBeenCalledTimes(1)
-            expect(errorWarmProductSpy).toHaveBeenCalledTimes(1)
+            expect(errorFactorySpy).toHaveBeenCalledTimes(2)
+            expect(errorWarmProductSpy).toHaveBeenCalledTimes(2)
         })
 
-        it("should still throw error when accessing a failed inited service's product", async () => {
+        it("should still throw error when accessing a failed warmed up service's product", async () => {
             const errorWarmProductSpy = vi.fn().mockImplementation(() => {
                 throw new Error()
             })
@@ -496,7 +496,7 @@ describe("typectx", () => {
 
             await sleep(10)
 
-            expect(ASpy).toHaveBeenCalledTimes(1)
+            expect(ASpy).toHaveBeenCalledTimes(2)
             expect(BSpy).toHaveBeenCalledTimes(0)
             expect(main).toBe("main")
         })

@@ -36,7 +36,7 @@ npm install typectx
 - **Hyper-minimalistic bundle size**: ~5KB minified, ~2KB minzipped.
 - **Tree-shakable and code-splittable architecture**: Helps you create hyper-specialized services: One function or piece of data per service
 - **Memory usage**: Smart memoization prevents duplicate dependency resolution
-- **Automatic lifecycle management**: Services that do not not depend on request data are cached across requests. Otherwise, they are rebuilt on every request, or on request data changes.
+- **Automatic lifecycle management**: App services are prepared immediately. Request-free services can pre-build at startup and be cached across requests; request-bound branches rebuild when request data changes.
 - **Options to optimize dependency chain waterfalls**: Choose an eager, lazy, or warmed-up factory pattern
 
 ## Quick Example
@@ -112,7 +112,7 @@ typectx uses an intuitive supply chain metaphor to make dependency injection eas
 
 ⚡ Waterfall Management
 
-- **Eager factory** — Return the product directly from the factory. It is built when that service is resolved (by default, `assemble()` warms the dependency graph in the background and in parallel).
+- **Eager factory** — Return the product directly from the factory. As soon as typectx has enough data to assemble that service, it builds it in the background and memoizes the result.
 - **Lazy factory** — Return a memoized function from the factory (for example with `once()`), and put the real work inside that function so it runs only when invoked.
 - **Warmed-up factory** — Same as lazy, plus an optional `warmup` callback that calls the memoized function right after the factory returns, so you can flip between eager-style preloading and true laziness without changing call sites.
 
@@ -165,91 +165,22 @@ const $user = service("user").app({
 })
 ```
 
-#### Factory Lifecycle & Memoization
-
-**Important**: Your factory function will be called a maximum of **one time per `assemble()` call**. If the service do not depend on request data, its factory will only ever run once at boot time and be cached for the remainder of the server's up time.
-
-- **Need something called multiple times, or to run side-effects?** Return a function from your factory instead of a value
-
-```ts
-// ✅ Good: Factory called once, returns a function for multiple calls or side-effects
-const $createUser = service("createUser").app({
-    services: [$db],
-    factory: ({ db }) => {
-        // This setup code runs only once per assemble()
-        const cache = new Map()
-
-        // Return a function that can be called multiple times
-        return (userId: string) => {
-            if (cache.has(userId)) return cache.get(userId)
-            const user = db.findUser(userId)
-            cache.set(userId, user)
-            return user
-        }
-    }
-})
-
-const createUser = $createUser.assemble(index($db.pack(db))).unpack()
-// Usage: createUser() can be called multiple times
-const user1 = createUser("123") // Fresh call
-const user2 = createUser("123") // Cached result
-```
-
-#### Eager, lazy, and warmed-up factories
-
-1. **Eager factory** — By default, all products are constructed on `assemble()` call immediately in the background and in parallel, no matter how deep in the supply chain. This means no waterfalls happen.
-
-```ts
-const $eagerService = service("eagerService").app({
-    services: [$db],
-    factory: ({ db }) => buildExpensiveService(db)
-})
-```
-
-2. **Lazy factory** — For factories that perform expensive or optional work, you can instead return a **memoized function** (a lodash like `once(() => ...)` utility is provided by typectx if you want) from the factory. The expensive work will only be performed the first time you actually call the inner function in some other service.
-
-```ts
-const $lazyService = service("lazyService").app({
-    services: [$db],
-    factory: ({ db }) =>
-        once(() => {
-            return buildExpensiveService(db)
-        })
-})
-```
-
-3. **Warmed-up factory** — For performance optimization and testing, sometimes you may need to often switch between eager or lazy factories. Refactoring this is a bit tedious as you'd need to update all use sites of a service from a property access to a function call. Instead, you can use the warmed-up factory pattern, which allows to switch easily from eager to lazy behavior without needing to refactor anything. You can also conditionally warmup the factory based on some flag.
-
-```ts
-const lazy = true
-const $warmedService = service("warmedService").app({
-    services: [$db],
-    factory: ({ db }) => once(() => buildExpensiveService(db)),
-    warmup: (lazyExpensiveService, { db }) => {
-        if (lazy) return
-        lazyExpensiveService()
-    }
-})
-```
-
-### 4. Define Your Main service
+### 3. Define Your Main service
 
 Your Main service is just an app service like the other ones. It's the most complex app service at the very end of your supply chain.
 
 ```tsx
 const $main = service("main").app({
-    services: [$user], // Depends on user
-    // Destructure the user value.
-    // Its type will be automatically inferred from $user's factory's inferred return type.
+    services: [$user],
     factory: ({ user }) => {
         return <h1>Hello, {user.name}! </h1>
     }
 })
 ```
 
-### 5. Assemble at Entry Point
+### 4. Assemble at Entry Point
 
-At your application's entry point, you `assemble` your $main service, providing just the request data (not the products) requested recursively by the $main service's supply chain. Typescript will tell you if any request data is missing.
+At your application's entry point, you `assemble` your $main service, providing just the request data requested recursively by the $main service's supply chain. Typescript will tell you if any request data is missing.
 
 ```tsx
 
@@ -286,6 +217,77 @@ const main = $main
         )
     )
     .unpack()
+```
+
+## Factory Lifecycle & Memoization
+
+**Important**: Your factory functions will be called only **one time per assembly** for performance purposes. All app services are assembled by default in the background before the first request, so that all request independent services are built, cached and ready to handle the first request. They stay cached for the remainder of the server's uptime. Then, a factory reruns only if its service is directly assembled, or if it depends on new request data provided when you call .assemble() or ctx().assemble() later in your program.
+
+- **Need to control when something is called, to call something multiple times, or to run side-effects?** Return a function from your factory.
+
+```ts
+// ✅ Good: Returns a function for multiple calls or side-effects
+const $createUser = service("createUser").app({
+    services: [$db],
+    factory: ({ db }) => {
+        // This setup code runs only once per assemble()
+        const cache = new Map()
+
+        // Return a function that can be called multiple times
+        return (userId: string) => {
+            if (cache.has(userId)) return cache.get(userId)
+            const user = db.findUser(userId)
+            cache.set(userId, user)
+            return user
+        }
+    }
+})
+
+// In this example, $createUser's factory runs twice, once in the background at service definition, and once here
+// because .assemble() is called directly on it. But the factory for the $db service will only ever run once, because it is request
+// independent, and .assemble() isn't called directly on it.
+const createUser = $createUser.assemble({}).unpack()
+
+// Usage: createUser() can be called multiple times
+const user1 = createUser("123") // Fresh call
+const user2 = createUser("123") // Cached result
+```
+
+#### Eager, lazy, and warmed-up factory patterns
+
+1. **Eager factory** — This is the default as explained above. Factories run as soon as possible, in the background and in parallel, and are then cached for reuse.
+
+```ts
+const $eagerService = service("eagerService").app({
+    services: [$db],
+    factory: ({ db }) => buildExpensiveService(db)
+})
+```
+
+2. **Lazy factory** — For factories that perform expensive or optional work, you can instead return a **memoized function** (a lodash like `once(() => ...)` utility is provided by typectx if you want) from the factory. The expensive work will only be performed the first time you actually call the inner function in some other service.
+
+```ts
+const $lazyService = service("lazyService").app({
+    services: [$db],
+    factory: ({ db }) =>
+        once(() => {
+            return buildExpensiveService(db)
+        })
+})
+```
+
+3. **Warmed-up factory** — For performance optimization and testing, sometimes you may need to often switch between eager or lazy factories. Refactoring this is a bit tedious as you'd need to update all use sites of a service from a property access to a method call. Instead, you can use the warmed-up factory pattern, which allows to switch easily from eager to lazy behavior without needing to refactor anything. You can also conditionally warmup the factory based on some flag.
+
+```ts
+const lazy = true
+const $warmedService = service("warmedService").app({
+    services: [$db],
+    factory: ({ db }) => once(() => buildExpensiveService(db)),
+    warmup: (lazyExpensiveService, { db }) => {
+        if (lazy) return
+        lazyExpensiveService()
+    }
+})
 ```
 
 ## Optionals

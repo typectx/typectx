@@ -122,8 +122,10 @@ describe("Optionals Feature", () => {
                 }
             })
 
-            // @ts-expect-error - missing required service
-            $product.assemble(index($optional.pack(42))).unpack()
+            expect(() => {
+                // @ts-expect-error - missing required service
+                $product.assemble(index($optional.pack(42))).unpack()
+            }).toThrow()
 
             // Should work without optional
             $product.assemble(index($required.pack("test"))).unpack()

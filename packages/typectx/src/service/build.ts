@@ -37,7 +37,7 @@ export function Ctx<
 
         return {
             ...actual,
-            _known: resolved
+            _known: { ...actual._known, ...resolved }
         }
     }
 }
@@ -96,6 +96,14 @@ export function _build<THIS extends UnknownAppService>(
 
     const supply = {
         unpack: once(() => {
+            this._services.forEach((service) => {
+                if (!(service.name in deps)) {
+                    // This error will be catched in warmup phase, but will trigger if unpack() is called again afterwards.
+                    throw new Error(
+                        `Dependency ${service.name} is not available`
+                    )
+                }
+            })
             const value = this._factory(deps, ctx)
             if (this._warmup) {
                 this._warmup(value, deps)

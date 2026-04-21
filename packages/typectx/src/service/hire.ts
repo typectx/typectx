@@ -99,6 +99,12 @@ export function Hire() {
             _team: team(this.name, mergedServices, this._optionals),
             _toSupply,
             _deps,
+            _known: {
+                ...this._known,
+                ...hired
+                    .map((service) => service._known)
+                    .reduce((acc, known) => ({ ...acc, ...known }), {})
+            },
             _oldToSupply: _toSupply,
             _oldDeps: _deps,
             _mock: false as const

@@ -25,9 +25,9 @@ typectx is designed for optimal performance, featuring a minimal bundle size, up
 
 ## Factory Lifecycle & Memoization
 
-**Important**: Your factory function will be called a maximum of **one time per `assemble()` call**. If the service do not depend on request data, its factory will ever run once at server boot time and be cached for the remainder of the server's up time.
+**Important**: Your factory functions will be called only **one time per assembly** for performance purposes. All app services are assembled by default in the background before the first request, so that all request independent services are built, cached and ready to handle the first request. They stay cached for the remainder of the server's uptime. Then, a factory reruns only if its service is directly assembled, or if it depends on new request data provided when you call .assemble() or ctx().assemble() later in your program.
 
-- **Need something called multiple times, or run side-effects?** Return a function from your factory instead of a value
+- **Need to control when something is called, to call something multiple times, or to run side-effects?** Return a function from your factory.
 
 ```typescript
 // ✅ Good: Factory called once, returns a function for multiple calls
@@ -56,7 +56,7 @@ const user2 = createUser("123") // Cached result
 
 ### Automatic lifecycle management
 
-Services that do not not depend on request data are cached across requests. Otherwise, they are rebuilt on every request, or on nested request data changes.
+Services that do not depend on request data are cached across requests. Otherwise, they are rebuilt on every request, or on nested request data changes.
 
 In other words:
 
@@ -98,39 +98,9 @@ export async function handleRequest(req: Request) {
 // - `dashboard` is rebuilt because it depends on `currentUser`.
 ```
 
-### Eager loading by default
-
-By default, all products are constructed in parallel and cached as soon as `.assemble()` is called. This is the best strategy for optimal performance in most cases, especially in the presence of async factories.
-
-```typescript
-// Both of these services will be constructed immediately and in parallel
-const $dbPromise = service("dbPromise").app({
-    // Async factories are possible
-    factory: async () => await db.connect()
-})
-const $cache = service("cache").app({
-    factory: () => new Map()
-})
-
-const $app = service("app").app({
-    services: [$dbPromise, $cache],
-    factory: async ({ dbPromise, cache }) => {
-        if (cache.get("greeting")) {
-            return cache.get("greeting")
-        }
-        const db = await dbPromise
-        const greeting = db.getGreeting()
-        cache.set("greeting", greeting)
-        return greeting
-    }
-})
-
-const appSupply = $app.assemble({}) // Starts constructing both dbPromise and cache in parallel
-```
-
 #### Eager, lazy, and warmed-up factories
 
-1. **Eager factory** — By default, all products are constructed on `assemble()` call immediately in the background and in parallel, no matter how deep in the supply chain. This means no waterfalls happen.
+1. **Eager factory** — This is the default as explained above. Factories run as soon as possible, in the background and in parallel, and are then cached for reuse.
 
 ```ts
 const $eagerService = service("eagerService").app({
@@ -165,7 +135,7 @@ const $warmedService = service("warmedService").app({
 })
 ```
 
-You can also use the warmup function for products that need to perform side-effects upon creation (like connecting to a database, logging, or pre-warming caches, orrunning setup logic without cluttering the factory). Warmup runs once immediately after the `factory` function returns, and receives the constructed product and deps as arguments.
+You can also use the warmup function for products that need to perform side-effects upon creation (like connecting to a database, logging, pre-warming caches, or running setup logic without cluttering the factory). `warmup` runs once immediately after the `factory` function returns, and receives the constructed product and deps as arguments.
 
 For example, you can easily populate an external cache, or perform logging.
 

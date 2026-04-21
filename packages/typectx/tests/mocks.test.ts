@@ -65,15 +65,13 @@ describe("Mocks Feature", () => {
                 factory: ({ lazy }) => lazy
             })
 
-            const $hired = $test.hire($warmMock)
-
-            $hired.assemble({})
+            $test.hire($warmMock).assemble({})
             $test.assemble({})
 
             await sleep(10)
 
             expect(lazyProductSpy).toHaveBeenCalledTimes(0)
-            expect(warmProductSpy).toHaveBeenCalledTimes(1)
+            expect(warmProductSpy).toHaveBeenCalledTimes(2)
         })
 
         it("should compute precise TOSUPPLY types with mock", () => {
