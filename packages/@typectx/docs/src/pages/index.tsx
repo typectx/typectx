@@ -49,25 +49,23 @@ const $userService = service("userService").app({
     }
 });`
 
-const performanceExample = `// An expensive service, lazy-loaded for on-demand performance.
-const $reportGenerator = service("reportGenerator").app({
-    factory: () => {
-        // This expensive logic runs only ONCE, the first time it's needed.
-        console.log("🚀 Initializing Report Generator...");
-        return new ReportGenerator();
-    },
-    lazy: true
+const performanceExample = `// Defer expensive work: return a memoized function from the factory.
+import { once, service } from "typectx"
+
+const $generateReport = service("generateReport").app({
+    factory: () =>
+        once(() => {
+            // Inner body runs only when something calls the returned function.
+            console.log("🚀 Initializing Report Generator...");
+            return new ReportGenerator().generate();
+        })
 });
 
 const $app = service("app").app({
     services: [$reportGenerator],
     factory: (deps) => (userAction: "view_dashboard" | "generate_report") => {
         if (userAction === "generate_report") {
-            // The generator is created on first access (deps.reportGenerator is a getter method)
-            // thanks to lazy loading.
-            // Subsequent calls within the same context will reuse the
-            // same, memoized instance without running the factory again.
-            deps.reportGenerator.generate();
+            deps.generateReport();
         }
     }
 });`
@@ -547,7 +545,7 @@ export default function Home(): ReactNode {
                 <SectionSeparator />
                 <FeatureSection
                     title="Unmatched Performance"
-                    description="Smart memoization: dependencies are created in parallel once per context eagerly, and cached. Or choose lazy loading to defer the creation of expensive services until they are first accessed."
+                    description="Smart memoization: dependencies are created in parallel once per context eagerly, and cached. Or return a memoized function from the factory to defer expensive work until it is first invoked."
                     code={performanceExample}
                     imageAlign="left"
                     variant="alt"

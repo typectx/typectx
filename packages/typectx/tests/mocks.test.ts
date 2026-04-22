@@ -47,33 +47,31 @@ describe("Mocks Feature", () => {
             }).toThrow()
         })
 
-        it("should handle init setting in mock", async () => {
-            const baseSpy = vi.fn().mockReturnValue("base")
-            const initedSpy = vi.fn().mockReturnValue("inited")
+        it("should handle warmup setting in mock", async () => {
+            const lazyProductSpy = vi.fn().mockReturnValue("lazy")
+            const warmProductSpy = vi.fn().mockReturnValue("warm")
 
-            const $base = service("base").app({
-                factory: () => baseSpy
+            const $lazy = service("lazy").app({
+                factory: () => once(lazyProductSpy)
             })
 
-            const $mocked = $base.mock({
-                factory: () => once(initedSpy),
-                init: (product) => product()
+            const $warmMock = $lazy.mock({
+                factory: () => once(warmProductSpy),
+                warmup: (warmProduct) => warmProduct()
             })
 
             const $test = service("test").app({
-                services: [$base],
-                factory: ({ base }) => base
+                services: [$lazy],
+                factory: ({ lazy }) => lazy
             })
 
-            const $hired = $test.hire($mocked)
-
-            $hired.assemble({})
+            $test.hire($warmMock).assemble({})
             $test.assemble({})
 
             await sleep(10)
 
-            expect(baseSpy).toHaveBeenCalledTimes(0)
-            expect(initedSpy).toHaveBeenCalledTimes(1)
+            expect(lazyProductSpy).toHaveBeenCalledTimes(0)
+            expect(warmProductSpy).toHaveBeenCalledTimes(2)
         })
 
         it("should compute precise TOSUPPLY types with mock", () => {

@@ -64,21 +64,6 @@ describe("Runtime Validation", () => {
                 } as any)
             ).toThrow("B must be an array")
         })
-
-        it("should throw TypeError when lazy is not a boolean", () => {
-            expect(() =>
-                service("A").app({
-                    factory: () => ({}),
-                    lazy: "yes"
-                } as any)
-            ).toThrow(TypeError)
-            expect(() =>
-                service("B").app({
-                    factory: () => ({}),
-                    lazy: "yes"
-                } as any)
-            ).toThrow("B.lazy must be a boolean, got string")
-        })
     })
 
     describe("appService.assemble()", () => {

@@ -122,8 +122,10 @@ describe("Optionals Feature", () => {
                 }
             })
 
-            // @ts-expect-error - missing required service
-            $product.assemble(index($optional.pack(42))).unpack()
+            expect(() => {
+                // @ts-expect-error - missing required service
+                $product.assemble(index($optional.pack(42))).unpack()
+            }).toThrow()
 
             // Should work without optional
             $product.assemble(index($required.pack("test"))).unpack()
@@ -463,7 +465,7 @@ describe("Optionals Feature", () => {
             })
         })
 
-        it("should handle init function with optionals", () => {
+        it("should handle warmup function with optionals", () => {
             const $optional = service("optional").request<number>()
             let optStore: number | undefined = undefined
 
@@ -472,7 +474,7 @@ describe("Optionals Feature", () => {
                 factory: ({ optional }) => {
                     return optional ?? 10
                 },
-                init: (product, { optional }) => {
+                warmup: (product, { optional }) => {
                     optStore = optional
                 }
             })

@@ -375,31 +375,27 @@ describe("typectx", () => {
             expect(first).not.toBe(second)
         })
     })
-    describe("Eager init (prerun) behavior", () => {
-        it("should init eager app services, not lazy ones ", async () => {
-            const initedValueSpy = vi
-                .fn<() => "inited">()
-                .mockReturnValue("inited")
-            const normalValueSpy = vi.fn().mockReturnValue("normal")
-            const lazyValueSpy = vi.fn().mockReturnValue("lazy")
+    describe("Eager warmup behavior", () => {
+        it("should warmup app services", async () => {
+            const eagerFactorySpy = vi.fn().mockReturnValue("eager")
+            const lazyProductSpy = vi.fn().mockReturnValue("lazy")
+            const warmProductSpy = vi.fn().mockReturnValue("warm")
 
-            const $inited = service("inited").app({
-                factory: () => initedValueSpy,
-                init: (product) => product()
-            })
-
-            const $normal = service("normal").app({
-                factory: () => normalValueSpy
+            const $eager = service("eager").app({
+                factory: eagerFactorySpy
             })
 
             const $lazy = service("lazy").app({
-                factory: () => lazyValueSpy,
-                init: (product) => product(),
-                lazy: true
+                factory: () => once(lazyProductSpy)
+            })
+
+            const $warm = service("warm").app({
+                factory: () => once(warmProductSpy),
+                warmup: (lazyProduct) => lazyProduct()
             })
 
             const $main = service("main").app({
-                services: [$inited, $normal, $lazy],
+                services: [$eager, $lazy, $warm],
                 factory: () => {
                     // Don't access any dependencies yet
                     return "main"
@@ -410,47 +406,57 @@ describe("typectx", () => {
 
             await sleep(10)
 
-            expect(initedValueSpy).toHaveBeenCalledTimes(1)
-            expect(normalValueSpy).toHaveBeenCalledTimes(0)
-            expect(lazyValueSpy).toHaveBeenCalledTimes(0)
+            expect(eagerFactorySpy).toHaveBeenCalledTimes(2)
+            expect(warmProductSpy).toHaveBeenCalledTimes(2)
+            expect(lazyProductSpy).toHaveBeenCalledTimes(0)
             expect(main).toBe("main")
         })
 
-        it("should handle init errors gracefully without breaking the supply chain", async () => {
-            const errorValueSpy = vi.fn().mockImplementation(() => {
+        it("should handle warmup errors gracefully without breaking the supply chain", async () => {
+            const errorFactorySpy = vi.fn().mockImplementation(() => {
+                throw new Error()
+            })
+            const errorWarmProductSpy = vi.fn().mockImplementation(() => {
                 throw new Error()
             })
 
             const $error = service("error").app({
-                factory: () => once(errorValueSpy),
-                init: (product) => product()
+                factory: errorFactorySpy
+            })
+
+            const $errorWarm = service("errorWarm").app({
+                factory: () => once(errorWarmProductSpy),
+                warmup: (errorWarmProduct) => errorWarmProduct()
             })
 
             const $main = service("main").app({
-                services: [$error],
+                services: [$error, $errorWarm],
                 factory: () => {
-                    // Don't access $error factory yet
+                    // This should not throw error, as error products are not accessed by the factory
+                    // Counter-intuitively, errorWarm throws when accessed from deps, even if not called, because warmup memoizes the error
+                    // On access, unpack is called, which calls the warmup function. The warmup function does not run, because it is memoized,
+                    // But the memoized error it returned from cache, so it gets thrown.
                     return "main"
                 }
             })
 
-            // This should not throw even though $error factory will fail during init
             const main = $main.assemble({}).unpack()
 
             await sleep(10)
 
             expect(main).toBe("main")
-            expect(errorValueSpy).toHaveBeenCalledTimes(1)
+            expect(errorFactorySpy).toHaveBeenCalledTimes(2)
+            expect(errorWarmProductSpy).toHaveBeenCalledTimes(2)
         })
 
-        it("should still throw error when accessing a failed inited service's product", async () => {
-            const errorValueSpy = vi.fn().mockImplementation(() => {
+        it("should still throw error when accessing a failed warmed up service's product", async () => {
+            const errorWarmProductSpy = vi.fn().mockImplementation(() => {
                 throw new Error()
             })
 
             const $error = service("error").app({
-                factory: () => once(errorValueSpy),
-                init: (product) => product()
+                factory: () => once(errorWarmProductSpy),
+                warmup: (errorWarmProduct) => errorWarmProduct()
             })
 
             const $main = service("main").app({
@@ -472,7 +478,7 @@ describe("typectx", () => {
 
             const $A = service("A").app({
                 factory: () => once(ASpy),
-                init: (product) => product()
+                warmup: (product) => product()
             })
 
             const $B = service("B").app({
@@ -490,193 +496,9 @@ describe("typectx", () => {
 
             await sleep(10)
 
-            expect(ASpy).toHaveBeenCalledTimes(1)
+            expect(ASpy).toHaveBeenCalledTimes(2)
             expect(BSpy).toHaveBeenCalledTimes(0)
             expect(main).toBe("main")
-        })
-    })
-
-    describe("Lazy Feature", () => {
-        it("should run factory for non-lazy services during assemble", async () => {
-            const eagerSpy = vi.fn().mockReturnValue("eager")
-            const $eager = service("eager").app({
-                factory: eagerSpy,
-                lazy: false // explicitly non-lazy
-            })
-
-            const $main = service("main").app({
-                services: [$eager],
-                factory: () => "main"
-            })
-
-            // Factory should be called during assemble, even though we don't access it
-            $main.assemble({})
-            await sleep(10)
-            expect(eagerSpy).toHaveBeenCalledTimes(1)
-        })
-
-        it("should NOT run factory for lazy services during assemble", () => {
-            const lazySpy = vi.fn().mockReturnValue("lazy")
-            const $lazy = service("lazy").app({
-                factory: lazySpy,
-                lazy: true
-            })
-
-            const $main = service("main").app({
-                services: [$lazy],
-                factory: () => "main"
-            })
-
-            // Factory should NOT be called during assemble
-            $main.assemble({})
-
-            expect(lazySpy).toHaveBeenCalledTimes(0)
-        })
-
-        it("should run lazy service factory only when first accessed", () => {
-            const lazySpy = vi.fn().mockReturnValue("lazy")
-            const $lazy = service("lazy").app({
-                factory: lazySpy,
-                lazy: true
-            })
-
-            const $main = service("main").app({
-                services: [$lazy],
-                factory: ({ lazy }) => {
-                    return lazy
-                }
-            })
-            const main = $main.assemble({}).unpack()
-            expect(main).toBe("lazy")
-            expect(lazySpy).toHaveBeenCalledTimes(1)
-        })
-
-        it("should handle lazy services with reassembly", () => {
-            const lazySpy = vi.fn().mockReturnValue("lazy")
-            const $lazy = service("lazy").app({
-                factory: lazySpy,
-                lazy: true
-            })
-
-            const $main = service("main").app({
-                services: [$lazy],
-                factory: ({ lazy }, ctx) => {
-                    expect(lazySpy).toHaveBeenCalledTimes(1)
-
-                    const newLazySupply = ctx($lazy).assemble({})
-                    expect(lazySpy).toHaveBeenCalledTimes(1)
-                    const newLazy = newLazySupply.unpack()
-                    expect(newLazy).toBe("lazy")
-                    expect(lazySpy).toHaveBeenCalledTimes(2)
-                    return newLazy
-                }
-            })
-            const mainSupply = $main.assemble({})
-            expect(lazySpy).toHaveBeenCalledTimes(0)
-            expect(mainSupply.unpack()).toBe("lazy")
-            expect(lazySpy).toHaveBeenCalledTimes(2)
-        })
-
-        it("should handle lazy services with mocks", () => {
-            const originalSpy = vi.fn().mockReturnValue("original")
-            const mockSpy = vi.fn().mockReturnValue("mock")
-            const $original = service("original").app({
-                factory: originalSpy,
-                lazy: true
-            })
-
-            const $mock = $original.mock({
-                factory: mockSpy,
-                lazy: true
-            })
-
-            const $main = service("main").app({
-                services: [$original],
-                factory: ({ original }) => {
-                    return original
-                }
-            })
-
-            const mainSupply = $main.hire($mock).assemble({})
-
-            // Neither factory should be called during assemble
-            expect(originalSpy).toHaveBeenCalledTimes(0)
-            expect(mockSpy).toHaveBeenCalledTimes(0)
-
-            // Only mock factory should be called when accessed
-            expect(mainSupply.unpack()).toBe("mock")
-            expect(originalSpy).toHaveBeenCalledTimes(0)
-            expect(mockSpy).toHaveBeenCalledTimes(1)
-        })
-
-        it("should default to non-lazy behavior when lazy is not specified", async () => {
-            const eagerSpy = vi.fn().mockReturnValue("default-eager")
-            const $default = service("default").app({
-                factory: eagerSpy
-                // lazy not specified, should default to false
-            })
-
-            const $main = service("main").app({
-                services: [$default],
-                factory: () => "main"
-            })
-
-            // Factory should be called during assemble (default behavior)
-            $main.assemble({})
-            await sleep(10)
-            expect(eagerSpy).toHaveBeenCalledTimes(1)
-        })
-
-        it("should not init lazy services even when init is specified", async () => {
-            const initSpy = vi.fn()
-            const factorySpy = vi.fn().mockReturnValue("lazy-with-init")
-            const $lazy = service("lazy").app({
-                factory: factorySpy,
-                init: initSpy,
-                lazy: true
-            })
-
-            const $main = service("main").app({
-                services: [$lazy],
-                factory: () => "main"
-            })
-
-            const mainSupply = $main.assemble({})
-
-            // Wait a bit for any initing to complete
-            await sleep(10)
-
-            // Lazy service should not be inited
-            expect(factorySpy).toHaveBeenCalledTimes(0)
-            expect(initSpy).toHaveBeenCalledTimes(0)
-
-            // Only when accessed should the factory run
-            expect(mainSupply.unpack()).toBe("main")
-            expect(factorySpy).toHaveBeenCalledTimes(0) // Still not called since we don't access the lazy service
-        })
-
-        it("should init non-lazy services when init is specified", async () => {
-            const initSpy = vi.fn()
-            const factorySpy = vi.fn().mockReturnValue(() => "eager-with-init")
-            const $eager = service("eager").app({
-                factory: factorySpy,
-                init: initSpy,
-                lazy: false
-            })
-
-            const $main = service("main").app({
-                services: [$eager],
-                factory: () => "main"
-            })
-
-            const mainSupply = $main.assemble({})
-
-            await sleep(10)
-
-            // Eager service should be inited
-            expect(factorySpy).toHaveBeenCalledTimes(1)
-            expect(initSpy).toHaveBeenCalledTimes(1)
-            expect(mainSupply.unpack()).toBe("main")
         })
     })
 

@@ -169,13 +169,11 @@ service("Component").app({
         React.memo((props) => {
             // return jsx
         }),
-    // Init is always called right after the factory, no matter if lazy is true or false
-    init: (Component, initDeps) => {
+    warmup: (Component, initDeps) => {
         <Component props={propSetToPreload1} />
         <Component props={propSetToPreload2} />
         <Component props={propSetToPreload3} />
     }
-    lazy: false // false is the default, so can be omitted
 })
 ```
 

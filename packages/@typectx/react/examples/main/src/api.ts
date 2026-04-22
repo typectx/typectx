@@ -100,7 +100,7 @@ export const $usersQuery = service("usersQuery").app({
             }
         }
     },
-    init: async (query, { userQuery }) => {
+    warmup: async (query, { userQuery }) => {
         const users = await queryClient.fetchQuery(query)
         for (const user of users) {
             queryClient.setQueryData(userQuery(user.id).queryKey, user)
@@ -147,7 +147,7 @@ export const $postsQuery = service("postsQuery").app({
             }
         }
     },
-    init: async (query, { commentsQuery, repliesQuery }) => {
+    warmup: async (query, { commentsQuery, repliesQuery }) => {
         const posts = await queryClient.fetchQuery(query)
         for (const post of posts) {
             queryClient.setQueryData(

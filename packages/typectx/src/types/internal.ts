@@ -35,7 +35,7 @@ export type Factory<
     }>
 ) => CONSTRAINT
 
-type Init<
+type Warmup<
     CONSTRAINT,
     SERVICES extends MainService[] = [],
     OPTIONALS extends RequestService[] = []
@@ -55,8 +55,7 @@ export type PartialAppServicePlan<
     services?: [...SERVICES]
     optionals?: [...OPTIONALS]
     factory: Factory<CONSTRAINT, SERVICES, OPTIONALS>
-    init?: Init<CONSTRAINT, SERVICES, OPTIONALS>
-    lazy?: boolean
+    warmup?: Warmup<CONSTRAINT, SERVICES, OPTIONALS>
 }
 
 export type AppServicePlan<
@@ -67,8 +66,7 @@ export type AppServicePlan<
     services: [...SERVICES]
     optionals: [...OPTIONALS]
     factory: Factory<CONSTRAINT, SERVICES, OPTIONALS>
-    init: Init<CONSTRAINT, SERVICES, OPTIONALS>
-    lazy: boolean
+    warmup: Warmup<CONSTRAINT, SERVICES, OPTIONALS>
 }
 
 export type UnknownAppServicePlan = AppServicePlan<

@@ -67,7 +67,7 @@ type ToSupplyBase<
     :   never
 }
 
-type FirstProperty<
+type FindDepFirstAppearanceInServiceTuple<
     SERVICES extends Service[],
     KEY extends "_toSupply" | "_deps",
     NAME extends PropertyKey
@@ -77,8 +77,8 @@ type FirstProperty<
             Head extends UnknownAppService ?
                 NAME extends keyof Head[KEY] ?
                     Head[KEY][NAME]
-                :   FirstProperty<Tail, KEY, NAME>
-            :   FirstProperty<Tail, KEY, NAME>
+                :   FindDepFirstAppearanceInServiceTuple<Tail, KEY, NAME>
+            :   FindDepFirstAppearanceInServiceTuple<Tail, KEY, NAME>
         :   never
     :   never
 
@@ -97,7 +97,11 @@ export type ToSupply<
                         UnknownAppService
                     >["_toSupply"]
                 > as NAME extends keyof ToSupplyBase<PLAN> ? never
-                :   NAME]: FirstProperty<PLAN["services"], "_toSupply", NAME>
+                :   NAME]: FindDepFirstAppearanceInServiceTuple<
+                    PLAN["services"],
+                    "_toSupply",
+                    NAME
+                >
             },
             Partial<KNOWN>
         >
@@ -127,7 +131,11 @@ export type Deps<
             [NAME in keyof UnionToIntersection<
                 Extract<PLAN["services"][number], UnknownAppService>["_deps"]
             > as NAME extends keyof DepsBase<PLAN> ? never
-            :   NAME]: FirstProperty<PLAN["services"], "_deps", NAME>
+            :   NAME]: FindDepFirstAppearanceInServiceTuple<
+                PLAN["services"],
+                "_deps",
+                NAME
+            >
         }
 
 export type SupplyDeps<

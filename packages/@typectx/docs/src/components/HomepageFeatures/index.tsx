@@ -56,8 +56,8 @@ const FeatureList: FeatureItem[] = [
         icon: "⚡",
         description: (
             <>
-                Smart memoization, lazy loading, tree-shakeable. ~5KB minified.
-                Optimal waterfalls with customizable preloading.
+                Smart memoization, eager or lazy factories, tree-shakeable. ~5KB
+                minified. Optimal waterfalls with optional warmup.
             </>
         )
     },

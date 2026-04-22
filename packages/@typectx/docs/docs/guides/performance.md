@@ -1,6 +1,6 @@
 ---
 title: "Performance Optimization"
-description: "Learn about performance in typectx, including its small bundle size, memoization, and eager vs. lazy loading strategies for optimal TypeScript dependency injection."
+description: "Learn about performance in typectx, including its small bundle size, memoization, and eager, lazy, and warmed factory patterns for optimal TypeScript dependency injection."
 keywords:
     - performance
     - optimization
@@ -15,7 +15,7 @@ keywords:
 
 # Performance
 
-typectx is designed for optimal performance, featuring a minimal bundle size, upfront service preparation, automatic lifecycle management, and eager/lazy execution controls.
+typectx is designed for optimal performance, featuring a minimal bundle size, upfront service preparation, automatic lifecycle management, and factory patterns for eager, lazy, or pre-warmed work.
 
 ## Bundle Size & Footprint
 
@@ -25,9 +25,9 @@ typectx is designed for optimal performance, featuring a minimal bundle size, up
 
 ## Factory Lifecycle & Memoization
 
-**Important**: Your factory function will be called a maximum of **one time per `assemble()` call**. If the service do not depend on request data, its factory will ever run once at server boot time and be cached for the remainder of the server's up time.
+**Important**: Your factory functions will be called only **one time per assembly** for performance purposes. All app services are assembled by default in the background before the first request, so that all request independent services are built, cached and ready to handle the first request. They stay cached for the remainder of the server's uptime. Then, a factory reruns only if its service is directly assembled, or if it depends on new request data provided when you call .assemble() or ctx().assemble() later in your program.
 
-- **Need something called multiple times, or run side-effects?** Return a function from your factory instead of a value
+- **Need to control when something is called, to call something multiple times, or to run side-effects?** Return a function from your factory.
 
 ```typescript
 // ✅ Good: Factory called once, returns a function for multiple calls
@@ -56,7 +56,7 @@ const user2 = createUser("123") // Cached result
 
 ### Automatic lifecycle management
 
-Services that do not not depend on request data are cached across requests. Otherwise, they are rebuilt on every request, or on nested request data changes.
+Services that do not depend on request data are cached across requests. Otherwise, they are rebuilt on every request, or on nested request data changes.
 
 In other words:
 
@@ -98,65 +98,58 @@ export async function handleRequest(req: Request) {
 // - `dashboard` is rebuilt because it depends on `currentUser`.
 ```
 
-### Eager loading by default
+#### Eager, lazy, and warmed-up factories
 
-By default, all products are constructed in parallel and cached as soon as `.assemble()` is called. This is the best strategy for optimal performance in most cases, especially in the presence of async factories.
+1. **Eager factory** — This is the default as explained above. Factories run as soon as possible, in the background and in parallel, and are then cached for reuse.
 
-```typescript
-// Both of these services will be constructed immediately and in parallel
-const $dbPromise = service("dbPromise").app({
-    // Async factories are possible
-    factory: async () => await db.connect()
+```ts
+const $eagerService = service("eagerService").app({
+    services: [$db],
+    factory: ({ db }) => buildExpensiveService(db)
 })
-const $cache = service("cache").app({
-    factory: () => new Map()
-})
+```
 
-const $app = service("app").app({
-    services: [$dbPromise, $cache],
-    factory: async ({ dbPromise, cache }) => {
-        if (cache.get("greeting")) {
-            return cache.get("greeting")
-        }
-        const db = await dbPromise
-        const greeting = db.getGreeting()
-        cache.set("greeting", greeting)
-        return greeting
+2. **Lazy factory** — For factories that perform expensive or optional work, you can instead return a **memoized function** (a lodash like `once(() => ...)` utility is provided by typectx if you want) from the factory. The expensive work will only be performed the first time you actually call the inner function in some other service.
+
+```ts
+const $lazyService = service("lazyService").app({
+    services: [$db],
+    factory: ({ db }) =>
+        once(() => {
+            return buildExpensiveService(db)
+        })
+})
+```
+
+3. **Warmed-up factory** — For performance optimization and testing, sometimes you may need to often switch between eager or lazy factories. Refactoring this is a bit tedious as you'd need to update all use sites of a service from a property access to a function call. Instead, you can use the warmed-up factory pattern, which allows to switch easily from eager to lazy behavior without needing to refactor anything. You can also conditionally warmup the factory based on some flag.
+
+```ts
+const lazy = true
+const $warmedService = service("warmedService").app({
+    services: [$db],
+    factory: ({ db }) => once(() => buildExpensiveService(db)),
+    warmup: (lazyExpensiveService, { db }) => {
+        if (lazy) return
+        lazyExpensiveService()
     }
 })
-
-const appSupply = $app.assemble({}) // Starts constructing both dbPromise and cache in parallel
 ```
 
-### Lazy Loading with `lazy: true`
+You can also use the warmup function for products that need to perform side-effects upon creation (like connecting to a database, logging, pre-warming caches, or running setup logic without cluttering the factory). `warmup` runs once immediately after the `factory` function returns, and receives the constructed product and deps as arguments.
 
-For expensive services that are only used in certain situations (e.g., an admin panel service or a PDF export tool), you can enable lazy loading by setting `lazy: true`. The product will only be constructed the first time its value is accessed via `unpack()`.
-
-```typescript
-const $lazy = service("lazy").app({
-    services: [$db],
-    // Will only be loaded when `deps.lazy` is called in another factory,
-    // or when `$lazy.assemble({...}).unpack()` is called directly.
-    factory: ({ db }) => new ExpensiveService(db),
-    lazy: true
-})
-```
-
-## Initialization with `init()`
-
-For products that need to perform side-effects upon creation (like connecting to a database or logging), you can use `init`. It runs immediately after the `factory` function returns, and receives the constructed product and deps as arguments.
-
-This is useful for pre-warming caches or running setup logic without cluttering your factory.
-
-For example, you can eagerly warm a memoized function:
+For example, you can easily populate an external cache, or perform logging.
 
 ```typescript
+import { once, service } from "typectx"
+
+const cache = {}
 const $profile = service("profile").app({
-    services: [$currentUser],
-    factory: () => memo((userId) => db.profiles.get(userId)),
-    init: (getProfile, { currentUser }) => {
-        // Pre-warm the current user's profile in the memoization cache.
-        getProfile(currentUser)
+    services: [$session],
+    factory: () => once((userId: string) => db.profiles.get(userId)),
+    warmup: (getProfile, { session }) => {
+        const profile = getProfile(session.user.id)
+        cache[session.user.id] = profile
+        console.log(`${session.useer.name}'s profile successfully loaded`)
     }
 })
 ```
