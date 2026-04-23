@@ -1,5 +1,5 @@
 import type {
-    MainService,
+    OriginalService,
     RequestService,
     Service,
     Supply,
@@ -22,7 +22,7 @@ export interface BaseService<
 
 export type Factory<
     CONSTRAINT,
-    SERVICES extends MainService[] = [],
+    SERVICES extends OriginalService[] = [],
     OPTIONALS extends RequestService[] = []
 > = (
     deps: Deps<{
@@ -37,7 +37,7 @@ export type Factory<
 
 type Warmup<
     CONSTRAINT,
-    SERVICES extends MainService[] = [],
+    SERVICES extends OriginalService[] = [],
     OPTIONALS extends RequestService[] = []
 > = (
     value: CONSTRAINT,
@@ -49,7 +49,7 @@ type Warmup<
 
 export type PartialAppServicePlan<
     CONSTRAINT,
-    SERVICES extends MainService[] = [],
+    SERVICES extends OriginalService[] = [],
     OPTIONALS extends RequestService[] = []
 > = {
     services?: [...SERVICES]
@@ -60,7 +60,7 @@ export type PartialAppServicePlan<
 
 export type AppServicePlan<
     CONSTRAINT,
-    SERVICES extends MainService[],
+    SERVICES extends OriginalService[],
     OPTIONALS extends RequestService[]
 > = {
     services: [...SERVICES]
@@ -71,7 +71,7 @@ export type AppServicePlan<
 
 export type UnknownAppServicePlan = AppServicePlan<
     unknown,
-    MainService[],
+    OriginalService[],
     RequestService[]
 >
 

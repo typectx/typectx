@@ -83,3 +83,8 @@ function warmup(supply: AppSupply<UnknownAppService>) {
             // The error will be thrown again when the dependency is actually accessed
         })
 }
+
+export function preassemble<THIS extends UnknownAppService>(this: THIS) {
+    const supply = assemble.call(this, {})
+    return { ...this, _known: { ...supply.supplies, [this.name]: supply } }
+}

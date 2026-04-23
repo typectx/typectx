@@ -1,13 +1,13 @@
 import type { PartialAppServicePlan } from "#types/internal"
 import { assertAppServices } from "#validation"
-import { assemble } from "#service/assemble"
+import { assemble, preassemble } from "#service/assemble"
 import { _build } from "#service/build"
 import { service } from "#index"
 import type { SupplyDeps, ToSupply } from "#types/records"
 import { dedupe, isAppService } from "#utils"
 import type {
     AppService,
-    MainService,
+    OriginalService,
     RequestService,
     Service
 } from "#types/public"
@@ -15,7 +15,7 @@ import type {
 export function main<
     NAME extends string,
     CONSTRAINT,
-    SERVICES extends MainService[] = [],
+    SERVICES extends OriginalService[] = [],
     OPTIONALS extends RequestService[] = []
 >(
     name: NAME,
@@ -58,6 +58,7 @@ export function main<
     return {
         ...service(name).request<CONSTRAINT>(),
         assemble,
+        preassemble,
         _factory: plan.factory,
         _build,
         _services: plan.services ?? [],

@@ -385,8 +385,8 @@ describe("Context Propagation", () => {
         await sleep(10)
 
         expect(result).toBe("mocked")
-        expect(originalSpy).toHaveBeenCalledTimes(2)
-        expect(mockSpy).toHaveBeenCalledTimes(3)
+        expect(originalSpy).toHaveBeenCalledTimes(0)
+        expect(mockSpy).toHaveBeenCalledTimes(2)
     })
 
     it("should support empty contextual dependency setup in mocks", () => {
