@@ -337,7 +337,7 @@ describe("typectx", () => {
     })
 
     describe("Automatic lifecycle management", () => {
-        it("should preserve referential identity for services without request dependencies", () => {
+        it("should preserve referential identity for services without request dependencies when preassembling main", () => {
             const $session = service("session").request<{ userId: string }>()
 
             const $db = service("db").app({
@@ -352,13 +352,15 @@ describe("typectx", () => {
                 })
             })
 
-            const $main = service("main").app({
-                services: [$db, $currentUser],
-                factory: ({ db, currentUser }) => ({
-                    db,
-                    currentUser
+            const $main = service("main")
+                .app({
+                    services: [$db, $currentUser],
+                    factory: ({ db, currentUser }) => ({
+                        db,
+                        currentUser
+                    })
                 })
-            })
+                .preassemble()
 
             const first = $main
                 .assemble(index($session.pack({ userId: "user-a" })))
@@ -406,8 +408,8 @@ describe("typectx", () => {
 
             await sleep(10)
 
-            expect(eagerFactorySpy).toHaveBeenCalledTimes(2)
-            expect(warmProductSpy).toHaveBeenCalledTimes(2)
+            expect(eagerFactorySpy).toHaveBeenCalledTimes(1)
+            expect(warmProductSpy).toHaveBeenCalledTimes(1)
             expect(lazyProductSpy).toHaveBeenCalledTimes(0)
             expect(main).toBe("main")
         })
@@ -445,8 +447,8 @@ describe("typectx", () => {
             await sleep(10)
 
             expect(main).toBe("main")
-            expect(errorFactorySpy).toHaveBeenCalledTimes(2)
-            expect(errorWarmProductSpy).toHaveBeenCalledTimes(2)
+            expect(errorFactorySpy).toHaveBeenCalledTimes(1)
+            expect(errorWarmProductSpy).toHaveBeenCalledTimes(1)
         })
 
         it("should still throw error when accessing a failed warmed up service's product", async () => {
@@ -496,7 +498,7 @@ describe("typectx", () => {
 
             await sleep(10)
 
-            expect(ASpy).toHaveBeenCalledTimes(2)
+            expect(ASpy).toHaveBeenCalledTimes(1)
             expect(BSpy).toHaveBeenCalledTimes(0)
             expect(main).toBe("main")
         })

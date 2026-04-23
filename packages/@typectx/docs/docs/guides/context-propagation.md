@@ -42,7 +42,7 @@ const $Post = service("Post").app({
 })
 
 const $Feed = service("Feed").app({
-    services: [$db, $session],
+    services: [$db, $Post],
     factory:
         ({ db }, ctx) =>
         () => {
@@ -82,9 +82,11 @@ When you call `ctx($service).assemble(...)`, typectx preserves any already-known
 
 In the feed example above, a request-free dependency like `$db` can be reused for every post card, while `$Post` is rebuilt for each different `postId`.
 
+Also, if you do ctx($serviceX), be sure to include $serviceX in the services array, even if it is not destructured directly as a dependency of the factory. This allows the preassemble() call on the main service to see it is used and optimize it.
+
 ## Reassemble an already-used dependency
 
-You can also reassemble an existing dependency with new request data:
+You can also reassemble an existing dependency with new request data. This allows, for example, to run a function impersonating a different user than the currently logged-in user:
 
 ```ts
 const $sendMoney = service("sendMoney").app({

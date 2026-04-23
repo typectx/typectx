@@ -71,7 +71,7 @@ describe("Mocks Feature", () => {
             await sleep(10)
 
             expect(lazyProductSpy).toHaveBeenCalledTimes(0)
-            expect(warmProductSpy).toHaveBeenCalledTimes(2)
+            expect(warmProductSpy).toHaveBeenCalledTimes(1)
         })
 
         it("should compute precise TOSUPPLY types with mock", () => {

@@ -36,7 +36,7 @@ npm install typectx
 - **Hyper-minimalistic bundle size**: ~5KB minified, ~2KB minzipped.
 - **Tree-shakable and code-splittable architecture**: Helps you create hyper-specialized services: One function or piece of data per service
 - **Memory usage**: Smart memoization prevents duplicate dependency resolution
-- **Automatic lifecycle management**: App services are prepared immediately. Request-free services can pre-build at startup and be cached across requests; request-bound branches rebuild when request data changes.
+- **Automatic lifecycle management**: App services are prepared immediately. Request-free services can pre-build at startup and be cached across requests; request-bound services rebuild when request data changes.
 - **Options to optimize dependency chain waterfalls**: Choose an eager, lazy, or warmed-up factory pattern
 
 ## Quick Example
@@ -50,24 +50,34 @@ const $todosDb = service("todosDb").app({
     services: [],
     factory: () => new Map<string, string[]>() // Simple in-memory DB
 })
-const $addTodo = service("addTodo").app({
-    services: [$session, $todosDb],
-    factory:
-        ({ session, todosDb }) =>
-        (todo: string) => {
-            const userTodos = todosDb.get(session.userId) || []
-            todosDb.set(session.userId, [...userTodos, todo])
-            return todosDb.get(session.userId)
-        }
-})
+
+// Define and preassemble your main service
+const $addTodo = service("addTodo")
+    .app({
+        services: [$session, $todosDb],
+        factory:
+            ({ session, todosDb }) =>
+            (todo: string) => {
+                const userTodos = todosDb.get(session.userId) || []
+                todosDb.set(session.userId, [...userTodos, todo])
+                return todosDb.get(session.userId)
+            }
+    })
+    .preassemble() // Will build and cache request-independent services, like $todosDb, across requests
 
 const session = { userId: "user123" }
 
 // 3. Assemble and use
-const addTodo = $addTodo.assemble(index($session.pack(session))).unpack()
+server.onRequest((req) => {
+    const addTodo = $addTodo
+        .assemble(index($session.pack(req.session)))
+        .unpack()
 
-console.log(addTodo("Learn typectx")) // ["Learn typectx"]
-console.log(addTodo("Build app")) // ["Learn typectx", "Build app"]
+    console.log(addTodo("Learn typectx")) // ["Learn typectx"]
+    console.log(addTodo("Build app")) // ["Learn typectx", "Build app"]
+
+    return addTodo(req.todo)
+})
 ```
 
 ## Intuitive, opinionated terminology
@@ -110,12 +120,6 @@ typectx uses an intuitive supply chain metaphor to make dependency injection eas
 - Context switching - Override context anywhere in the call stack with `ctx($service).assemble(...)`.
 - Context enrichment - Add new inputs and products deep in the call stack with contextual assembly and `hire(...)`.
 
-⚡ Waterfall Management
-
-- **Eager factory** — Return the product directly from the factory. As soon as typectx has enough data to assemble that service, it builds it in the background and memoizes the result.
-- **Lazy factory** — Return a memoized function from the factory (for example with `once()`), and put the real work inside that function so it runs only when invoked.
-- **Warmed-up factory** — Same as lazy, plus an optional `warmup` callback that calls the memoized function right after the factory returns, so you can flip between eager-style preloading and true laziness without changing call sites.
-
 🧪 Testing and Packing
 
 - You can override any service with `pack()`, which uses the provided value directly and overrides the request service's previous value or bypasses the service's factory.
@@ -132,7 +136,7 @@ typectx uses an intuitive supply chain metaphor to make dependency injection eas
 
 ### 1. Define Request Services
 
-Request services are used to wire the data you get from the user's request, and that cannot be derived from other request or app services, like sessions or request params. You define a `$request` service and then `.pack()` it with a value at request time. The value can be anything you want, just specify its type.
+Request services are used to wire the data you get from the user's request, like sessions or request params, that cannot be derived from other request or app services. You define a `$request` service and then `.pack()` it with a value at request time. The value can be anything you want, just specify its type.
 
 Service names can **only** contain digits, letters, underscores or `$` signs and cannot start with a digit, just like any Javascript identifier.
 
@@ -153,7 +157,7 @@ const session = $session
 
 App services are your application's components or features. They are factory functions that can depend on other app services or request data. Factories can return anything: simple values, promises or other functions.
 
-Dependencies are accessed via the 1st argument of the factory (deps).
+Dependencies are accessed via the 1st argument of the factory (deps), destructured.
 
 ```tsx
 const $user = service("user").app({
@@ -167,15 +171,17 @@ const $user = service("user").app({
 
 ### 3. Define Your Main service
 
-Your Main service is just an app service like the other ones. It's the most complex app service at the very end of your supply chain.
+Your Main service is just an app service like the other ones. It's the most complex app service at the very end of your supply chain. To prepare request-independent services and cache them for all requests, just call preassemble() on your main service, and let typectx optimize the entire dependency graph automatically:
 
 ```tsx
-const $main = service("main").app({
-    services: [$user],
-    factory: ({ user }) => {
-        return <h1>Hello, {user.name}! </h1>
-    }
-})
+const $main = service("main")
+    .app({
+        services: [$user],
+        factory: ({ user }) => {
+            return <h1>Hello, {user.name}! </h1>
+        }
+    })
+    .preassemble() //to preload all request-independent services across the entire dependency graph of the main service and cache the result across requests
 ```
 
 ### 4. Assemble at Entry Point
@@ -183,19 +189,20 @@ const $main = service("main").app({
 At your application's entry point, you `assemble` your $main service, providing just the request data requested recursively by the $main service's supply chain. Typescript will tell you if any request data is missing.
 
 ```tsx
+server.onRequest((req) => {
+    // Assemble the Main product, providing the Session and Db inputs.
+    // Bad but working syntax for demonstration purposes only. See index() below for syntactic sugar.
+    const main = $main
+        .assemble({
+            [$session.name]: $session.pack({
+                userId: req.userId
+            }),
+            [$params.name]: params.pack(req.params)
+        })
+        .unpack()
 
-const req = //...Get the current http request
-
-// Assemble the Main product, providing the Session and Db inputs.
-// Bad but working syntax for demonstration purposes only. See index() below for syntactic sugar.
-const main = $main.assemble({
-    [$session.name]: $session.pack({
-        userId: req.userId
-    }),
-    [$params.name]: params.pack(req.params)
-}).unpack()
-
-// Return or render main...
+    // Return or render main...
+})
 ```
 
 The flow of the assemble call is as follows: request data is obtained, which is provided to `$request` services using pack(). Then those inputs are supplied to `$main`'s services recursively, which assemble their own product, and pass them up along the supply chain until they reach `$main`, which assembles the final `main` product. All this work happens in the background, no matter the complexity of your application.
@@ -207,7 +214,8 @@ To simplify the assemble() call, you should use the index() utility, which just 
 ```tsx
 import { index } from "typectx"
 
-const main = $main
+server.onRequest((req) => {
+    const main = $main
     .assemble(
         index(
             $session.pack({
@@ -216,12 +224,15 @@ const main = $main
             $db.pack(db)
         )
     )
-    .unpack()
+    .unpack().
+})
 ```
 
 ## Factory Lifecycle & Memoization
 
-**Important**: Your factory functions will be called only **one time per assembly** for performance purposes. All app services are assembled by default in the background before the first request, so that all request independent services are built, cached and ready to handle the first request. They stay cached for the remainder of the server's uptime. Then, a factory reruns only if its service is directly assembled, or if it depends on new request data provided when you call .assemble() or ctx().assemble() later in your program.
+Important: Each factory runs at most once per assemble(), ctx().assemble() or preassemble() call.
+
+Typectx eagerly preassembles your main service at startup and builds its dependency graph in parallel when possible. Dependencies that do not need request data are cached and ready for the first request. Dependencies that do need request data are resolved only after you assemble again with that data. When you do, Typectx recomputes only the parts of the graph that depend on the new request data, and reuses the rest.
 
 - **Need to control when something is called, to call something multiple times, or to run side-effects?** Return a function from your factory.
 
@@ -243,9 +254,6 @@ const $createUser = service("createUser").app({
     }
 })
 
-// In this example, $createUser's factory runs twice, once in the background at service definition, and once here
-// because .assemble() is called directly on it. But the factory for the $db service will only ever run once, because it is request
-// independent, and .assemble() isn't called directly on it.
 const createUser = $createUser.assemble({}).unpack()
 
 // Usage: createUser() can be called multiple times
@@ -276,7 +284,7 @@ const $lazyService = service("lazyService").app({
 })
 ```
 
-3. **Warmed-up factory** — For performance optimization and testing, sometimes you may need to often switch between eager or lazy factories. Refactoring this is a bit tedious as you'd need to update all use sites of a service from a property access to a method call. Instead, you can use the warmed-up factory pattern, which allows to switch easily from eager to lazy behavior without needing to refactor anything. You can also conditionally warmup the factory based on some flag.
+3. **Warmed-up factory** — For performance optimization and testing, sometimes you may need to often switch between eager or lazy factories. Refactoring this is a bit tedious as you'd need to update all use sites of a service from a property access to a method call, or vice-versa. Instead, you can use the warmed-up factory pattern, which allows to switch easily from eager to lazy behavior without needing to refactor anything. You can also conditionally warmup the factory based on some flag.
 
 ```ts
 const lazy = true
@@ -306,7 +314,7 @@ Context propagation is typectx's flagship capability. It lets you reassemble ser
 
 ### 1. Mocking in tests with `.pack()`
 
-You usually use `pack()` to provide request data to `assemble()`, but you can also use `pack()` on app services. This allows to provide a value for that product directly, bypassing its factory. Perfect to override a product's implementation with a mock for testing.
+You usually use `pack()` to provide request data to `assemble()` (see step 4 above), but you can also use `pack()` on app services. This allows to provide a value for that product directly, bypassing its factory. Perfect to override a product's implementation with a mock for testing.
 
 ```tsx
 const $profile = service("profile").app({

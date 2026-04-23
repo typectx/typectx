@@ -32,6 +32,7 @@ export interface AppService<
         this: THIS,
         toSupply: THIS["_toSupply"]
     ) => Supply<THIS>
+    preassemble: <THIS extends UnknownAppService>(this: THIS) => THIS
     mock: <
         THIS extends UnknownAppService & {
             name: NAME
@@ -39,7 +40,7 @@ export interface AppService<
             _mock: false
         },
         CONSTRAINT2 extends THIS["_constraint"],
-        SERVICES2 extends MainService[] = [],
+        SERVICES2 extends OriginalService[] = [],
         OPTIONALS2 extends RequestService[] = []
     >(
         this: THIS,
@@ -92,7 +93,7 @@ export interface AppService<
     _oldToSupply: TO_SUPPLY
     _oldDeps: SupplyDeps<TO_SUPPLY, OPTIONAL_KEYS>
     /** Array of services this service depends on */
-    _services: MainService[]
+    _services: OriginalService[]
     /** Array of optional request services this service may depend on */
     _optionals: RequestService[]
     _team: Service[]
@@ -109,7 +110,7 @@ export interface AppService<
 }
 
 export type Service = UnknownAppService | RequestService
-export type MainService = Service & {
+export type OriginalService = Service & {
     _mock: false
 }
 
@@ -126,7 +127,7 @@ export type UnknownAppService = AppService<
 export type Mock<
     SERVICE extends UnknownAppService,
     CONSTRAINT2 extends SERVICE["_constraint"],
-    SERVICES2 extends MainService[] = [],
+    SERVICES2 extends OriginalService[] = [],
     OPTIONALS2 extends RequestService[] = []
 > = Omit<
     AppService<

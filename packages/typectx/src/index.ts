@@ -6,7 +6,7 @@ import type { ToSupply } from "#types/records"
 import type { AppServiceGuard } from "#types/guards"
 import { assertName, assertAppServicePlan } from "#validation"
 import type {
-    MainService,
+    OriginalService,
     AppService,
     RequestService,
     Service,
@@ -56,7 +56,7 @@ export function service<NAME extends string>(name: NAME) {
          */
         app<
             CONSTRAINT,
-            SERVICES extends MainService[] = [],
+            SERVICES extends OriginalService[] = [],
             OPTIONALS extends RequestService[] = []
         >(
             plan: PartialAppServicePlan<CONSTRAINT, SERVICES, OPTIONALS>
@@ -81,7 +81,7 @@ export function service<NAME extends string>(name: NAME) {
             assertName(name)
             assertAppServicePlan(name, plan)
 
-            const s = {
+            return {
                 ...main(name, plan),
                 mock: Mock<NAME, CONSTRAINT>(),
                 hire: Hire(),
@@ -101,13 +101,6 @@ export function service<NAME extends string>(name: NAME) {
                 [],
                 false
             >
-
-            const supply = assemble.call(s as unknown as UnknownAppService, {})
-
-            return {
-                ...s,
-                _known: { ...supply.supplies, [name]: supply }
-            } as any
         }
     }
 }

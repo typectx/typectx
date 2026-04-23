@@ -3,7 +3,7 @@ import type { AppServiceGuard } from "#types/guards"
 import type { PartialAppServicePlan } from "#types/internal"
 import { assertAppServicePlan } from "#validation"
 import type {
-    MainService,
+    OriginalService,
     RequestService,
     UnknownAppService,
     Mock as MockType
@@ -31,7 +31,7 @@ export function Mock<NAME extends string, CONSTRAINT>() {
     return function mock<
         THIS extends UnknownAppService,
         CONSTRAINT2 extends THIS["_constraint"],
-        SERVICES2 extends MainService[] = [],
+        SERVICES2 extends OriginalService[] = [],
         OPTIONALS2 extends RequestService[] = []
     >(
         this: THIS & {
@@ -46,7 +46,7 @@ export function Mock<NAME extends string, CONSTRAINT>() {
         assertAppServicePlan(this.name, plan)
         const mock = main(this.name, plan)
 
-        const s = {
+        return {
             ...this,
             ...mock,
             hired: [] as [],
@@ -54,12 +54,5 @@ export function Mock<NAME extends string, CONSTRAINT>() {
             _oldToSupply: this._toSupply,
             _oldDeps: this._deps
         } satisfies MockType<THIS, CONSTRAINT2, SERVICES2, OPTIONALS2> as any
-
-        const supply = assemble.call(s as unknown as UnknownAppService, {})
-
-        return {
-            ...s,
-            _known: { ...supply.supplies, [this.name]: supply }
-        } as any
     }
 }

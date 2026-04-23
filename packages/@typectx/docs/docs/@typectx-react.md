@@ -125,12 +125,12 @@ export const $App = service("App").app({
             </div>
         );
     }
-});
+}).preassemble();
 ```
 
 ### 3. Root Render
 
-Assemble the root component and render it.
+Assemble the main component and render it.
 
 ```typescript
 // main.tsx

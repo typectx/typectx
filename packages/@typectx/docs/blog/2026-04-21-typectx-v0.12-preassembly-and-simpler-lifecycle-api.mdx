@@ -1,6 +1,6 @@
 ---
-title: "typectx v0.12: Earlier Warmup, Simpler Lifecycle API"
-slug: typectx-v0.12-earlier-warmup-simpler-lifecycle-api
+title: "typectx v0.12: Preassembly, and Simpler Lifecycle API"
+slug: typectx-v0.12-preassembly-and-simpler-lifecycle-api
 authors:
     - name: Félix Dubé
       title: "@someone635"
@@ -10,19 +10,30 @@ hide_table_of_contents: false
 
 Version 0.12 ships two improvements:
 
-First, the background warmup system got stronger: app services now start warming up **at declaration time**, not just when you call `.assemble(...)`.
+First, the background warmup system got stronger: app services can now start warming up early when you call `.preassemble()`, usually on the main service of your app, instead of waiting for a later `.assemble(...)`.
 
 Second, the service lifecycle API got smaller: the `lazy: boolean` flag is gone, as adding it to the framework caused unnecessary complexity. A simple pattern can be used to make a factory lazy or eager, no need for a library flag.
 
 {/* truncate */}
 
-## Change 1: Warmup Now Starts at Declaration Time
+## Change 1: Adding .preassemble()
 
 In v0.11, writing `service(name).app({...})` validated the dependency graph and built a reusable assembly blueprint, but the factory itself stayed cold. Nothing ran until an explicit `.assemble({...})` call somewhere else in your program.
 
-In v0.12, that declaration step also **attempts an initial assembly right away**, with whatever supplies are already known, and kicks off a background warmup pass over the whole reachable graph. For request-free services that means their factories can finish building at startup. For request-dependent services, the warmup attempt just memoizes a "missing dependency" error on the unresolved part of the graph and waits for real request data to arrive. The error is only thrown if the service's value is accessed before the needed request data has been provided.
+In the current v0.12 design, declaration still stays cheap. If you want earlier warmup, you opt into it by calling `.preassemble()`, usually on your main service. That triggers an initial assembly with whatever supplies are already known and kicks off a background warmup pass over the whole reachable graph. For request-independent services, that means their factories can finish building at startup. For request-dependent services, the preassembly attempt just memoizes a "missing dependency" error on the unresolved part of the graph and waits for real request data to arrive. The error is only thrown if the service's value is accessed before the needed request data has been provided.
 
-This is a pure performance and ergonomics win. No public API changes, no migration work, no new concepts in your service definitions—your existing v0.11 code gets earlier warmup for free.
+This keeps startup compute under your control. If you want request-independent services ready before the first request, call `.preassemble()`. If you do not, typectx avoids doing that extra work up front.
+
+```typescript
+const $main = service("main")
+    .app({
+        services: [$router],
+        factory: ({ router }) => router
+    })
+    .preassemble()
+```
+
+In practice, that one call is usually enough: preassembling the main service lets typectx warm up the whole request-independent part of the graph and cache it across requests.
 
 ## Change 2: The Lifecycle API Gets Simpler
 
@@ -64,7 +75,7 @@ v0.12 deletes the flag. Laziness is now expressed by **what your factory returns
 
 With `lazy` gone, here are the three shapes your factories can take. All of them are plain factories from typectx's point of view—the difference is purely in what your code returns.
 
-**1. Eager factory (the default).** Return your product directly. typectx builds it in the background as soon as its dependencies are known and memoizes the result.
+**1. Eager factory (the default).** Return your product directly. typectx builds it when the service is assembled, and also during `.preassemble()` if you opt into startup warmup, then memoizes the result.
 
 ```typescript
 const $eagerService = service("eagerService").app({
@@ -184,17 +195,28 @@ service("x").app({ factory: ..., init: (value, deps) => { ... } })
 service("x").app({ factory: ..., warmup: (value, deps) => { ... } })
 ```
 
-### 3. Nothing else changes
+### 3. Add `.preassemble()` if you want startup warmup
 
-Request services, `.assemble()`, `.pack()`, `.hire()`, `.mock()`, and `ctx($service).assemble(...)` all keep the exact same public API. The declaration-time warmup improvements apply automatically with no code changes.
+If you want request-independent services warmed up before the first request, add `.preassemble()` to your main service:
+
+```typescript
+const $main = service("main")
+    .app({
+        services: [$user],
+        factory: ({ user }) => user
+    })
+    .preassemble()
+```
+
+If you do not call `.preassemble()`, declaration stays cheap and warmup happens later when you call `.assemble()`.
 
 ## Why These Changes?
 
-1. **Earlier work, safer failure.** Warmup now runs at declaration time, so request-free services are ready before the first request. Errors from missing request data stay memoized on their unresolved branch instead of crashing startup.
+1. **Earlier work when you want it, less compute when you do not.** - Let preassemble() optimize your app for you.
 2. **Simpler mental model for lifecycle.** Eager, lazy, and warmed-up are now patterns you write in ordinary JavaScript—not flags inside a framework option bag.
 3. **No destructuring trap.** The lazy pattern uses a function call, which is both obvious to read and impossible to accidentally trigger through destructuring.
 
-typectx is inching closer to v1. Each release has been chipping away at the "one way to do it" surface, and v0.12 does that both under the hood, with declaration-time warmup, and at the public API, with the shrunken lifecycle options.
+typectx is inching closer to v1. Each release has been chipping away at the "one way to do it" surface, and v0.12 does that both under the hood, with explicit opt-in preassembly, and at the public API, with the shrunken lifecycle options.
 
 ---
 

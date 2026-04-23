@@ -30,21 +30,15 @@ typectx uses a supply chain metaphor to make context injection intuitive. Instea
 
 Think of it like a real supply chain: raw materials (request data and simple products) are transformed by factories into increasingly complex products.
 
-## Step 1: Import flat APIs
-
-Every typectx application starts by declaring services directly with `service(name).request()` and `service(name).app(config)`.
-
-```typescript
-import { service } from "typectx"
-```
-
-## Step 2: Defining Request services
+## Step 1: Defining Request services
 
 Request services are the simplest form of services. Just specify the type of the piece of data from the user's request you need to propagate through your code.
 
 ### Creating a Request Service
 
 ```typescript
+import { service } from "typectx"
+
 const $session = service("session").request<{
     userId: string
     timestamp: number
@@ -86,7 +80,7 @@ const $port = service("port").request<number>()
 const $isProduction = service("isProduction").request<boolean>()
 
 // Complex types
-const $database = service("database").request<Database>()
+const $session = service("session").request<Session>()
 
 // Even functions (but usually, you'll use app services in that case)
 const $logger = service("logger").request<{
@@ -95,16 +89,20 @@ const $logger = service("logger").request<{
 }>()
 ```
 
-## Step 3: Defining App services
+## Step 2: Defining App services
 
 App services are where the real power of typectx shines. App services define factory functions that can depend on other services (both request and other app services) to create values, products, components, or any complex functionality.
 
 ### Basic App Service Definition
 
 ```typescript
+import { service } from "typectx"
+
+const $db = service("db").app({ factory: () => connect() })
+
 const $userService = service("userService").app({
-    services: [$config, $database],
-    factory: ({ config, database }) => {
+    services: [$config, $db],
+    factory: ({ config, db }) => {
         return {
             getUser: (id: string) => {
                 return db.query(`${config.apiUrl}/users/${id}`)
@@ -126,7 +124,7 @@ factory: (deps) => {
     const config = deps.config
     // You can do this, but it produces less boilerplate to just destructure deps directly
     // See previous example just above
-    const database = deps.database
+    const db = deps.db
 
     // Return whatever your product produces
     return myService
@@ -160,10 +158,10 @@ const $session = service("session").app({
 
 // Depends on the "session" complex product, on the "db" trivial product, and on the "page" request data
 const $userProfile = service("userProfile").app({
-    services: [$session, $database, $page],
+    services: [$session, $db, $page],
     factory: ({ session, db, page }) => {
         const user = db.getUser(session.userId)
-        if (page === 1) {
+        if (page === "/user") {
             return {
                 name: user.name,
                 avatar: user.avatar
@@ -171,7 +169,7 @@ const $userProfile = service("userProfile").app({
             }
         }
 
-        if (page === 2) {
+        if (page === "/profile") {
             return {
                 address: user.address,
                 email: user.email
@@ -182,27 +180,36 @@ const $userProfile = service("userProfile").app({
 })
 ```
 
+## Step 3: Define your main service
+
+Your Main service is just an app service like the other ones. It's the most complex app service at the very end of your supply chain. To prepare request-independent services and cache them for all requests, just call preassemble() on your main service, and let typectx optimize the entire dependency graph automatically:
+
+```tsx
+const $main = service("main")
+    .app({
+        services: [$user],
+        factory: ({ user }) => {
+            return <h1>Hello, {user.name}! </h1>
+        }
+    })
+    .preassemble() //to preload all request-independent services across the entire dependency graph of the main service and cache the result across requests
+```
+
 ## Step 4: The Factory Lifecycle
 
 Understanding how and when factories are called is crucial for effective use of typectx.
 
-### Service Preparation Happens Up Front
-
-When you declare an app service with `service(name).app(...)`, typectx prepares its dependency graph immediately and attempts an initial background assembly with whatever dependencies are already known.
-
-That preparation step validates the graph, builds a reusable assembly blueprint, and lets request-free services finish building as early as startup. If a service still needs request data, the background attempt stores the missing-dependency error on that unresolved supply instead of throwing immediately.
-
 ### One Factory Call Per Assembly
 
-**Important**: Your factory functions will be called only **one time per assembly** for performance purposes. All app services are assembled by default in the background before the first request, so that all request independent services are built, cached and ready to handle the first request. They stay cached for the remainder of the server's uptime. Then, a factory reruns only if its service is directly assembled, or if it depends on new request data provided when you call .assemble() or ctx().assemble() later in your program.
+**Important**: Each factory runs at most once per assemble(), ctx().assemble() or preassemble() call.
 
-- **Need to control when something is called, to call something multiple times, or to run side-effects?** Return a function from your factory.
+Typectx eagerly preassembles your main service at startup and builds its dependency graph in parallel when possible. Dependencies that do not need request data are cached and ready for the first request. Dependencies that do need request data are resolved only after you assemble again with that data at request-time. When you do, Typectx recomputes only the parts of the graph that depend on the new request data, and reuses the rest.
 
 typectx manages those instances automatically:
 
-- Request-free app services can be preserved across multiple assemblies.
-- Request-bound app services are rebuilt when their request data changes.
-- Nested `ctx(...).assemble(...)` calls preserve unaffected services and only rebuild invalidated branches.
+- Request-independent app services can be preserved across multiple assemblies.
+- Request-dependent app services are rebuilt when their request data changes.
+- Nested `ctx(...).assemble(...)` calls preserve unaffected services and only rebuild service invalidated by the new request data provided.
 
 This removes the need to manually configure transient/scoped/singleton lifecycles.
 
@@ -279,12 +286,14 @@ Assembly is where everything comes together. At your application's entry point, 
 ### Basic Assembly
 
 ```typescript
-const main = $main
-    .assemble({
-        [$locale.name]: $locale.pack("en"),
-        [$session.name]: $session.pack({ userId: "user-123" })
-    })
-    .unpack()
+server.onRequest((req) => {
+    const main = $main
+        .assemble({
+            [$locale.name]: $locale.pack(req.locale),
+            [$session.name]: $session.pack({ userId: "user-123" })
+        })
+        .unpack()
+})
 ```
 
 This syntax works, but it's verbose. That's why typectx provides the `index()` utility.
@@ -296,9 +305,16 @@ The `index()` function simplifies assembly by converting an array of packed supp
 ```typescript
 import { index } from "typectx"
 
-const app = $app
-    .assemble(index($locale.pack("en"), $session.pack({ userId: "user-123" })))
-    .unpack()
+server.onRequest((req) => {
+    const main = $main
+        .assemble(
+            index(
+                $locale.pack(req.locale),
+                $session.pack({ userId: "user-123" })
+            )
+        )
+        .unpack()
+})
 ```
 
 The `index()` function automatically maps each supply to its service name.
@@ -336,27 +352,32 @@ const $session = service("session").request<Session>()
 
 const $db = service("db").app({ factory: () => dbConnect(/*...*/) })
 
-const $userService = service("userService").app({
+const $user = service("user").app({
     services: [$db, $session],
     factory: ({ db, session }) => ({
         /* ... */
     })
 })
 
-const $app = service("app").app({
-    services: [$userService],
-    factory: ({ userService }) => {
-        return {
-            /* ... */
+const $app = service("app")
+    .app({
+        services: [$user],
+        factory: ({ user }) => {
+            return {
+                /* ... */
+            }
         }
-    }
-})
+    })
+    .preassemble()
 
 // You only provide the $session
-// $db and $userService are autowired automatically
-const app = $app
-    .assemble(index($db.pack(database), $session.pack(session)))
-    .unpack()
+// $db and $user are autowired automatically
+
+server.onRequest((req) => {
+    const app = $app
+        .assemble(index($db.pack(database), $session.pack(session)))
+        .unpack()
+})
 ```
 
 ## Performance: Eager, lazy, and warmed factories
@@ -370,8 +391,7 @@ Let's put everything together with a realistic example:
 ```typescript
 import { index, service } from "typectx"
 
-// 2. Define request services
-const $req = service("req").request<Request>()
+// 1. Define request services
 const $config = service("config").request<{
     postsPerPage: number
     cacheEnabled: boolean
@@ -457,29 +477,31 @@ const $postsService = service("postsService").app({
 })
 
 // 4. Define the API handler
-const $apiHandler = service("apiHandler").app({
-    services: [$postsService, $req],
-    factory: async ({ postsService: posts, req }) => {
-        const url = new URL(req.url)
-        const path = url.pathname
+const $apiHandler = service("apiHandler")
+    .app({
+        services: [$postsService, $req],
+        factory: async ({ postsService: posts, req }) => {
+            const url = new URL(req.url)
+            const path = url.pathname
 
-        if (path.startsWith("/posts")) {
-            if (req.method === "GET") {
-                const page = parseInt(url.searchParams.get("page") || "0")
-                const data = await posts.getPosts(page)
-                return Response.json(data)
+            if (path.startsWith("/posts")) {
+                if (req.method === "GET") {
+                    const page = parseInt(url.searchParams.get("page") || "0")
+                    const data = await posts.getPosts(page)
+                    return Response.json(data)
+                }
+
+                if (req.method === "POST") {
+                    const post = await request.json()
+                    const created = await posts.createPost(post)
+                    return Response.json(created, { status: 201 })
+                }
             }
 
-            if (req.method === "POST") {
-                const post = await request.json()
-                const created = await posts.createPost(post)
-                return Response.json(created, { status: 201 })
-            }
+            return new Response("Not Found", { status: 404 })
         }
-
-        return new Response("Not Found", { status: 404 })
-    }
-})
+    })
+    .preassemble()
 
 // 5. Assembly at request time
 export async function handleRequest(request: Request) {
@@ -490,9 +512,7 @@ export async function handleRequest(request: Request) {
     }
 
     const response = await $apiHandler
-        .assemble(
-            index($req.pack(request), $user.pack(user), $config.pack(config))
-        )
+        .assemble(index($user.pack(user), $config.pack(config)))
         .unpack()
 
     return response

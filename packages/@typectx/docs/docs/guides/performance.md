@@ -25,34 +25,9 @@ typectx is designed for optimal performance, featuring a minimal bundle size, up
 
 ## Factory Lifecycle & Memoization
 
-**Important**: Your factory functions will be called only **one time per assembly** for performance purposes. All app services are assembled by default in the background before the first request, so that all request independent services are built, cached and ready to handle the first request. They stay cached for the remainder of the server's uptime. Then, a factory reruns only if its service is directly assembled, or if it depends on new request data provided when you call .assemble() or ctx().assemble() later in your program.
+Each factory runs at most once per assemble(), ctx().assemble() or preassemble() call for maximum performance.
 
-- **Need to control when something is called, to call something multiple times, or to run side-effects?** Return a function from your factory.
-
-```typescript
-// ✅ Good: Factory called once, returns a function for multiple calls
-const $createUser = service("createUser").app({
-    services: [$db],
-    factory: ({ db }) => {
-        const cache = new Map()
-
-        // Return a function that can be called multiple times
-        return (userId: string) => {
-            if (cache.has(userId)) return cache.get(userId)
-            const user = db.findUser(userId)
-            cache.set(userId, user)
-            return user
-        }
-    }
-})
-
-// Usage: createUserService() can be called multiple times
-const createUser = $createUser.assemble(index($db.pack(db))).unpack()
-const user1 = createUser("123") // Fresh call
-const user2 = createUser("123") // Cached result
-```
-
-## Factories run in parallel
+Typectx eagerly preassembles your main service at startup and builds its dependency graph in parallel when possible. Dependencies that do not need request data are cached and ready for the first request. Dependencies that do need request data are resolved only after you assemble again with that data at request-time. When you do, Typectx recomputes only the parts of the graph that depend on the new request data, and reuses the rest.
 
 ### Automatic lifecycle management
 
@@ -60,7 +35,7 @@ Services that do not depend on request data are cached across requests. Otherwis
 
 In other words:
 
-- Request-free app services behave like long-lived cached singletons.
+- Request-independent app services behave like long-lived cached singletons.
 - App services with request dependencies behave like transient per-request scoped values.
 - Nested `ctx(...).assemble(...)` calls only rebuild the services that the new request data invalidates.
 
@@ -76,24 +51,25 @@ const $currentUser = service("currentUser").app({
     factory: ({ db, session }) => db.findUser(session.userId)
 })
 
-const $dashboard = service("dashboard").app({
-    services: [$db, $currentUser],
-    factory: ({ db, currentUser }) => {
-        return {
-            user: currentUser,
-            notifications: db.getNotifications(currentUser.id)
+const $dashboard = service("dashboard")
+    .app({
+        services: [$db, $currentUser],
+        factory: ({ db, currentUser }) => {
+            return {
+                user: currentUser,
+                notifications: db.getNotifications(currentUser.id)
+            }
         }
-    }
-})
+    })
+    .preassemble()
 
 export async function handleRequest(req: Request) {
     const session = await readSession(req)
-
     return $dashboard.assemble(index($session.pack(session))).unpack()
 }
 
-// On each request, only the request-scoped branch is rebuilt:
-// - `db` can be preserved because it is request-free.
+// On each request, only the request-dependent branch is rebuilt:
+// - `db` can be preserved because it is request-independent.
 // - `currentUser` is rebuilt because it depends on `session`.
 // - `dashboard` is rebuilt because it depends on `currentUser`.
 ```
